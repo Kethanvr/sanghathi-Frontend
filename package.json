@@ -1,0 +1,56 @@
+{
+  "name": "frontend",
+  "version": "0.0.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "@fullcalendar/core": "^6.1.4",
+    "@fullcalendar/daygrid": "^6.1.4",
+    "@fullcalendar/list": "^6.1.4",
+    "@fullcalendar/react": "^6.1.4",
+    "@fullcalendar/timegrid": "^6.1.4",
+    "@hookform/resolvers": "^2.8.8",
+    "@iconify/react": "^4.1.0",
+    "@mui/icons-material": "^5.10.16",
+    "@mui/lab": "^5.0.0-alpha.125",
+    "@mui/material": "^5.10.16",
+    "@mui/x-date-pickers": "^6.0.2",
+    "@vitejs/plugin-react": "^4.0.0",
+    "axios": "^1.2.0",
+    "change-case": "^4.1.2",
+    "date-fns": "^2.29.3",
+    "dayjs": "^1.11.7",
+    "framer-motion": "6.2.8",
+    "fullcalendar": "^6.1.4",
+    "mui-image": "^1.0.7",
+    "notistack": "^3.0.1",
+    "numeral": "^2.0.6",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-dropzone": "^12.0.4",
+    "react-helmet-async": "^1.2.3",
+    "react-hook-form": "^7.27.1",
+    "react-lazy-load-image-component": "^1.5.1",
+    "react-router-dom": "^6.4.4",
+    "simplebar-react": "^3.2.3",
+    "socket.io-client": "^4.5.4",
+    "timeago.js": "^4.0.2",
+    "yup": "0.32.11"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.2.0",
+    "eslint": "^9.2.0",
+    "eslint-plugin-react": "^7.34.1",
+    "globals": "^15.2.0",
+    "vite": "^5.4.8"
+  }
+}
