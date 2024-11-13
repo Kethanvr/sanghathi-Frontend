@@ -38,8 +38,8 @@ const Login = () => {
   const handleFacultyDemoChange = (event) => {
     setIsFacultyDemoChecked(event.target.checked);
     if (event.target.checked) {
-      email.current.value = "facultydemo@emithru.com";
-      password.current.value = "facultypassword";
+      email.current.value = "demofaculty@emithru.com";
+      password.current.value = "demofacultypassword";
       setIsStudentDemoChecked(false);
     } else {
       email.current.value = "";
@@ -50,8 +50,8 @@ const Login = () => {
   const handleStudentDemoChange = (event) => {
     setIsStudentDemoChecked(event.target.checked);
     if (event.target.checked) {
-      email.current.value = "studentdemo@emithru.com";
-      password.current.value = "studentpassword";
+      email.current.value = "demostudent@emithru.com";
+      password.current.value = "demostudentpassword";
       setIsFacultyDemoChecked(false);
     } else {
       email.current.value = "";

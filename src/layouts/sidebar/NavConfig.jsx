@@ -42,10 +42,8 @@ const studentNavConfig = [
   { text: "Campus Buddy", icon: <InfoOutlinedIcon />, link: "/campus-buddy" },
 ];
 
-const getNavConfig = (role) => {
-  console.log("ROLE", role);
-  const assignedRole=role || 'student';
-  switch (assignedRole) {
+const getNavConfig = (roleName) => {
+  switch (roleName) {
     case "admin":
       return adminNavConfig;
     case "faculty":

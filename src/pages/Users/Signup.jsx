@@ -11,18 +11,30 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+  
+    // Define roleName based on the selected role
+    const roleName = role === "faculty" ? "faculty" : "student"; 
+  
+    try {
       const response = await axios.post("http://localhost:8000/api/users/signup", {
         name,
         email,
         password,
         passwordConfirm,
         role,
+        roleName,  // Send roleName explicitly
       });
+  
       console.log("User signed up:", response.data);
       // Handle successful signup (e.g., redirect or show a success message)
-    
+  
+    } catch (error) {
+      console.error("Error during signup:", error);
+      setError("Signup failed, please try again.");
+    }
   };
+  
+  
 
   return (
     <div>
