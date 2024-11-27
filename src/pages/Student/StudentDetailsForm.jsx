@@ -195,6 +195,7 @@ export default function StudentDetailsForm() {
                 name="fullName.firstName"
                 label="First Name"
                 fullWidth
+                required
                 autoComplete="given-name"
               />
               <RHFTextField
@@ -213,19 +214,21 @@ export default function StudentDetailsForm() {
                 name="department"
                 label="Department"
                 fullWidth
+                required
                 autoComplete="off"
               />
-              <RHFTextField
+              {/* <RHFTextField
                 name="nameOnMarksheet"
                 label="Name on Marksheet"
                 fullWidth
                 autoComplete="off"
-              />
+              /> */}
               <RHFTextField
                 name="personalEmail"
                 label="Personal Email"
                 type="email"
                 fullWidth
+                required
                 autoComplete="email"
               />
             </Stack>
@@ -238,9 +241,10 @@ export default function StudentDetailsForm() {
               <Grid item xs={12} md={6}>
                 <RHFTextField
                   name="email"
-                  label="Email"
+                  label="College Email"
                   type="email"
                   fullWidth
+                  required
                   autoComplete="email"
                 />
               </Grid>
@@ -249,6 +253,7 @@ export default function StudentDetailsForm() {
                   name="usn"
                   label="USN"
                   fullWidth
+                  required
                   autoComplete="off"
                 />
               </Grid>
@@ -258,6 +263,7 @@ export default function StudentDetailsForm() {
                   label="Date of Birth"
                   type="date"
                   fullWidth
+                  required
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
@@ -275,6 +281,7 @@ export default function StudentDetailsForm() {
                   label="Mobile Number"
                   type="tel"
                   fullWidth
+                  required
                   autoComplete="tel"
                 />
               </Grid>
@@ -292,6 +299,7 @@ export default function StudentDetailsForm() {
                   name="nationality"
                   label="Nationality"
                   fullWidth
+                  required
                   autoComplete="off"
                 />
               </Grid>
@@ -303,14 +311,14 @@ export default function StudentDetailsForm() {
                   autoComplete="off"
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              {/* <Grid item xs={12} md={6}>
                 <RHFTextField
                   name="religion"
                   label="Religion"
                   fullWidth
                   autoComplete="off"
                 />
-              </Grid>
+              </Grid> */}
               <Grid item xs={12} md={6}>
                 <RHFTextField
                   name="category"
@@ -327,23 +335,24 @@ export default function StudentDetailsForm() {
                   autoComplete="off"
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              {/* <Grid item xs={12} md={6}>
                 <RHFTextField
                   name="subCaste"
                   label="Sub-Caste"
                   fullWidth
                   autoComplete="off"
                 />
-              </Grid>
+              </Grid> */}
               <Grid item xs={12} md={6}>
                 <RHFTextField
                   name="aadharCardNumber"
                   label="Aadhar Card Number"
                   fullWidth
+                  required
                   autoComplete="off"
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              {/* <Grid item xs={12} md={6}>
                 <RHFSelect name="sportsLevel" label="Sports Level" fullWidth>
                   {sportsLevels.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -351,8 +360,8 @@ export default function StudentDetailsForm() {
                     </option>
                   ))}
                 </RHFSelect>
-              </Grid>
-              <Grid item xs={12} md={6}>
+              </Grid> */}
+              {/* <Grid item xs={12} md={6}>
                 <RHFSelect
                   name="defenceOrExServiceman"
                   label="Defence or Ex-Serviceman"
@@ -364,7 +373,7 @@ export default function StudentDetailsForm() {
                     </option>
                   ))}
                 </RHFSelect>
-              </Grid>
+              </Grid> */}
               <Grid item xs={12} md={6}>
                 <RHFTextField
                   name="admissionDate"
@@ -375,7 +384,7 @@ export default function StudentDetailsForm() {
                 />
               </Grid>
               <Grid item xs={12} md={4}>
-                <RHFSelect name="hostelite" label="Hostelite" fullWidth>
+                <RHFSelect name="hostelite" label="Hostelite" fullWidth required>
                   {yesNoOptions.map((option) => (
                     <option key={option.value}>{option.label}</option>
                   ))}
@@ -386,19 +395,20 @@ export default function StudentDetailsForm() {
                   name="physicallyChallenged"
                   label="Physically Challenged"
                   fullWidth
+                  required
                 >
                   {yesNoOptions.map((option) => (
                     <option key={option.value}>{option.label}</option>
                   ))}
                 </RHFSelect>
               </Grid>
-              <Grid item xs={12} md={4}>
+              {/* <Grid item xs={12} md={4}>
                 <RHFSelect name="isForeigner" label="Is Foreigner" fullWidth>
                   {yesNoOptions.map((option) => (
                     <option key={option.value}>{option.label}</option>
                   ))}
                 </RHFSelect>
-              </Grid>
+              </Grid> */}
             </Grid>
             <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
               <Box display="flex" gap={1}>

@@ -90,7 +90,6 @@ export default function LocalGuardianForm() {
          label="First Name"
          fullWidth
          autoComplete="given-name"
-         required
        />
 </Grid>
 <Grid item xs={12}>
@@ -107,7 +106,6 @@ export default function LocalGuardianForm() {
          label="Last Name"
          fullWidth
          autoComplete="family-name"
-         required
        />
 </Grid>
 <Grid item xs={12}>
@@ -117,7 +115,6 @@ export default function LocalGuardianForm() {
          type="email"
          fullWidth
          autoComplete="email"
-         required
        />
 </Grid>
 <Grid item xs={12}>
@@ -125,7 +122,6 @@ export default function LocalGuardianForm() {
          name="relationWithGuardian"
          label="Relation with Guardian"
          fullWidth
-         required
        />
 </Grid>
 <Grid item xs={12} md={6}>
@@ -134,7 +130,6 @@ export default function LocalGuardianForm() {
          label="Mobile Number"
          type="tel"
          fullWidth
-         required
        />
 </Grid>
 <Grid item xs={12} md={6}>
@@ -152,41 +147,21 @@ export default function LocalGuardianForm() {
          multiline
          fullWidth
          rows={4}
-         required
        />
 </Grid>
 <Grid item xs={12} md={4}>
-<RHFTextField name="taluka" label="Taluka" fullWidth required />
+<RHFTextField name="taluka" label="Taluka" fullWidth/>
 </Grid>
 <Grid item xs={12} md={4}>
-  <RHFTextField name="district" label="District" fullWidth required />
+  <RHFTextField name="district" label="District" fullWidth/>
 </Grid>
 <Grid item xs={12} md={4}>
-  <RHFTextField name="state" label="State" fullWidth required />
+  <RHFTextField name="state" label="State" fullWidth/>
 </Grid>
 <Grid item xs={12} md={4}>
-  <RHFTextField name="pincode" label="Pincode" fullWidth required />
+  <RHFTextField name="pincode" label="Pincode" fullWidth />
 </Grid>
-{/* <Grid item xs={12}>
-  <FormControlLabel
-    control={
-      <Controller
-        name="termsAndConditions"
-        control={control}
-        defaultValue={false}
-        render={({ field: { onChange, value } }) => (
-          <Checkbox
-            color="primary"
-            onChange={(e) => onChange(e.target.checked)}
-            checked={value}
-          />
-        )}
-      />
-    }
-    label="I agree to the terms and conditions"
-    required
-  />
-</Grid> */}
+
 
 </Grid>
 <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>

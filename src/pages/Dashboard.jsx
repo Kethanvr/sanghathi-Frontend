@@ -69,66 +69,6 @@ const StudentTile = ({ title, icon, link }) => {
   );
 };
 
-/*
-const BugReportDialog = ({ open, onClose }) => {
-  return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Report a Bug</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          id="bug-title"
-          label="Bug Title"
-          type="text"
-          fullWidth
-          variant="outlined"
-        />
-        <TextField
-          margin="dense"
-          id="bug-description"
-          label="Bug Description"
-          type="text"
-          fullWidth
-          variant="outlined"
-          multiline
-          rows={4}
-        />
-        <FormControl fullWidth variant="outlined" margin="dense">
-          <InputLabel id="bug-priority-label">Priority</InputLabel>
-          <Select
-            labelId="bug-priority-label"
-            id="bug-priority"
-            label="Priority"
-          >
-            <MenuItem value="low">Low</MenuItem>
-            <MenuItem value="medium">Medium</MenuItem>
-            <MenuItem value="high">High</MenuItem>
-          </Select>
-        </FormControl>
-        <TextField
-          margin="dense"
-          id="bug-image"
-          label="Upload Image"
-          type="file"
-          fullWidth
-          variant="outlined"
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={onClose} variant="contained" color="primary">
-          Submit
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
-*/
 
 const Dashboard = () => {
   const [bugReportDialogOpen, setBugReportDialogOpen] = useState(false);
@@ -154,18 +94,19 @@ const Dashboard = () => {
               link="/student/profile"
             />
           </Grid>
+
           <Grid item xs={12} sm={6} md={4}>
             <StudentTile
-              title="Academic"
-              icon={<BookIcon fontSize="large" />}
-              link="/student/academic"
+              title="Career review"
+              icon={<PersonIcon fontSize="large" />}
+              link="/student/CareerReview"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
             <StudentTile
-              title="Admission"
+              title="Scorecard"
               icon={<AssignmentIcon fontSize="large" />}
-              link="/student/admission"
+              link="/student/Scorecard"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4}>

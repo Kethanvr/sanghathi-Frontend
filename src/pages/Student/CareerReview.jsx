@@ -1,69 +1,67 @@
-import { capitalCase } from "change-case";
-
-import { useState } from "react";
 // @mui
 import { Container, Tab, Box, Tabs } from "@mui/material";
-// routes
-
 // hooks
 import useTabs from "../../hooks/useTabs";
-
 // components
 import Page from "../../components/Page";
 import Iconify from "../../components/Iconify";
-import HeaderBreadcrumbs from "../../components/HeaderBreadcrumbs";
-// sections
-
 import React from "react";
-import StudentDetailsForm from "./StudentDetailsForm";
-import AdmissionDetails from "./AdmissionDetails";
-import LocalGuardianForm from "./LocalGuardianForm";
-import ParentsDetails from "./ParentsDetails";
-import ContactDetails from "./ContactDetails";
-import Academic from "./Academic";
-import PrevAcademic from "./PrevAcademic";
+
+import CareerCounselling from "./CareerCounselling";
+import Mooc from "./Mooc";
+import ProfessionalBodiesSection from "./ProfessionalBodiesSection";
+import ClubsSection from "./ClubsSection";
+import MiniProject from "./MiniProject";
+import Activity from "./Activity";
+import Hobbies from "./Hobbies";
 
 
-// ----------------------------------------------------------------------
-
-export default function StudentProfile() {
-  const { currentTab, onChangeTab } = useTabs("Student Details");
+export default function CareerReview() {
+  const { currentTab, onChangeTab } = useTabs("Career Counselling");
   const ACCOUNT_TABS = [
     {
-      value: "Student Details",
+      value: "Career Counselling",
       icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
-      component: <StudentDetailsForm />,
-    },
-    {
-      value: "Parent Details",
-      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
-      component: <ParentsDetails />,
-    },
-    {
-      value: "Guardian Details",
-      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
-      component: <LocalGuardianForm />,
-    },
-    {
-      value: "Contact Details",
-      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
-      component: <ContactDetails />,
-    },
-    {
-      value: "Academic Details",
-      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
-      component: <PrevAcademic/>,
-    },
-    {
-      value: "Admission Details",
-      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
-      component: <AdmissionDetails />,
+      component: <CareerCounselling/>,
     },
     
-  ];
+    {
+      value: "Clubs",
+      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
+      component: <ClubsSection />, 
+    },
 
-  return (
-    <Page title="Student Profile">
+    {
+      value: "Professional Bodies",
+      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
+      component: <ProfessionalBodiesSection/>,
+    },
+
+    {
+      value: "Mooc Courses",
+      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
+      component: <Mooc/>,
+    },
+    
+    {
+      value: "Mini Project",
+      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
+      component: <MiniProject/>,
+    },
+
+    {
+      value: "Activity",
+      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
+      component: <Activity/>,
+    },
+    {
+      value: "Hobbies",
+      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
+      component: <Hobbies />,
+    },
+
+  ];return (
+    <Page title="Career Review">
       <Container maxWidth="lg">
         <Tabs
           allowScrollButtonsMobile

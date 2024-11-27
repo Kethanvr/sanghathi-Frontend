@@ -90,173 +90,6 @@ export default function ParentsDetails() {
 
   return (
     <div>
-      {/* <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-        <Card sx={{ p: 3 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={12}>
-              <Grid item xs={6} md={6}>
-                <RHFTextField
-                  name="fatherFirstName"
-                  label="Father's First Name"
-                  fullWidth
-                  required
-                />
-              </Grid>
-              <Grid item xs={6} md={6}>
-                <RHFTextField
-                  name="fatherMiddleName"
-                  label="Father's Middle Name"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <RHFTextField
-                  name="fatherLastName"
-                  label="Father's Last Name"
-                  fullWidth
-                  required
-                />
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <RHFTextField
-                  name="motherFirstName"
-                  label="Mother's First Name"
-                  fullWidth
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <RHFTextField
-                  name="motherMiddleName"
-                  label="Mother's Middle Name"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <RHFTextField
-                  name="motherLastName"
-                  label="Mother's Last Name"
-                  fullWidth
-                  required
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="fatherOccupation"
-                  label="Father's Occupation"
-                  fullWidth
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="motherOccupation"
-                  label="Mother's Occupation"
-                  fullWidth
-                  required
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="fatherOrganization"
-                  label="Father's Organization"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="motherOrganization"
-                  label="Mother's Organization"
-                  fullWidth
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="fatherDesignation"
-                  label="Father's Designation"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="motherDesignation"
-                  label="Mother's Designation"
-                  fullWidth
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="fatherOfficeAddress"
-                  label="Father's Office Address"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="motherOfficeAddress"
-                  label="Mother's Office Address"
-                  fullWidth
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="fatherAnnualIncome"
-                  label="Father's Annual Income"
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="motherAnnualIncome"
-                  label="Mother's Annual Income"
-                  fullWidth
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="fatherOfficePhoneNo"
-                  label="Father's Office Phone No."
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="motherOfficePhoneNo"
-                  label="Mother's Office Phone No."
-                  fullWidth
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="father"
-                  label="Mother's Office Phone No."
-                  fullWidth
-                />
-              </Grid>
-
-              <Box sx={{ mb: 2 }}>
-                <LoadingButton
-                  variant="contained"
-                  type="submit"
-                  color="primary"
-                >
-                  Submit
-                </LoadingButton>
-              </Box>
-            </Grid>
-          </Grid>
-        </Card>
-      </FormProvider> */}
-
-
 
 <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Grid container spacing={2}>
@@ -333,6 +166,12 @@ export default function ParentsDetails() {
                   label="Father's Designation"
                   fullWidth
                 />
+                <RHFTextField
+                  name="fatherOfficePhoneNo"
+                  label="Father's Office Phone No."
+                  fullWidth
+                  required
+                />
               <RHFTextField
                   name="fatherOfficeAddress"
                   label="Father's Office Address"
@@ -341,11 +180,6 @@ export default function ParentsDetails() {
                <RHFTextField
                   name="fatherAnnualIncome"
                   label="Father's Annual Income"
-                  fullWidth
-                />
-                <RHFTextField
-                  name="fatherOfficePhoneNo"
-                  label="Father's Office Phone No."
                   fullWidth
                 />
             </Stack>
@@ -372,6 +206,12 @@ export default function ParentsDetails() {
                   label="Mother's Designation"
                   fullWidth
                 />
+                <RHFTextField
+                  name="MotherOfficePhoneNo"
+                  label="Mother's Phone No."
+                  fullWidth
+                  required
+                />
               <RHFTextField
                   name="MotherOfficeAddress"
                   label="Mother's Office Address"
@@ -382,11 +222,7 @@ export default function ParentsDetails() {
                   label="Mother's Annual Income"
                   fullWidth
                 />
-                <RHFTextField
-                  name="MotherOfficePhoneNo"
-                  label="Mother's Office Phone No."
-                  fullWidth
-                />
+                
             </Stack>
           
           </Card>
