@@ -30,6 +30,7 @@ import MentorAssignmentDialog from "./pages/MentorAllocation/MentorAssignmentDia
 import MentorSuggestionMenu from "./pages/MentorAllocation/MentorSuggestionMenu";
 import CareerReview from "./pages/Student/CareerReview";
 import ScoreCard from "./pages/Student/ScoreCard";
+import StudentProfileOnly from "./pages/Student/StudentProfileOnly";
 // TODO : Need to remove routing logic from app component
 function App() {
   const { user } = useContext(AuthContext);
@@ -196,6 +197,14 @@ function App() {
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={Report} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/student/StudentProfileOnly"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={StudentProfileOnly} />
                       </ProtectedRouteWrapper>
                     }
                   />

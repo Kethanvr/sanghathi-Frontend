@@ -24,7 +24,7 @@ const MENU_OPTIONS = [
   },
   {
     label: "Profile",
-    linkTo: "/Profile",
+    linkTo: "/student/StudentProfileOnly",
   },
 ];
 
