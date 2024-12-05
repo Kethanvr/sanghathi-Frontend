@@ -98,7 +98,7 @@ const Login = () => {
   };
 
   return (
-    <Page title="LOGIN | CMRIT">
+    <Page title="LOGIN">
       <Container maxWidth="lg">
         <Box
           sx={{
@@ -115,15 +115,23 @@ const Login = () => {
               width: "100%",
               borderRadius: 2,
               backgroundColor: "background.paper",
-              boxShadow: " 0px 0px 20px rgba(0, 0, 0, 0.5)",
+              boxShadow: "0px 0px 20px rgba(0, 0, 0, 0.5)",
             }}
           >
-            <Grid container spacing={8}>
-              <Grid item xs={12} md={6}>
+            <Grid container spacing={8} alignItems="center">
+              <Grid
+                item
+                xs={12}
+                md={6}
+                sx={{
+                  order: { xs: 2, md: 1 }, 
+                  textAlign: { xs: "center", md: "left" },
+                }}
+              >
                 <Box
                   sx={{
-                    ml: 3,
-                    postion: "relative",
+                    ml: { md: 3 },
+                    position: "relative",
                   }}
                 >
                   <Box sx={{ mb: 7 }}>
@@ -211,13 +219,20 @@ const Login = () => {
                   </Box>
                 </Box>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+                sx={{
+                  order: { xs: 1, md: 2 }, 
+                }}
+              >
                 <Box
                   sx={{
                     display: "flex",
                     justifyContent: "flex-end",
                     alignItems: "center",
-                    height: "70vh",
+                    height: { xs: "auto", md: "70vh" }, 
                   }}
                 >
                   <Image
@@ -237,6 +252,7 @@ const Login = () => {
       </Container>
     </Page>
   );
+
 };
 
 export default Login;
