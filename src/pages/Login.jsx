@@ -81,10 +81,13 @@ const Login = () => {
       if (data.data.user.roleName === "admin") {
         // Redirect to admin dashboard
         navigate("/admin/dashboard");
-      } else {
-        // Redirect to regular user dashboard or home page
+      } else if (data.data.user.roleName === "faculty") {
+        // Redirect to faculty dashboard
+        navigate("/faculty/dashboard");
+      } else if (data.data.user.roleName === "student") {
+        // Redirect to student dashboard
         navigate("/");
-      }
+      } 
     } catch (error) {
       console.log("error", error);
       if (error.response && error.response.status === 401) {

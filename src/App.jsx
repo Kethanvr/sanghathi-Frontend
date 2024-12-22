@@ -2,7 +2,7 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import ThemeProvider from "./theme";
 import LazyLoadWrapper from "./components/loader/LazyLoadWrapper";
-import Signup from './pages/Users/Signup';
+import Signup from "./pages/Users/Signup";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRouteWrapper from "./ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -26,11 +26,13 @@ import Thread from "./pages/Thread/Thread";
 import ThreadWindow from "./pages/Thread/ThreadWindow";
 import Report from "./pages/Report/Report";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import FacultyDashboard from "./pages/Faculty/FacultyDashboard";
 import MentorAssignmentDialog from "./pages/MentorAllocation/MentorAssignmentDialog";
 import MentorSuggestionMenu from "./pages/MentorAllocation/MentorSuggestionMenu";
 import CareerReview from "./pages/Student/CareerReview";
 import ScoreCard from "./pages/Student/ScoreCard";
 import StudentProfileOnly from "./pages/Student/StudentProfileOnly";
+import FacultyProfile from "./pages/Faculty/FacultyProfile";
 // TODO : Need to remove routing logic from app component
 function App() {
   const { user } = useContext(AuthContext);
@@ -53,6 +55,15 @@ function App() {
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={Dashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+
+                  <Route
+                    path="/faculty/dashboard"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["faculty"]}>
+                        <LazyLoadWrapper component={FacultyDashboard} />
                       </ProtectedRouteWrapper>
                     }
                   />
@@ -205,6 +216,14 @@ function App() {
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={StudentProfileOnly} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/faculty/FacultyProfile"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={FacultyProfile} />
                       </ProtectedRouteWrapper>
                     }
                   />
