@@ -17,21 +17,7 @@ import {
   RHFTextField,
   RHFSelect,
   RHFUploadAvatar,
-  RHFCheckbox,
 } from "../../components/hook-form";
-
-const sportsLevels = [
-  { label: "State", value: "state" },
-  { label: "National", value: "national" },
-  { label: "International", value: "international" },
-  { label: "Not Applicable", value: "notApplicable" },
-];
-
-const defenceStatus = [
-  { label: "Defence", value: "defence" },
-  { label: "Ex-Serviceman", value: "exServiceman" },
-  { label: "Not Applicable", value: "notApplicable" },
-];
 
 const yesNoOptions = [
   { value: "yes", label: "Yes" },
@@ -41,72 +27,8 @@ const yesNoOptions = [
 export default function StudentDetailsForm() {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
-
-  const DEFAULT_VALUES = {
-    userId: user._id,
-    fullName: {
-      firstName: "John",
-      middleName: "A",
-      lastName: "Doe",
-    },
-    department: "Computer Science",
-    nameOnMarksheet: "John A Doe",
-    personalEmail: "john.doe@example.com",
-    email: "john.doe@college.edu",
-    usn: "CS101",
-    dateOfBirth: "2000-01-01",
-    bloodGroup: "O+",
-    mobileNumber: "1234567890",
-    alternatePhoneNumber: "0987654321",
-    nationality: "American",
-    domicile: "California",
-    religion: "Christianity",
-    category: "General",
-    caste: "N/A",
-    hostelite: "no",
-    subCaste: "N/A",
-    aadharCardNumber: "123456789012",
-    physicallyChallenged: "no",
-    admissionDate: "2022-09-01",
-    sportsLevel: "National",
-    defenceOrExServiceman: "Not Applicable",
-    isForeigner: "no",
-    photo: null,
-  };
-  const methods = useForm({
-    defaultValues: {
-      userId: user._id,
-      fullName: {
-        firstName: "",
-        middleName: "",
-        lastName: "",
-      },
-      department: "",
-      nameOnMarksheet: "",
-      personalEmail: "",
-      email: "",
-      usn: "",
-      dateOfBirth: "",
-      bloodGroup: "",
-      mobileNumber: "",
-      alternatePhoneNumber: "",
-      nationality: "",
-      domicile: "",
-      religion: "",
-      category: "",
-      caste: "",
-      hostelite: "",
-      subCaste: "",
-      aadharCardNumber: "",
-      physicallyChallenged: "",
-      admissionDate: "",
-      sportsLevel: "",
-      defenceOrExServiceman: "",
-      isForeigner: "",
-      photo: null,
-    },
-  });
-
+  const [isDataFetched, setIsDataFetched] = useState(false);
+  const methods = useForm();
   const {
     handleSubmit,
     reset,
@@ -118,38 +40,40 @@ export default function StudentDetailsForm() {
     try {
       const response = await api.get(`/students/profile/${user._id}`);
       const { data } = response.data;
+      
       if (data) {
-        for (const key in data) {
-          if (data[key] && typeof data[key] === "object") {
-            for (const innerKey in data[key]) {
-              setValue(`${key}.${innerKey}`, data[key][innerKey]);
-            }
+        // Set each form field using the fetched data
+        Object.keys(data.studentProfile).forEach((key) => {
+          if (data.studentProfile[key] && typeof data.studentProfile[key] === "object") {
+            Object.keys(data.studentProfile[key]).forEach((innerKey) => {
+              setValue(`studentProfile.${key}.${innerKey}`, data.studentProfile[key][innerKey]);
+            });
           } else {
-            setValue(key, data[key]);
+            setValue(`studentProfile.${key}`, data.studentProfile[key]);
           }
-        }
+        });
+        setIsDataFetched(true);
       }
+      console.log("Student data fetched successfully:", data);
+      console.log("Name:",data.studentProfile.fullName.firstName);
     } catch (error) {
-      console.error("Error fetching student data", error);
+      console.error("Error fetching student data:", error.response || error);
     }
-  }, [user._id]);
+  }, [user._id, setValue]);
 
   useEffect(() => {
     fetchStudentData();
   }, [fetchStudentData]);
 
-  const handleFillMockData = () => {
-    reset(DEFAULT_VALUES);
-  };
-
   const handleReset = () => {
     reset();
+    setIsDataFetched(false);
   };
 
   const onSubmit = useCallback(async (formData) => {
     try {
-      await api.post("/students/profile", formData);
-      enqueueSnackbar("Student profile created successfully!", {
+      await api.post("/students/profile", formData.studentProfile);
+      enqueueSnackbar("Student profile updated successfully!", {
         variant: "success",
       });
       reset();
@@ -159,7 +83,7 @@ export default function StudentDetailsForm() {
         variant: "error",
       });
     }
-  }, []);
+  }, [enqueueSnackbar, reset]);
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
@@ -167,7 +91,7 @@ export default function StudentDetailsForm() {
         <Grid item xs={12} md={4}>
           <Card sx={{ height: "100%", py: 10, px: 3, textAlign: "center" }}>
             <RHFUploadAvatar
-              name="photo"
+              name="studentProfile.photo"
               accept="image/*"
               maxSize={3145728}
               helperText={
@@ -192,44 +116,43 @@ export default function StudentDetailsForm() {
           <Card sx={{ p: 3 }}>
             <Stack spacing={3} sx={{ mt: 3 }}>
               <RHFTextField
-                name="fullName.firstName"
+                name="studentProfile.fullName.firstName"
                 label="First Name"
                 fullWidth
-                required
+                required={!isDataFetched}
                 autoComplete="given-name"
+                InputLabelProps={{ shrink: isDataFetched }}
               />
               <RHFTextField
-                name="fullName.middleName"
+                name="studentProfile.fullName.middleName"
                 label="Middle Name"
                 fullWidth
                 autoComplete="additional-name"
+                InputLabelProps={{ shrink: isDataFetched }}
               />
               <RHFTextField
-                name="fullName.lastName"
+                name="studentProfile.fullName.lastName"
                 label="Last Name"
                 fullWidth
                 autoComplete="family-name"
+                InputLabelProps={{ shrink: isDataFetched }}
               />
               <RHFTextField
-                name="department"
+                name="studentProfile.department"
                 label="Department"
                 fullWidth
-                required
+                required={!isDataFetched}
                 autoComplete="off"
+                InputLabelProps={{ shrink: isDataFetched }}
               />
-              {/* <RHFTextField
-                name="nameOnMarksheet"
-                label="Name on Marksheet"
-                fullWidth
-                autoComplete="off"
-              /> */}
               <RHFTextField
-                name="personalEmail"
+                name="studentProfile.personalEmail"
                 label="Personal Email"
                 type="email"
                 fullWidth
-                required
+                required={!isDataFetched}
                 autoComplete="email"
+                InputLabelProps={{ shrink: isDataFetched }}
               />
             </Stack>
           </Card>
@@ -240,151 +163,130 @@ export default function StudentDetailsForm() {
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="email"
+                  name="studentProfile.email"
                   label="College Email"
                   type="email"
                   fullWidth
-                  required
+                  required={!isDataFetched}
                   autoComplete="email"
+                  InputLabelProps={{ shrink: isDataFetched }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="usn"
+                  name="studentProfile.usn"
                   label="USN"
                   fullWidth
-                  required
+                  required={!isDataFetched}
                   autoComplete="off"
+                  InputLabelProps={{ shrink: isDataFetched }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="dateOfBirth"
+                  name="studentProfile.dateOfBirth"
                   label="Date of Birth"
                   type="date"
                   fullWidth
-                  required
-                  InputLabelProps={{ shrink: true }}
+                  required={!isDataFetched}
+                  InputLabelProps={{ shrink: isDataFetched }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="bloodGroup"
+                  name="studentProfile.bloodGroup"
                   label="Blood Group"
                   fullWidth
                   autoComplete="off"
+                  InputLabelProps={{ shrink: isDataFetched }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="mobileNumber"
+                  name="studentProfile.mobileNumber"
                   label="Mobile Number"
                   type="tel"
                   fullWidth
-                  required
+                  required={!isDataFetched}
                   autoComplete="tel"
+                  InputLabelProps={{ shrink: isDataFetched }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="alternatePhoneNumber"
+                  name="studentProfile.alternatePhoneNumber"
                   label="Alternate Phone Number"
                   type="tel"
                   fullWidth
                   autoComplete="tel"
+                  InputLabelProps={{ shrink: isDataFetched }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="nationality"
+                  name="studentProfile.nationality"
                   label="Nationality"
                   fullWidth
-                  required
+                  required={!isDataFetched}
                   autoComplete="off"
+                  InputLabelProps={{ shrink: isDataFetched }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="domicile"
+                  name="studentProfile.domicile"
                   label="Domicile"
                   fullWidth
                   autoComplete="off"
+                  InputLabelProps={{ shrink: isDataFetched }}
                 />
               </Grid>
-              {/* <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="religion"
-                  label="Religion"
-                  fullWidth
-                  autoComplete="off"
-                />
-              </Grid> */}
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="category"
+                  name="studentProfile.category"
                   label="Category"
                   fullWidth
                   autoComplete="off"
+                  InputLabelProps={{ shrink: isDataFetched }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="caste"
+                  name="studentProfile.caste"
                   label="Caste"
                   fullWidth
                   autoComplete="off"
+                  InputLabelProps={{ shrink: isDataFetched }}
                 />
               </Grid>
-              {/* <Grid item xs={12} md={6}>
-                <RHFTextField
-                  name="subCaste"
-                  label="Sub-Caste"
-                  fullWidth
-                  autoComplete="off"
-                />
-              </Grid> */}
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="aadharCardNumber"
+                  name="studentProfile.aadharCardNumber"
                   label="Aadhar Card Number"
                   fullWidth
-                  required
+                  required={!isDataFetched}
                   autoComplete="off"
+                  InputLabelProps={{ shrink: isDataFetched }}
                 />
               </Grid>
-              {/* <Grid item xs={12} md={6}>
-                <RHFSelect name="sportsLevel" label="Sports Level" fullWidth>
-                  {sportsLevels.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </RHFSelect>
-              </Grid> */}
-              {/* <Grid item xs={12} md={6}>
-                <RHFSelect
-                  name="defenceOrExServiceman"
-                  label="Defence or Ex-Serviceman"
-                  fullWidth
-                >
-                  {defenceStatus.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </RHFSelect>
-              </Grid> */}
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="admissionDate"
+                  name="studentProfile.admissionDate"
                   label="Admission Date"
                   type="date"
                   fullWidth
-                  InputLabelProps={{ shrink: true }}
+                  required={!isDataFetched}
+                  InputLabelProps={{ shrink: isDataFetched }}
                 />
               </Grid>
               <Grid item xs={12} md={4}>
-                <RHFSelect name="hostelite" label="Hostelite" fullWidth required>
+                <RHFSelect
+                  name="studentProfile.hostelite"
+                  label="Hostelite"
+                  fullWidth
+                  required={!isDataFetched}
+                  InputLabelProps={{ shrink: isDataFetched }}
+                >
                   {yesNoOptions.map((option) => (
                     <option key={option.value}>{option.label}</option>
                   ))}
@@ -392,37 +294,28 @@ export default function StudentDetailsForm() {
               </Grid>
               <Grid item xs={12} md={4}>
                 <RHFSelect
-                  name="physicallyChallenged"
+                  name="studentProfile.physicallyChallenged"
                   label="Physically Challenged"
                   fullWidth
-                  required
+                  required={!isDataFetched}
+                  InputLabelProps={{ shrink: isDataFetched }}
                 >
                   {yesNoOptions.map((option) => (
                     <option key={option.value}>{option.label}</option>
                   ))}
                 </RHFSelect>
               </Grid>
-              {/* <Grid item xs={12} md={4}>
-                <RHFSelect name="isForeigner" label="Is Foreigner" fullWidth>
-                  {yesNoOptions.map((option) => (
-                    <option key={option.value}>{option.label}</option>
-                  ))}
-                </RHFSelect>
-              </Grid> */}
             </Grid>
             <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
               <Box display="flex" gap={1}>
                 {import.meta.env.MODE === "development" && (
                   <LoadingButton
                     variant="outlined"
-                    onClick={handleFillMockData}
+                    onClick={handleReset}
                   >
-                    Fill Mock Data
+                    Reset
                   </LoadingButton>
                 )}
-                <LoadingButton variant="outlined" onClick={handleReset}>
-                  Reset
-                </LoadingButton>
                 <LoadingButton
                   type="submit"
                   variant="contained"
