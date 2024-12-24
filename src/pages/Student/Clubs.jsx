@@ -1,176 +1,154 @@
-import React, { useState } from "react";
-import {
-  Box,
-  Grid,
-  Card,
-  Stack,
-  Button,
-  TextField,
-  IconButton,
-  Typography,
-} from "@mui/material";
+import React, { useEffect, useState, useCallback, useContext } from "react";
+import { useSnackbar } from "notistack";
+import api from "../../utils/axios";
+import { useForm, useFieldArray } from "react-hook-form";
+import { AuthContext } from "../../context/AuthContext";
+import { Box, Grid, Card, Stack, Button, IconButton, Typography, TextField } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { Delete as DeleteIcon } from "@mui/icons-material";
+import { FormProvider, RHFTextField } from "../../components/hook-form";
 
 export default function ClubEvents() {
-  const [rows, setRows] = useState([
-    {
-      slNo: 1,
-      clubName: "",
-      clubdepartment: "",
-      registeredDate: "",
+  const { enqueueSnackbar } = useSnackbar();
+  const { user } = useContext(AuthContext);
+  const methods = useForm({
+    defaultValues: {
+      clubs: [{ clubName: "", clubdepartment: "", registeredDate: null }],
     },
-  ]);
+  });
+  const { handleSubmit, reset, formState: { isSubmitting } } = methods;
+  const { fields, append, remove } = useFieldArray({
+    control: methods.control,
+    name: "clubs",
+  });
 
-  const handleAddRow = () => {
-    const newRow = {
-      slNo: rows.length + 1,
-      clubName: "",
-      clubdepartment: "",
-      registeredDate: "",
-    };
-    setRows([...rows, newRow]);
-  };
 
-  const handleInputChange = (index, field, value) => {
-    const updatedRows = [...rows];
-    updatedRows[index][field] = value;
-    setRows(updatedRows);
-  };
+  const fetchClubs = useCallback(async () => {
+    try {
+      const response = await api.get(`/career-counselling/clubs/${user._id}`);
+      console.log("Club data fetched: ", response.data);
+      const { data } = response.data;
+  
+      if (data && Array.isArray(data.clubs)) {
+        const formattedClubs = data.clubs.map(club => ({
+          ...club,
+          registeredDate: club.registeredDate ? new Date(club.registeredDate).toISOString().split('T')[0] : '',
+        }));
+        reset({ clubs: formattedClubs });
+      } else {
+        console.warn("No club data found for this user");
+        reset({ clubs: [{ clubName: "", clubdepartment: "", registeredDate: null }] });
+      }
+    } catch (error) {
+      console.log("Error fetching club data:", error);
+    }
+  }, [user._id, reset, enqueueSnackbar]);
 
-  const handleDeleteRow = (index) => {
-    const updatedRows = rows.filter((_, i) => i !== index);
-    setRows(updatedRows.map((row, i) => ({ ...row, slNo: i + 1 })));
-  };
-
-  const handleSave = () => {
-    console.log("Saving Data: ", rows);
-  };
+  useEffect(() => {
+    fetchClubs();
+  }, [fetchClubs]);
 
   const handleReset = () => {
-    setRows([
-      {
-        slNo: 1,
-        clubName: "",
-        clubdepartment: "",
-        registeredDate: "",
-      },
-    ]);
+    reset();
   };
 
-  const handleFillMockData = () => {
-    setRows([
-      {
-        slNo: 1,
-        clubName: "Literary Club",
-        clubdepartment: "Poetry Slam",
-        registeredDate: "2024-12-01",
-      },
-      {
-        slNo: 2,
-        clubName: "Coding Club",
-        clubdepartment: "Hackathon",
-        registeredDate: "2024-12-10",
-      },
-    ]);
-  };
+  const onSubmit = useCallback(
+    async (formData) => {
+      try {
+        await api.post("/career-counselling/club", { clubs: formData.clubs, userId: user._id });
+        enqueueSnackbar("Club data updated successfully!", {
+          variant: "success",
+        });
+        fetchClubs();
+      } catch (error) {
+        console.error(error);
+        enqueueSnackbar("An error occurred while processing the request", {
+          variant: "error",
+        });
+      }
+    },
+    [enqueueSnackbar, fetchClubs, user._id]
+  );
 
   return (
-    <Card sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Clubs Registered (Department Specific or Institution Specific)
-      </Typography>
-      <Grid container spacing={2}>
-        {rows.map((row, index) => (
-          <Grid
-            container
-            spacing={2}
-            key={row.slNo}
-            alignItems="center"
-            sx={{ mb: 1, mt: 1 }} 
-          >
-            <Grid item xs={1}>
-              <TextField
-                fullWidth
-                disabled
-                value={row.slNo}
-                label="Sl. No."
-                variant="outlined"
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <TextField
-                fullWidth
-                value={row.clubName}
-                onChange={(e) =>
-                  handleInputChange(index, "clubName", e.target.value)
-                }
-                label="Club Name"
-                variant="outlined"
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <TextField
-                fullWidth
-                value={row.clubdepartment}
-                onChange={(e) =>
-                  handleInputChange(index, "clubdepartment", e.target.value)
-                }
-                label="Club Department"
-                variant="outlined"
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <TextField
-                fullWidth
-                value={row.registeredDate}
-                onChange={(e) =>
-                  handleInputChange(index, "registeredDate", e.target.value)
-                }
-                label="registeredDate"
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                variant="outlined"
-              />
-            </Grid>
-            <Grid item xs={1}>
-              <IconButton
-                color="error"
-                onClick={() => handleDeleteRow(index)}
-                sx={{ mt: 1 }}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Grid>
-          </Grid>
-        ))}
-        <Grid item xs={12}>
-          <Button
-            variant="contained"
-            onClick={handleAddRow}
-            sx={{ mt: 2, display: "block", mx: "auto" }}
-          >
-            Add Clubs
-          </Button>
-        </Grid>
-        <Grid item xs={12}>
-          <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 3 }}>
-            <LoadingButton
-              variant="outlined"
-              onClick={handleFillMockData}
-              color="info"
+    <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+      <Card sx={{ p: 3 }}>
+        <Typography variant="h6" gutterBottom>
+          Clubs Registered (Department Specific or Institution Specific)
+        </Typography>
+        <Grid container spacing={2}>
+          {fields.map((item, index) => (
+            <Grid 
+            container 
+            spacing={2} 
+            key={item.id} 
+            alignItems="center" 
+            sx={{ mb: 1, mt: 1 }}
             >
-              Fill Mock Data
-            </LoadingButton>
-            <LoadingButton variant="outlined" onClick={handleReset}>
-              Reset
-            </LoadingButton>
-            <LoadingButton variant="contained" onClick={handleSave}>
-              Save
-            </LoadingButton>
-          </Stack>
+              <Grid item xs={1}>
+                <TextField 
+                fullWidth 
+                disabled 
+                value={index + 1} 
+                label="Sl. No." 
+                variant="outlined" 
+                />
+              </Grid>
+              <Grid item xs={3}>
+                <RHFTextField 
+                name={`clubs[${index}].clubName`} 
+                label="Club Name" 
+                fullWidth 
+                />
+              </Grid>
+              <Grid item xs={4}>
+                <RHFTextField 
+                name={`clubs[${index}].clubdepartment`} 
+                label="Club Department" 
+                fullWidth />
+              </Grid>
+              <Grid item xs={3}>
+                <RHFTextField
+                  name={`clubs[${index}].registeredDate`}
+                  label="Registered Date"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={1}>
+                <IconButton color="error" onClick={() => remove(index)} sx={{ mt: 1 }}>
+                  <DeleteIcon />
+                </IconButton>
+              </Grid>
+            </Grid>
+          ))}
+          <Grid item xs={12}>
+            <Button 
+              variant="contained" 
+              onClick={() => append({ clubName: "", clubdepartment: "", registeredDate: null })} 
+              sx={{ mt: 2, display: "block", mx: "auto" }}>
+              Add Clubs
+            </Button>
+          </Grid>
+          <Grid item xs={12}>
+            <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
+              <Box display="flex" gap={1}>
+                {import.meta.env.MODE === "development" && (
+                  <LoadingButton 
+                  variant="outlined" 
+                  onClick={handleReset}>
+                    Reset
+                  </LoadingButton>
+                )}
+                <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+                  Save
+                </LoadingButton>
+              </Box>
+            </Stack>
+          </Grid>
         </Grid>
-      </Grid>
-    </Card>
+      </Card>
+    </FormProvider>
   );
 }

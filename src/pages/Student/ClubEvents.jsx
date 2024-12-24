@@ -1,91 +1,87 @@
-import React, { useState } from "react";
-import {
-  Box,
-  Grid,
-  Card,
-  Stack,
-  Button,
-  TextField,
-  IconButton,
-  Typography,
-} from "@mui/material";
+import React, { useEffect, useState, useCallback, useContext } from "react";
+import { useSnackbar } from "notistack";
+import api from "../../utils/axios";
+import { useForm, useFieldArray } from "react-hook-form";
+import { AuthContext } from "../../context/AuthContext";
+import { Box, Grid, Card, Stack, Button, IconButton, Typography, TextField } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { Delete as DeleteIcon } from "@mui/icons-material";
+import { FormProvider, RHFTextField } from "../../components/hook-form";
 
 export default function ClubEvents() {
-  const [rows, setRows] = useState([
-    {
-      slNo: 1,
-      clubName: "",
-      eventTitle: "",
-      eventDate: "",
+  const { enqueueSnackbar } = useSnackbar();
+  const { user } = useContext(AuthContext);
+  const methods = useForm({
+    defaultValues: {
+      clubs: [{ clubName: "", eventTitle: "", eventDate: null }],
     },
-  ]);
+  });
+  const { handleSubmit, reset, formState: { isSubmitting } } = methods;
+  const { fields, append, remove } = useFieldArray({
+    control: methods.control,
+    name: "clubevents",
+  });
 
-  const handleAddRow = () => {
-    const newRow = {
-      slNo: rows.length + 1,
-      clubName: "",
-      eventTitle: "",
-      eventDate: "",
-    };
-    setRows([...rows, newRow]);
-  };
+  const fetchClubEvents = useCallback(async () => {
+    try {
+      const response = await api.get(`/career-counselling/clubevent/${user._id}`);
+      console.log("Club event data fetched: ", response.data);
+      const { data } = response.data;
+  
+      if (data && Array.isArray(data.clubevents)) {
+        const formattedClubEvents = data.clubevents.map(clubevents => ({
+          ...clubevents,
+          eventDate: clubevents.eventDate ? new Date(clubevents.eventDate).toISOString().split('T')[0] : '',
+        }));
+        reset({ clubevents: formattedClubEvents });
+      } else {
+        console.warn("No club events found for this user");
+        reset({ clubevents: [{ clubName: "", eventTitle: "", eventDate: null }] });
+      }
+    } catch (error) {
+      console.log("Error fetching club event data:", error);
+    }
+  }, [user._id, reset, enqueueSnackbar]);
 
-  const handleInputChange = (index, field, value) => {
-    const updatedRows = [...rows];
-    updatedRows[index][field] = value;
-    setRows(updatedRows);
-  };
-
-  const handleDeleteRow = (index) => {
-    const updatedRows = rows.filter((_, i) => i !== index);
-    setRows(updatedRows.map((row, i) => ({ ...row, slNo: i + 1 })));
-  };
-
-  const handleSave = () => {
-    console.log("Saving Data: ", rows);
-  };
+  useEffect(() => {
+    fetchClubEvents();
+  }, [fetchClubEvents]);
 
   const handleReset = () => {
-    setRows([
-      {
-        slNo: 1,
-        clubName: "",
-        eventTitle: "",
-        eventDate: "",
-      },
-    ]);
+    reset();
   };
 
-  const handleFillMockData = () => {
-    setRows([
-      {
-        slNo: 1,
-        clubName: "Literary Club",
-        eventTitle: "Poetry Slam",
-        eventDate: "2024-12-01",
-      },
-      {
-        slNo: 2,
-        clubName: "Coding Club",
-        eventTitle: "Hackathon",
-        eventDate: "2024-12-10",
-      },
-    ]);
-  };
+  const onSubmit = useCallback(
+    async (formData) => {
+      try {
+        console.log("Club event data:", formData.clubevents);
+        await api.post("/career-counselling/clubevent", { clubevents: formData.clubevents, userId: user._id });
+        enqueueSnackbar("Club data updated successfully!", {
+          variant: "success",
+        });
+        fetchClubEvents();
+      } catch (error) {
+        console.error(error);
+        enqueueSnackbar("An error occurred while processing the request", {
+          variant: "error",
+        });
+      }
+    },
+    [enqueueSnackbar, fetchClubEvents, user._id]
+  );
 
   return (
+    <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
     <Card sx={{ p: 3 }}>
       <Typography variant="h6" gutterBottom>
         Events Attended under the clubs
       </Typography>
       <Grid container spacing={2}>
-        {rows.map((row, index) => (
+        {fields.map((item, index) => (
           <Grid
             container
             spacing={2}
-            key={row.slNo}
+            key={item.id}
             alignItems="center"
             sx={{ mb: 1, mt: 1 }} 
           >
@@ -93,61 +89,45 @@ export default function ClubEvents() {
               <TextField
                 fullWidth
                 disabled
-                value={row.slNo}
+                value={index+1}
                 label="Sl. No."
                 variant="outlined"
               />
             </Grid>
             <Grid item xs={3}>
-              <TextField
-                fullWidth
-                value={row.clubName}
-                onChange={(e) =>
-                  handleInputChange(index, "clubName", e.target.value)
-                }
+              <RHFTextField
+                name = {`clubevents[${index}].clubName`}
                 label="Club Name"
-                variant="outlined"
+                fullWidth
               />
             </Grid>
             <Grid item xs={4}>
-              <TextField
-                fullWidth
-                value={row.eventTitle}
-                onChange={(e) =>
-                  handleInputChange(index, "eventTitle", e.target.value)
-                }
+              <RHFTextField
+                name = {`clubevents[${index}].eventTitle`}
                 label="Event Title"
-                variant="outlined"
+                fullWidth
               />
             </Grid>
             <Grid item xs={3}>
-              <TextField
-                fullWidth
-                value={row.eventDate}
-                onChange={(e) =>
-                  handleInputChange(index, "eventDate", e.target.value)
-                }
+              <RHFTextField
+                name = {`clubevents[${index}].eventDate`}
                 label="Event Date"
                 type="date"
                 InputLabelProps={{ shrink: true }}
-                variant="outlined"
+                fullWidth
               />
             </Grid>
             <Grid item xs={1}>
-              <IconButton
-                color="error"
-                onClick={() => handleDeleteRow(index)}
-                sx={{ mt: 1 }}
-              >
-                <DeleteIcon />
-              </IconButton>
+                <IconButton color="error" onClick={() => remove(index)} sx={{ mt: 1 }}>
+                  <DeleteIcon />
+                </IconButton>
             </Grid>
           </Grid>
         ))}
         <Grid item xs={12}>
           <Button
             variant="contained"
-            onClick={handleAddRow}
+            onClick={() => append({ clubName: "", eventTitle: "", eventDate: null })}
             sx={{ mt: 2, display: "block", mx: "auto" }}
           >
             Add Event
@@ -155,22 +135,22 @@ export default function ClubEvents() {
         </Grid>
         <Grid item xs={12}>
           <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 3 }}>
-            <LoadingButton
-              variant="outlined"
-              onClick={handleFillMockData}
-              color="info"
-            >
-              Fill Mock Data
-            </LoadingButton>
-            <LoadingButton variant="outlined" onClick={handleReset}>
-              Reset
-            </LoadingButton>
-            <LoadingButton variant="contained" onClick={handleSave}>
-              Save
-            </LoadingButton>
+            <Box display="flex" gap={1}>
+                {import.meta.env.MODE === "development" && (
+                  <LoadingButton 
+                  variant="outlined" 
+                  onClick={handleReset}>
+                    Reset
+                  </LoadingButton>
+                )}
+                <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+                  Save
+                </LoadingButton>
+              </Box>
           </Stack>
         </Grid>
       </Grid>
     </Card>
+    </FormProvider>
   );
 }

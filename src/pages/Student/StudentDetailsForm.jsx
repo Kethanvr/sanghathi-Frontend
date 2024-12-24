@@ -55,7 +55,6 @@ export default function StudentDetailsForm() {
         setIsDataFetched(true);
       }
       console.log("Student data fetched successfully:", data);
-      console.log("Name:",data.studentProfile.fullName.firstName);
     } catch (error) {
       console.error("Error fetching student data:", error.response || error);
     }
