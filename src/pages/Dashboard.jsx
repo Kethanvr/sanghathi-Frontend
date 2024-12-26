@@ -99,21 +99,21 @@ const Dashboard = () => {
             <StudentTile
               title="Career review"
               icon={<PersonIcon fontSize="large" />}
-              link="/student/CareerReview"
+              link="/CareerReview/CareerReview"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
             <StudentTile
               title="Scorecard"
               icon={<AssignmentIcon fontSize="large" />}
-              link="/student/Scorecard"
+              link="/Scorecard/ScoreCard"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
             <StudentTile
               title="Placement"
               icon={<EmojiEventsIcon fontSize="large" />}
-              link="/student/placement"
+              link="/Placement/Placement"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4}>

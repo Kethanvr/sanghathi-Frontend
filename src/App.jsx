@@ -19,7 +19,7 @@ import CampusBuddy from "./pages/CampusBuddy/CampusBuddy";
 import Academic from "./pages/Student/Academic";
 import AdmissionDetails from "./pages/Student/AdmissionDetails";
 import AdmissionDetailsPage from "./pages/Student/AdmissionDetailsPage";
-import Placement from "./pages/Student/Placement";
+import Placement from "./pages/Placement/Placement";
 import Ptm from "./pages/ParentsTeacherMeeting/Ptm";
 import Attendance from "./pages/Student/Attendance";
 import Thread from "./pages/Thread/Thread";
@@ -29,8 +29,8 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import FacultyDashboard from "./pages/Faculty/FacultyDashboard";
 import MentorAssignmentDialog from "./pages/MentorAllocation/MentorAssignmentDialog";
 import MentorSuggestionMenu from "./pages/MentorAllocation/MentorSuggestionMenu";
-import CareerReview from "./pages/Student/CareerReview";
-import ScoreCard from "./pages/Student/ScoreCard";
+import CareerReview from "./pages/CareerReview/CareerReview";
+import ScoreCard from "./pages/Scorecard/ScoreCard";
 import StudentProfileOnly from "./pages/Student/StudentProfileOnly";
 import FacultyProfile from "./pages/Faculty/FacultyProfile";
 // TODO : Need to remove routing logic from app component
@@ -124,7 +124,7 @@ function App() {
                     }
                   />
                   <Route
-                    path="/student/placement"
+                    path="/Placement/Placement"
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={Placement} />
@@ -172,7 +172,7 @@ function App() {
                     }
                   />
                   <Route
-                    path="/student/CareerReview"
+                    path="/CareerReview/CareerReview"
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={CareerReview} />
@@ -180,7 +180,7 @@ function App() {
                     }
                   />
                   <Route
-                    path="/student/ScoreCard"
+                    path="/scorecard/ScoreCard"
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={ScoreCard} />
