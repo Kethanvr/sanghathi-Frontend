@@ -26,7 +26,6 @@ export default function ClubEvents() {
   const fetchClubs = useCallback(async () => {
     try {
       const response = await api.get(`/career-counselling/clubs/${user._id}`);
-      console.log("Club data fetched: ", response.data);
       const { data } = response.data;
   
       if (data && Array.isArray(data.clubs)) {
@@ -104,7 +103,7 @@ export default function ClubEvents() {
               <Grid item xs={4}>
                 <RHFTextField 
                 name={`clubs[${index}].clubdepartment`} 
-                label="Club Department" 
+                label="Club Department"
                 fullWidth />
               </Grid>
               <Grid item xs={3}>
