@@ -30,10 +30,8 @@ export default function CareerCounselling() {
 
   const fetchCareerCounselling = useCallback(async () => {
     try {
-      console.log(`/career-counselling/career/${user._id}`);
       const response = await api.get(`/career-counselling/career/${user._id}`);
       const { data } = response.data;
-      console.log("Career counselling data:", data);
   
       if (!data.careers) {
         console.warn("No Career Counselling data found.");
@@ -48,14 +46,10 @@ export default function CareerCounselling() {
       } else {
         console.warn("No Career Counselling data found for this user.");
       }
-      
-    console.log("Student data fetched successfully:", data);
     } catch (error) {
       console.error("Error fetching career counselling data:", error);
-      // Check if the error is a 404 (Not Found)
       if (error.response && error.response.status === 404) {
         console.log("Career profile not found, which is expected for new users.");
-        // It's okay if it's not found initially. The form is ready for input.
       } else {
         enqueueSnackbar("Error fetching career counselling data", { variant: "error" });
       }
