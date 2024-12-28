@@ -1,188 +1,162 @@
-import React, { useState } from "react";
-import { Box, Grid, Card, Stack, TextField, Button, IconButton } from "@mui/material";
+import React, { useEffect, useState, useCallback, useContext } from "react";
+import { useSnackbar } from "notistack";
+import api from "../../utils/axios";
+import { useForm, useFieldArray } from "react-hook-form";
+import { AuthContext } from "../../context/AuthContext";
+import { Box, Grid, Card, Stack, Button, IconButton, Typography, TextField } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import DeleteIcon from "@mui/icons-material/Delete";
-
-const DEFAULT_VALUES = {
-  title: "",
-  manHours: "",
-  startDate: "",
-  completedDate: "",
-};
+import { Delete as DeleteIcon } from "@mui/icons-material";
+import { FormProvider, RHFTextField } from "../../components/hook-form";
 
 export default function MiniProject() {
-  const [rows, setRows] = useState([{ slNo: 1, ...DEFAULT_VALUES }]);
-  const [isEditable, setIsEditable] = useState(false); // Tracks if editing is enabled
-
-  const handleAddRow = () => {
-    setRows([
-      ...rows,
-      {
-        slNo: rows.length + 1,
-        ...DEFAULT_VALUES,
+  const { enqueueSnackbar } = useSnackbar();
+    const { user } = useContext(AuthContext);
+    const methods = useForm({
+      defaultValues: {
+        miniproject: [{ title: "",manHours: "",startDate: null,completedDate: null, }],
       },
-    ]);
-  };
+    });
 
-  const handleInputChange = (index, field, value) => {
-    const updatedRows = rows.map((row, i) =>
-      i === index ? { ...row, [field]: value } : row
+  const { handleSubmit, reset, formState: { isSubmitting } } = methods;
+    const { fields, append, remove } = useFieldArray({
+      control: methods.control,
+      name: "miniproject",
+    });
+
+    const fetchMiniProjects = useCallback(async () => {
+      try {
+        const response = await api.get(`/project/miniproject/${user._id}`);
+        console.log("Raw API Response:", response.data);
+        const { data } = response.data;
+    
+        if (data && Array.isArray(data.miniproject)) {
+          const formattedMiniProject = data.miniproject.map((miniproject) => ({
+            ...miniproject,
+            startDate: miniproject.startDate ? new Date(miniproject.startDate).toISOString().split("T")[0] : "",
+            completedDate: miniproject.completedDate ? new Date(miniproject.completedDate).toISOString().split("T")[0] : "",
+          }));
+          console.log("Formatted miniproject:", formattedMiniProject); 
+          reset({ miniproject: formattedMiniProject });
+        } else {
+          console.warn("No miniproject data found for this user");
+          reset({ miniproject: [{ title: "",manHours: "",startDate: null,completedDate: null,  }] });
+        }
+      } catch (error) {
+        console.log("Error fetching miniproject data:", error);
+      }
+    }, [user._id, reset, enqueueSnackbar]);
+    
+    useEffect(() => {
+      fetchMiniProjects();
+    }, [fetchMiniProjects]);
+  
+    const handleReset = () => {
+      reset();
+    };
+  
+    const onSubmit = useCallback(
+      async (formData) => {
+        try {
+          await api.post("/project/miniproject", { miniproject: formData.miniproject, userId: user._id });
+          enqueueSnackbar("miniproject data updated successfully!", {
+            variant: "success",
+          });
+          fetchMiniProjects();
+        } catch (error) {
+          console.error(error);
+          enqueueSnackbar("An error occurred while processing the request", {
+            variant: "error",
+          });
+        }
+      },
+      [enqueueSnackbar, fetchMiniProjects, user._id]
     );
-    setRows(updatedRows);
-  };
-
-  const handleDeleteRow = (index) => {
-    const updatedRows = rows.filter((_, i) => i !== index);
-    const reIndexedRows = updatedRows.map((row, i) => ({
-      ...row,
-      slNo: i + 1,
-    }));
-    setRows(reIndexedRows);
-  };
-
-  const handleReset = () => {
-    setRows([{ slNo: 1, ...DEFAULT_VALUES }]);
-  };
-
-  const handleMockData = () => {
-    setRows([
-      {
-        slNo: 1,
-        title: "AI Chatbot Development",
-        manHours: "120",
-        startDate: "2024-01-01",
-        completedDate: "2024-01-20",
-      },
-      {
-        slNo: 2,
-        title: "IoT Smart Home System",
-        manHours: "150",
-        startDate: "2024-02-15",
-        completedDate: "2024-03-10",
-      },
-    ]);
-  };
-
-  const handleSave = () => {
-    console.log("Saved data:", rows);
-  };
-
-  const toggleEdit = () => {
-    setIsEditable(!isEditable);
-  };
 
   return (
-    <Box>
+    <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+    <Card sx={{ p: 3 }}>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Card sx={{ p: 3 }}>
-            <Stack spacing={2}>
-              {rows.map((row, index) => (
-                <Box
-                  key={index}
-                  display="flex"
-                  alignItems="center"
-                  gap={2}
-                  sx={{
-                    "&:not(:first-of-type)": { mt: 2 },
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <TextField
-                    label="Sl No"
-                    value={row.slNo}
-                    disabled
-                    sx={{ width: "5%" }}
-                  />
-                  <TextField
-                    label="Mini Project Title"
-                    value={row.title}
-                    onChange={(e) =>
-                      handleInputChange(index, "title", e.target.value)
-                    }
-                    sx={{ width: "40%" }}
-                    disabled={!isEditable}
-                  />
-                  <TextField
-                    label="Man Hours"
-                    value={row.manHours}
-                    onChange={(e) =>
-                      handleInputChange(index, "manHours", e.target.value)
-                    }
-                    sx={{ width: "15%" }}
-                    disabled={!isEditable}
-                  />
-                  <TextField
-                    type="date"
-                    label="Start Date"
-                    value={row.startDate}
-                    onChange={(e) =>
-                      handleInputChange(index, "startDate", e.target.value)
-                    }
-                    InputLabelProps={{ shrink: true }}
-                    sx={{ width: "15%" }}
-                    disabled={!isEditable}
-                  />
-                  <TextField
-                    type="date"
-                    label="Completed Date"
-                    value={row.completedDate}
-                    onChange={(e) =>
-                      handleInputChange(index, "completedDate", e.target.value)
-                    }
-                    InputLabelProps={{ shrink: true }}
-                    sx={{ width: "15%" }}
-                    disabled={!isEditable}
-                  />
-                  {isEditable && (
-                    <IconButton
-                      color="error"
-                      onClick={() => handleDeleteRow(index)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
-                </Box>
-              ))}
-              <Box textAlign="center" sx={{ mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={handleAddRow}
-                  sx={{ mt: 1 }}
-                >
-                  Add Row
-                </Button>
-              </Box>
-            </Stack>
-          </Card>
-        </Grid>
-        <Grid item xs={12}>
-          <Card sx={{ p: 2 }}>
-            <Stack direction="row" spacing={2} justifyContent="flex-end">
-              <LoadingButton
-                variant="contained"
-                onClick={toggleEdit}
-                sx={{
-                  bgcolor: isEditable ? "error.main" : "primary.main",
-                  color: "white",
-                }}
-              >
-                {isEditable ? "Disable Edit" : "Edit"}
-              </LoadingButton>
-              <LoadingButton variant="outlined" onClick={handleMockData}>
-                Fill Mock Data
-              </LoadingButton>
-              <LoadingButton variant="outlined" onClick={handleReset}>
-                Reset
-              </LoadingButton>
-              <LoadingButton variant="contained" onClick={handleSave}>
-                Save
-              </LoadingButton>
-            </Stack>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
-  );
+        {fields.map((item, index) => (
+          <Grid 
+            container 
+            spacing={2} 
+            key={item.id} 
+            alignItems="center" 
+            sx={{ mb: 1, mt: 1 }}
+            >
+            <Grid item xs={1}>
+              <TextField 
+              disabled 
+              value={index + 1} 
+              label="Sl. No." 
+              variant="outlined" 
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <RHFTextField
+                name={`miniproject[${index}].title`} 
+                label="Miniproject Title"
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <RHFTextField
+                name={`miniproject[${index}].manHours`} 
+                label="Man Hours"
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={2}>
+            <RHFTextField
+              name={`miniproject[${index}].startDate`}
+              label="Start Date"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
+            </Grid>
+            <Grid item xs={2}>
+            <RHFTextField
+              name={`miniproject[${index}].completedDate`}
+              label="Completed Date"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
+            </Grid>
+             <Grid item xs={1}>
+              <IconButton color="error" onClick={() => remove(index)} sx={{ mt: 1 }}>
+                <DeleteIcon />
+              </IconButton>
+            </Grid>
+          </Grid>
+        ))}        
+          <Grid item xs={12}>
+            <Button 
+              variant="contained" 
+              onClick={() => append({  title: "",manHours: "",startDate: null,completedDate: null, })} 
+              sx={{ mt: 2, display: "block", mx: "auto" }}>
+              Add Row
+            </Button>
+          </Grid>
+  <Grid item xs={12}>
+      <Stack direction="row" spacing={2} justifyContent="flex-end">
+        <Box display="flex" gap={1}>
+          {import.meta.env.MODE === "development" && (
+            <LoadingButton 
+            variant="outlined" 
+            onClick={handleReset}>
+              Reset
+            </LoadingButton>
+          )}
+          <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+            Save
+          </LoadingButton>
+        </Box>
+      </Stack>
+  </Grid>
+</Grid>
+</Card>
+</FormProvider>
+);
 }

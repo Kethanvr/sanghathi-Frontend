@@ -1,193 +1,160 @@
-import React, { useState } from "react";
-import { Box, Grid, Card, Stack, TextField, Button, Typography, IconButton } from "@mui/material";
+import React, { useEffect, useState, useCallback, useContext } from "react";
+import { useSnackbar } from "notistack";
+import api from "../../utils/axios";
+import { useForm, useFieldArray } from "react-hook-form";
+import { AuthContext } from "../../context/AuthContext";
+import { Box, Grid, Card, Stack, Button, IconButton, Typography, TextField } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import DeleteIcon from "@mui/icons-material/Delete";
-
-const DEFAULT_VALUES = {
-  eventType: "",
-  eventTitle: "",
-  description: "",
-  eventDate: "",
-};
+import { Delete as DeleteIcon } from "@mui/icons-material";
+import { FormProvider, RHFTextField } from "../../components/hook-form";
 
 export default function Activity() {
-  const [rows, setRows] = useState([{ slNo: 1, ...DEFAULT_VALUES }]);
-  const [isEditable, setIsEditable] = useState(false); // Tracks if editing is enabled
-
-  const handleAddRow = () => {
-    setRows([
-      ...rows,
-      {
-        slNo: rows.length + 1,
-        ...DEFAULT_VALUES,
+  const { enqueueSnackbar } = useSnackbar();
+    const { user } = useContext(AuthContext);
+    const methods = useForm({
+      defaultValues: {
+        activity: [{ eventType: "", eventTitle: "", description: "", eventDate: "" }],
       },
-    ]);
-  };
+    });
 
-  const handleInputChange = (index, field, value) => {
-    const updatedRows = rows.map((row, i) =>
-      i === index ? { ...row, [field]: value } : row
+  const { handleSubmit, reset, formState: { isSubmitting } } = methods;
+    const { fields, append, remove } = useFieldArray({
+      control: methods.control,
+      name: "activity",
+    });
+
+    const fetchActivity = useCallback(async () => {
+      try {
+        const response = await api.get(`/activity-data/activity/${user._id}`);
+        const { data } = response.data;
+    
+        if (data && Array.isArray(data.activity)) {
+          const formattedActivity = data.activity.map((activity) => ({
+            ...activity,
+            eventDate: activity.eventDate ? new Date(activity.eventDate).toISOString().split("T")[0] : "",
+          }));
+          reset({ activity: formattedActivity });
+        } else {
+          console.warn("No activity data found for this user");
+          reset({ activity: [{ eventType: "", eventTitle: "", description: "", eventDate: ""  }] });
+        }
+      } catch (error) {
+        console.log("Error fetching activity data:", error);
+      }
+    }, [user._id, reset, enqueueSnackbar]);
+
+    useEffect(() => {
+      fetchActivity();
+    }, [fetchActivity]);
+  
+    const handleReset = () => {
+      reset();
+    };
+  
+    const onSubmit = useCallback(
+      async (formData) => {
+        try {
+          await api.post("/activity-data/activity", { activity: formData.activity, userId: user._id });
+          enqueueSnackbar("Activity data updated successfully!", {
+            variant: "success",
+          });
+          fetchActivity();
+        } catch (error) {
+          console.error(error);
+          enqueueSnackbar("An error occurred while processing the request", {
+            variant: "error",
+          });
+        }
+      },
+      [enqueueSnackbar, fetchActivity, user._id]
     );
-    setRows(updatedRows);
-  };
 
-  const handleDeleteRow = (index) => {
-    const updatedRows = rows.filter((_, i) => i !== index);
-    const reIndexedRows = updatedRows.map((row, i) => ({
-      ...row,
-      slNo: i + 1,
-    }));
-    setRows(reIndexedRows);
-  };
-
-  const handleReset = () => {
-    setRows([{ slNo: 1, ...DEFAULT_VALUES }]);
-  };
-
-  const handleMockData = () => {
-    setRows([
-      {
-        slNo: 1,
-        eventType: "Sports",
-        eventTitle: "Inter-College Basketball Tournament",
-        description: "Participated as a team captain and secured 2nd place.",
-        eventDate: "2024-03-01",
-      },
-      {
-        slNo: 2,
-        eventType: "Cultural",
-        eventTitle: "Annual Drama Competition",
-        description: "Performed in a theatrical play and won best actor award.",
-        eventDate: "2024-04-15",
-      },
-    ]);
-  };
-
-  const handleSave = () => {
-    console.log("Saved data:", rows);
-  };
-
-  const toggleEdit = () => {
-    setIsEditable(!isEditable);
-  };
-
-  return (
-    <Box>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
+return (
+    <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
           <Card sx={{ p: 3 }}>
-            <Stack spacing={2}>
-              <Typography
-                variant="h6"
-                textAlign="center"
-                sx={{ mb: 2, fontWeight: "bold" }}
-              >
-                Event Participation Record in Sports, Cultural, Societal, etc by the Student
-              </Typography>
-              {rows.map((row, index) => (
-                <Box
-                  key={index}
-                  display="flex"
-                  alignItems="center"
-                  gap={2}
-                  sx={{
-                    "&:not(:first-of-type)": { mt: 2 },
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <TextField
-                    label="Sl No"
-                    value={row.slNo}
-                    disabled
-                    sx={{ width: "5%" }}
-                  />
-                  <TextField
+            <Typography variant="h6" gutterBottom>
+            Event Participation Record in Sports, Cultural, Societal, etc by the Student
+            </Typography>
+            <Grid container spacing={2}>
+              {fields.map((item, index) => (
+                <Grid 
+                  container 
+                  spacing={2} 
+                  key={item.id} 
+                  alignItems="center" 
+                  sx={{ mb: 1, mt: 1 }}
+                  >
+                  <Grid item xs={1}>
+                    <TextField 
+                    disabled 
+                    value={index + 1} 
+                    label="Sl. No." 
+                    variant="outlined" 
+                    />
+                  </Grid>
+                  <Grid item xs={2}>
+                  <RHFTextField
+                    name={`activity[${index}].eventType`} 
                     label="Event Type"
-                    value={row.eventType}
-                    onChange={(e) =>
-                      handleInputChange(index, "eventType", e.target.value)
-                    }
-                    sx={{ width: "20%" }}
-                    disabled={!isEditable}
+                    fullWidth
                   />
-                  <TextField
+                  </Grid>
+                  <Grid item xs={3}>
+                  <RHFTextField
+                    name={`activity[${index}].eventTitle`} 
                     label="Event Title"
-                    value={row.eventTitle}
-                    onChange={(e) =>
-                      handleInputChange(index, "eventTitle", e.target.value)
-                    }
-                    sx={{ width: "25%" }}
-                    disabled={!isEditable}
+                    fullWidth
                   />
-                  <TextField
+                  </Grid>
+                  <Grid item xs={3}>
+                  <RHFTextField
+                    name={`activity[${index}].description`} 
                     label="Description"
-                    value={row.description}
-                    onChange={(e) =>
-                      handleInputChange(index, "description", e.target.value)
-                    }
-                    sx={{ width: "30%" }}
-                    disabled={!isEditable}
+                    fullWidth
                   />
-                  <TextField
-                    type="date"
+                  </Grid>
+                  <Grid item xs={2}>
+                  <RHFTextField
+                    name={`activity[${index}].eventDate`}
                     label="Event Date"
-                    value={row.eventDate}
-                    onChange={(e) =>
-                      handleInputChange(index, "eventDate", e.target.value)
-                    }
+                    type="date"
                     InputLabelProps={{ shrink: true }}
-                    sx={{ width: "15%" }}
-                    disabled={!isEditable}
+                    fullWidth
                   />
-                  {isEditable && (
-                    <IconButton
-                      color="error"
-                      onClick={() => handleDeleteRow(index)}
-                    >
+                  </Grid>
+                  <Grid item xs={1}>
+                    <IconButton color="error" onClick={() => remove(index)} sx={{ mt: 1 }}>
                       <DeleteIcon />
                     </IconButton>
-                  )}
-                </Box>
+                  </Grid>
+                </Grid>
               ))}
-              <Box textAlign="center" sx={{ mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={handleAddRow}
-                  sx={{ mt: 1 }}
-                >
-                  Add Row
-                </Button>
+                <Grid item xs={12}>
+                  <Button 
+                    variant="contained" 
+                    onClick={() => append({ eventType: "", eventTitle: "", description: "", eventDate: "" })} 
+                    sx={{ mt: 2, display: "block", mx: "auto" }}>
+                    Add Activity
+                  </Button>
+                </Grid>
+        <Grid item xs={12}>
+            <Stack direction="row" spacing={2} justifyContent="flex-end">
+              <Box display="flex" gap={1}>
+                {import.meta.env.MODE === "development" && (
+                  <LoadingButton 
+                  variant="outlined" 
+                  onClick={handleReset}>
+                    Reset
+                  </LoadingButton>
+                )}
+                <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+                  Save
+                </LoadingButton>
               </Box>
             </Stack>
-          </Card>
-        </Grid>
-        <Grid item xs={12}>
-          <Card sx={{ p: 2 }}>
-            <Stack direction="row" spacing={2} justifyContent="flex-end">
-              <LoadingButton
-                variant="contained"
-                onClick={toggleEdit}
-                sx={{
-                  bgcolor: isEditable ? "error.main" : "primary.main",
-                  color: "white",
-                }}
-              >
-                {isEditable ? "Disable Edit" : "Edit"}
-              </LoadingButton>
-              <LoadingButton variant="outlined" onClick={handleMockData}>
-                Fill Mock Data
-              </LoadingButton>
-              <LoadingButton variant="outlined" onClick={handleReset}>
-                Reset
-              </LoadingButton>
-              <LoadingButton variant="contained" onClick={handleSave}>
-                Save
-              </LoadingButton>
-            </Stack>
-          </Card>
         </Grid>
       </Grid>
-    </Box>
+    </Card>
+  </FormProvider>
   );
 }

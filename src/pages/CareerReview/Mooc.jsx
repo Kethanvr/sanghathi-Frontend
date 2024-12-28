@@ -1,218 +1,175 @@
-import React, { useState } from "react";
-import { Box, Grid, Card, Stack, TextField, Button, IconButton, Link } from "@mui/material";
+import React, { useEffect, useState, useCallback, useContext } from "react";
+import { useSnackbar } from "notistack";
+import api from "../../utils/axios";
+import { useForm, useFieldArray } from "react-hook-form";
+import { AuthContext } from "../../context/AuthContext";
+import { Box, Grid, Card, Stack, Button, IconButton, Typography, TextField } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { Delete as DeleteIcon } from "@mui/icons-material";
+import { FormProvider, RHFTextField } from "../../components/hook-form";
 
-const DEFAULT_VALUES = {
-  portal: "",
-  title: "",
-  startDate: "",
-  completedDate: "",
-  score: "",
-  certificateLink: "",
-};
 
 export default function Mooc() {
-  const [rows, setRows] = useState([{ slNo: 1, ...DEFAULT_VALUES }]);
-  const [isEditable, setIsEditable] = useState(false); // Tracks if editing is enabled
-  const [editingCertificateIndex, setEditingCertificateIndex] = useState(-1); // Tracks the row index being edited for certificate link
-
-  const handleAddRow = () => {
-    setRows([
-      ...rows,
-      {
-        slNo: rows.length + 1,
-        ...DEFAULT_VALUES,
+  const { enqueueSnackbar } = useSnackbar();
+    const { user } = useContext(AuthContext);
+    const methods = useForm({
+      defaultValues: {
+        mooc: [{ portal: "", title: "", startDate: null, completedDate: null, score: null, certificateLink: "" }],
       },
-    ]);
-  };
+    });
 
-  const handleInputChange = (index, field, value) => {
-    const updatedRows = rows.map((row, i) =>
-      i === index ? { ...row, [field]: value } : row
+  const { handleSubmit, reset, formState: { isSubmitting } } = methods;
+    const { fields, append, remove } = useFieldArray({
+      control: methods.control,
+      name: "mooc",
+    });
+
+    const fetchMooc = useCallback(async () => {
+      try {
+        const response = await api.get(`/mooc-data/mooc/${user._id}`);
+        const { data } = response.data;
+    
+        if (data && Array.isArray(data.mooc)) {
+          const formattedMooc = data.mooc.map((mooc) => ({
+            ...mooc,
+            startDate: mooc.startDate ? new Date(mooc.startDate).toISOString().split("T")[0] : "",
+            completedDate: mooc.completedDate ? new Date(mooc.completedDate).toISOString().split("T")[0] : "",
+          }));
+          reset({ mooc: formattedMooc });
+        } else {
+          console.warn("No mooc data found for this user");
+          reset({ mooc: [{ portal: "", title: "", startDate: null, completedDate: null, score: null, certificateLink: "" }] });
+        }
+      } catch (error) {
+        console.log("Error fetching mooc data:", error);
+      }
+    }, [user._id, reset, enqueueSnackbar]);
+
+    useEffect(() => {
+      fetchMooc();
+    }, [fetchMooc]);
+  
+    const handleReset = () => {
+      reset();
+    };
+  
+    const onSubmit = useCallback(
+      async (formData) => {
+        try {
+          await api.post("/mooc-data/mooc", { mooc: formData.mooc, userId: user._id });
+          enqueueSnackbar("Mooc data updated successfully!", {
+            variant: "success",
+          });
+          fetchMooc();
+        } catch (error) {
+          console.error(error);
+          enqueueSnackbar("An error occurred while processing the request", {
+            variant: "error",
+          });
+        }
+      },
+      [enqueueSnackbar, fetchMooc, user._id]
     );
-    setRows(updatedRows);
-  };
-
-  const handleDeleteRow = (index) => {
-    const updatedRows = rows.filter((_, i) => i !== index);
-    const reIndexedRows = updatedRows.map((row, i) => ({
-      ...row,
-      slNo: i + 1,
-    }));
-    setRows(reIndexedRows);
-  };
-
-  const handleReset = () => {
-    setRows([{ slNo: 1, ...DEFAULT_VALUES }]);
-  };
-
-  const handleMockData = () => {
-    setRows([
-      {
-        slNo: 1,
-        portal: "Coursera",
-        title: "AI for Everyone",
-        startDate: "2024-01-01",
-        completedDate: "2024-03-01",
-        score: "95%",
-        certificateLink: "https://coursera.org/certificate/xyz",
-      },
-    ]);
-  };
-
-  const handleSave = () => {
-    console.log("Saved data:", rows);
-  };
-
-  const toggleEdit = () => {
-    setIsEditable(!isEditable);
-  };
 
   return (
-    <Box>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
+    <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
           <Card sx={{ p: 3 }}>
-            <Stack spacing={2}>
-              {rows.map((row, index) => (
-                <Box
-                  key={index}
-                  display="flex"
-                  alignItems="center"
-                  gap={2}
-                  sx={{
-                    "&:not(:first-of-type)": { mt: 2 },
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <TextField
-                    label="Sl No"
-                    value={row.slNo}
-                    disabled
-                    sx={{ width: "5%" }}
-                  />
-                  <TextField
-                    label="Course Portal"
-                    value={row.portal}
-                    onChange={(e) =>
-                      handleInputChange(index, "portal", e.target.value)
-                    }
-                    sx={{ width: "15%" }}
-                    disabled={!isEditable}
-                  />
-                  <TextField
-                    label="Mooc Title"
-                    value={row.title}
-                    onChange={(e) =>
-                      handleInputChange(index, "title", e.target.value)
-                    }
-                    sx={{ width: "15%" }}
-                    disabled={!isEditable}
-                  />
-                  <TextField
-                    type="date"
-                    label="Start Date"
-                    value={row.startDate}
-                    onChange={(e) =>
-                      handleInputChange(index, "startDate", e.target.value)
-                    }
-                    InputLabelProps={{ shrink: true }}
-                    sx={{ width: "15%" }}
-                    disabled={!isEditable}
-                  />
-                  <TextField
-                    type="date"
-                    label="Completed Date"
-                    value={row.completedDate}
-                    onChange={(e) =>
-                      handleInputChange(index, "completedDate", e.target.value)
-                    }
-                    InputLabelProps={{ shrink: true }}
-                    sx={{ width: "15%" }}
-                    disabled={!isEditable}
-                  />
-                  <TextField
-                    label="Score"
-                    value={row.score}
-                    onChange={(e) =>
-                      handleInputChange(index, "score", e.target.value)
-                    }
-                    sx={{ width: "10%" }}
-                    disabled={!isEditable}
-                  />
-                  {editingCertificateIndex === index ? (
-                    <TextField
-                      label="Certificate Link"
-                      value={row.certificateLink}
-                      onChange={(e) =>
-                        handleInputChange(index, "certificateLink", e.target.value)
-                      }
-                      onBlur={() => setEditingCertificateIndex(-1)} // Exit editing mode on blur
-                      sx={{ width: "20%" }}
+            <Grid container spacing={2}>
+              {fields.map((item, index) => (
+                <Grid 
+                  container 
+                  spacing={2} 
+                  key={item.id} 
+                  alignItems="center" 
+                  sx={{ mb: 1, mt: 1 }}
+                  >
+                  <Grid item xs={1}>
+                    <TextField 
+                    disabled 
+                    value={index + 1} 
+                    label="Sl. No." 
+                    variant="outlined" 
                     />
-                  ) : (
-                    <Link
-                      href={row.certificateLink || "#"}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (isEditable) setEditingCertificateIndex(index);
-                      }}
-                      underline={row.certificateLink ? "hover" : "none"}
-                      sx={{ width: "20%", color: row.certificateLink ? "primary.main" : "text.secondary" }}
-                    >
-                      {row.certificateLink || "Add Certificate Link"}
-                    </Link>
-                  )}
-                  {isEditable && (
-                    <IconButton
-                      color="error"
-                      onClick={() => handleDeleteRow(index)}
-                    >
+                  </Grid>
+                  <Grid item xs={3}>
+                  <RHFTextField
+                    name={`mooc[${index}].portal`} 
+                    label="Course Portal"
+                    fullWidth
+                  />
+                  </Grid>
+                  <Grid item xs={3}>
+                  <RHFTextField
+                    name={`mooc[${index}].title`} 
+                    label="Mooc Title"
+                    fullWidth
+                  />
+                  </Grid>
+                  <Grid item xs={2}>
+                  <RHFTextField
+                    name={`mooc[${index}].startDate`}
+                    label="Start Date"
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
+                  />
+                  </Grid>
+                  <Grid item xs={2}>
+                  <RHFTextField
+                    name={`mooc[${index}].completedDate`}
+                    label="Completed Date"
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
+                  />
+                  </Grid>
+                  <Grid item xs={2}>
+                  <RHFTextField
+                    name={`mooc[${index}].score`} 
+                    label="Score"
+                    fullWidth
+                  />
+                  </Grid>
+                  <Grid item xs={5}>
+                  <RHFTextField
+                    name={`mooc[${index}].certificateLink`} 
+                    label="Certificate Link"
+                    fullWidth
+                  />
+                  </Grid>
+                  <Grid item xs={1}>
+                    <IconButton color="error" onClick={() => remove(index)} sx={{ mt: 1 }}>
                       <DeleteIcon />
                     </IconButton>
-                  )}
-                </Box>
-              ))}
-              <Box textAlign="center" sx={{ mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={handleAddRow}
-                  sx={{ mt: 1 }}
-                >
-                  Add Row
-                </Button>
+                  </Grid>
+                </Grid>
+              ))}        
+                <Grid item xs={12}>
+                  <Button 
+                    variant="contained" 
+                    onClick={() => append({ portal: "", title: "", startDate: null, completedDate: null, score: null, certificateLink: "" })} 
+                    sx={{ mt: 2, display: "block", mx: "auto" }}>
+                    Add Row
+                  </Button>
+                </Grid>
+        <Grid item xs={12}>
+            <Stack direction="row" spacing={2} justifyContent="flex-end">
+              <Box display="flex" gap={1}>
+                {import.meta.env.MODE === "development" && (
+                  <LoadingButton 
+                  variant="outlined" 
+                  onClick={handleReset}>
+                    Reset
+                  </LoadingButton>
+                )}
+                <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+                  Save
+                </LoadingButton>
               </Box>
             </Stack>
-          </Card>
-        </Grid>
-        <Grid item xs={12}>
-          <Card sx={{ p: 2 }}>
-            <Stack direction="row" spacing={2} justifyContent="flex-end">
-              <LoadingButton
-                variant="contained"
-                onClick={toggleEdit}
-                sx={{
-                  bgcolor: isEditable ? "error.main" : "primary.main",
-                  color: "white",
-                }}
-              >
-                {isEditable ? "Disable Edit" : "Edit"}
-              </LoadingButton>
-              <LoadingButton variant="outlined" onClick={handleMockData}>
-                Fill Mock Data
-              </LoadingButton>
-              <LoadingButton variant="outlined" onClick={handleReset}>
-                Reset
-              </LoadingButton>
-              <LoadingButton variant="contained" onClick={handleSave}>
-                Save
-              </LoadingButton>
-            </Stack>
-          </Card>
         </Grid>
       </Grid>
-    </Box>
+    </Card>
+  </FormProvider>
   );
 }

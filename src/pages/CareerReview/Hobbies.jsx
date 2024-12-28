@@ -1,66 +1,91 @@
-import React, { useState } from "react";
-import { Box, Grid, Card, Stack, TextField, Button, Typography } from "@mui/material";
+import React, { useEffect, useState, useCallback, useContext } from "react";
+import { useSnackbar } from "notistack";
+import api from "../../utils/axios";
+import { useForm } from "react-hook-form";
+import { AuthContext } from "../../context/AuthContext";
+import { Box, Grid, Card, Stack, Typography } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
+import { FormProvider, RHFTextField } from "../../components/hook-form";
+
+const defaultValues = {
+  hobby: "",
+  nccNss: "",
+  academic: "",
+  cultural: "",
+  sports: "",
+  others: "",
+  ambition: "",
+  plans: "",
+  roleModel: "",
+  roleModelReason: "",
+  selfDescription: "",
+};
 
 export default function Hobbies() {
-  const [formData, setFormData] = useState({
-    hobbies: "",
-    nccNss: "",
-    achievements: {
-      academic: "",
-      cultural: "",
-      sports: "",
-      others: "",
-    },
-    ambition: "",
-    plans: "",
-    roleModel: "",
-    roleModelReason: "",
-    selfDescription: "",
+  const { enqueueSnackbar } = useSnackbar();
+  const { user } = useContext(AuthContext);
+  const [isDataFetched, setIsDataFetched] = useState(false);
+  const methods = useForm({
+    defaultValues,
   });
+  const {
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+    setValue,
+  } = methods;
 
-  const handleChange = (field, value) => {
-    if (field.includes(".")) {
-      const [mainField, subField] = field.split(".");
-      setFormData((prevState) => ({
-        ...prevState,
-        [mainField]: {
-          ...prevState[mainField],
-          [subField]: value,
-        },
-      }));
-    } else {
-      setFormData((prevState) => ({
-        ...prevState,
-        [field]: value,
-      }));
+  const fetchHobbies = useCallback(async () => {
+    try {
+      const response = await api.get(`/hobbies-data/hobbies/${user._id}`);
+      const { data } = response.data;
+  
+      if (data && data.hobbies) { // Check if data and data.hobbies exist
+        Object.keys(data.hobbies).forEach((key) => {
+          setValue(key, data.hobbies[key]);
+        });
+      }
+      setIsDataFetched(true);
+    } catch (error) {
+      console.error("Error fetching hobbies data:", error);
+      if (error.response && error.response.status === 404) {
+        console.log("Hobbies profile not found, which is expected for new users.");
+        setIsDataFetched(true);
+      } else {
+        enqueueSnackbar("Error fetching hobbies data", { variant: "error" });
+      }
     }
-  };
+  }, [user._id, setValue, enqueueSnackbar]);
+
+  useEffect(() => {
+    fetchHobbies();
+  }, [fetchHobbies]);
 
   const handleReset = () => {
-    setFormData({
-      hobbies: "",
-      nccNss: "",
-      achievements: {
-        academic: "",
-        cultural: "",
-        sports: "",
-        others: "",
-      },
-      ambition: "",
-      plans: "",
-      roleModel: "",
-      roleModelReason: "",
-      selfDescription: "",
-    });
+    reset(defaultValues);
+    setIsDataFetched(false);
   };
 
-  const handleSave = () => {
-    console.log("Saved data:", formData);
-  };
+  const onSubmit = useCallback(
+    async (formData) => {
+        try {
+          console.log("Form Data: ",formData)
+            await api.post("/hobbies-data/hobbies", { ...formData, userId: user._id });
+            enqueueSnackbar("Hobbies updated successfully!", {
+                variant: "success",
+            });
+            fetchHobbies();
+        } catch (error) {
+            console.error(error);
+            enqueueSnackbar("An error occurred while processing the request",{
+                    variant: "error",
+            });
+        }
+    },[enqueueSnackbar, reset, fetchHobbies, user]
+  );
 
   return (
-    <Box>
+    <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
           <Card sx={{ p: 3 }}>
@@ -73,18 +98,20 @@ export default function Hobbies() {
                 Hobbies and Aspirations
               </Typography>
 
-              <TextField
+              <RHFTextField
+                name="hobby"
                 label="What are your hobbies?"
-                value={formData.hobbies}
-                onChange={(e) => handleChange("hobbies", e.target.value)}
+                InputLabelProps={{ shrink: isDataFetched }}
+                multiline
                 fullWidth
               />
 
-              <TextField
+              <RHFTextField
+                name="nccNss"
                 label="Are you a member of NCC/NSS? If yes, describe"
-                value={formData.nccNss}
-                onChange={(e) => handleChange("nccNss", e.target.value)}
+                InputLabelProps={{ shrink: isDataFetched }}
                 fullWidth
+                multiline
               />
 
               <Box>
@@ -92,53 +119,51 @@ export default function Hobbies() {
                   What are your achievements so far?
                 </Typography>
                 <Stack spacing={2}>
-                  <TextField
+                  <RHFTextField
+                    name="academic"
                     label="Academic"
-                    value={formData.achievements.academic}
-                    onChange={(e) =>
-                      handleChange("achievements.academic", e.target.value)
-                    }
+                    InputLabelProps={{ shrink: isDataFetched }}
                     fullWidth
+                    multiline
                   />
-                  <TextField
+                  <RHFTextField
+                    name="cultural"
                     label="Cultural"
-                    value={formData.achievements.cultural}
-                    onChange={(e) =>
-                      handleChange("achievements.cultural", e.target.value)
-                    }
+                    InputLabelProps={{ shrink: isDataFetched }}
                     fullWidth
+                    multiline
                   />
-                  <TextField
+                  <RHFTextField
+                    name="sports"
                     label="Sports"
-                    value={formData.achievements.sports}
-                    onChange={(e) =>
-                      handleChange("achievements.sports", e.target.value)
-                    }
+                    InputLabelProps={{ shrink: isDataFetched }}
                     fullWidth
+                    multiline
                   />
-                  <TextField
+                  <RHFTextField
+                    name="others"
                     label="Others"
-                    value={formData.achievements.others}
-                    onChange={(e) =>
-                      handleChange("achievements.others", e.target.value)
-                    }
+                    InputLabelProps={{ shrink: isDataFetched }}
                     fullWidth
+                    multiline
                   />
                 </Stack>
               </Box>
 
-              <TextField
+              <RHFTextField
                 label="What is your ambition or goal?"
-                value={formData.ambition}
-                onChange={(e) => handleChange("ambition", e.target.value)}
+                name="ambition"
+                InputLabelProps={{ shrink: isDataFetched }}
                 fullWidth
+                multiline
               />
 
-              <TextField
+              <RHFTextField
                 label="What are your plans to achieve your goals?"
-                value={formData.plans}
-                onChange={(e) => handleChange("plans", e.target.value)}
+                name="plans"
+                InputLabelProps={{ shrink: isDataFetched }}
                 fullWidth
+                multiline
               />
 
               <Box>
@@ -146,48 +171,51 @@ export default function Hobbies() {
                   Who is your role model and why?
                 </Typography>
                 <Stack spacing={2}>
-                  <TextField
+                  <RHFTextField
                     label="Role Model"
-                    value={formData.roleModel}
-                    onChange={(e) => handleChange("roleModel", e.target.value)}
+                    name="roleModel"
+                    InputLabelProps={{ shrink: isDataFetched }}
                     fullWidth
+                    multiline
                   />
-                  <TextField
+                  <RHFTextField
                     label="Reason"
-                    value={formData.roleModelReason}
-                    onChange={(e) =>
-                      handleChange("roleModelReason", e.target.value)
-                    }
+                    name="roleModelReason"
+                    InputLabelProps={{ shrink: isDataFetched }}
                     fullWidth
+                    multiline
                   />
                 </Stack>
               </Box>
 
-              <TextField
+              <RHFTextField
                 label="Describe yourself"
-                value={formData.selfDescription}
-                onChange={(e) => handleChange("selfDescription", e.target.value)}
+                name="selfDescription"
+                InputLabelProps={{ shrink: isDataFetched }}
                 fullWidth
                 multiline
-                rows={4}
               />
-            </Stack>
-          </Card>
-        </Grid>
 
-        <Grid item xs={12}>
-          <Card sx={{ p: 2 }}>
-            <Stack direction="row" spacing={2} justifyContent="flex-end">
-              <LoadingButton variant="outlined" onClick={handleReset}>
-                Reset
-              </LoadingButton>
-              <LoadingButton variant="contained" onClick={handleSave}>
-                Save
-              </LoadingButton>
+              <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
+                <Box display="flex" gap={1}>
+                  {import.meta.env.MODE === "development" && (
+                    <LoadingButton variant="outlined" onClick={handleReset}>
+                      Reset
+                    </LoadingButton>
+                  )}
+                  <LoadingButton
+                    type="submit"
+                    variant="contained"
+                    loading={isSubmitting}
+                  >
+                    Save
+                  </LoadingButton>
+                </Box>
+              </Stack>
             </Stack>
-          </Card>
+            </Card>
         </Grid>
       </Grid>
-    </Box>
+    </FormProvider>
   );
 }
