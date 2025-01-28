@@ -1,6 +1,5 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import api from "./api";
-import { AuthContext } from "../../context/AuthContext"; // Import AuthContext
 
 const conversationConfig = {
   group: {
@@ -19,7 +18,6 @@ const conversationConfig = {
 
 const useMessages = (conversationType, conversationId) => {
   const [messages, setMessages] = useState([]);
-  const { user } = useContext(AuthContext); // Retrieve user from AuthContext
 
   useEffect(() => {
     const { endpoint } = conversationConfig[conversationType];
@@ -40,7 +38,6 @@ const useMessages = (conversationType, conversationId) => {
     const { endpoint, messageProps } = conversationConfig[conversationType];
     const message = {
       body: newMessage,
-      senderId: user?._id, // Add senderId here
       ...messageProps(conversationId),
     };
 

@@ -48,7 +48,7 @@ function UserList({ onEdit }) {
     setPage(0);
   };
 
-  const rowsPerPageOptions = [5, 10, 25];
+  const rowsPerPageOptions = [20, 10, 25];
 
   const tableHeaderColor =
     theme.palette.mode === "dark" ? "#37404a" : "#e9eaeb";

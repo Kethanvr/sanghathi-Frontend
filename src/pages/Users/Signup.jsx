@@ -11,32 +11,32 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     // Define roleName based on the selected role
-    const roleName = role === "student" ? "student" : "faculty";
-
+    const roleName = role === "student" ? "student" : "admin"; 
+  
     try {
-      const response = await axios.post(
-        "http://localhost:8000/api/users/signup",
-        {
-          name,
-          email,
-          password,
-          passwordConfirm,
-          role,
-          roleName,
-        }
-      );
-
+      const response = await axios.post("http://localhost:8000/api/users/signup", {
+        name,
+        email,
+        password,
+        passwordConfirm,
+        role,
+        roleName,
+      });
+      
       <div>
-        <h2>Signed up!</h2>
-      </div>;
+      <h2>Signed up!</h2>
+      </div>
       console.log("User signed up:", response.data);
+  
     } catch (error) {
       console.error("Error during signup:", error);
       setError("Signup failed, please try again.");
     }
   };
+  
+  
 
   return (
     <div>
@@ -92,7 +92,7 @@ const Signup = () => {
             required
           >
             <option value="student">Student</option>
-            <option value="faculty">faculty</option>
+            <option value="admin">Admin</option>
           </select>
         </div>
         <button type="submit">Sign Up</button>

@@ -92,7 +92,7 @@ function App() {
                     }
                   />
                   <Route
-                    path="/users"
+                    path="/admin/add-user"
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={User} />
@@ -132,7 +132,7 @@ function App() {
                     }
                   />
                   <Route
-                    path="/mentor"
+                    path="/admin/mentor-assignment"
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={MentorAllocation} />

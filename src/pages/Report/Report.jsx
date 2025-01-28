@@ -329,8 +329,8 @@ const Report = () => {
                         ? new Date(thread.closedAt).toLocaleDateString()
                         : "N/A"}
                     </TableCell>
-                    {/* <TableCell>{thread.author.name || "sample"}</TableCell> */} 
-                    {/* to be maintained */}
+                    {/* <TableCell>{thread.author.name || " "}</TableCell> */}
+                    <TableCell>{thread?.author?.name || " "}</TableCell>
                     <TableCell style={{ display: "flex", cursor: "pointer" }}>
                       {thread.participants
                         .slice(0, 3)

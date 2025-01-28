@@ -7,8 +7,11 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle errors globally
-    console.error(error);
+    console.error("Axios Error Details:", {
+      status: error.response?.status,
+      data: error.response?.data,
+      headers: error.response?.headers,
+    });
 
     const message =
       error.response?.data?.message || "An error occurred. Please try again.";
@@ -16,4 +19,5 @@ api.interceptors.response.use(
     return Promise.reject(new Error(message));
   }
 );
+
 export default api;

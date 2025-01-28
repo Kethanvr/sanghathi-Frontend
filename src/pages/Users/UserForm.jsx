@@ -1,13 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import * as Yup from "yup";
 import { useSnackbar } from "notistack";
-import { useCallback } from "react";
-
-import api from "../../utils/axios";
-
-// form
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import api from "../../utils/axios"; // axios instance
 
 // @mui
 import { Box, Grid, Card, Stack, Typography } from "@mui/material";
@@ -59,7 +55,9 @@ const options = [
 export default function UserForm({ editingUser }) {
   const { enqueueSnackbar } = useSnackbar();
   const [avatar, setAvatar] = useState(null);
+  const [roleId, setRoleId] = useState("");
 
+  // Form initialization
   const methods = useForm({
     resolver: yupResolver(getUserSchema(editingUser)),
     defaultValues: {
@@ -72,22 +70,41 @@ export default function UserForm({ editingUser }) {
     },
   });
 
-  const {
-    setValue,
-    handleSubmit,
-    reset,
-    formState: { isSubmitting },
-  } = methods;
+  const { setValue, handleSubmit, reset, formState: { isSubmitting } } = methods;
 
+  // Fetch roleId based on role selection
+  useEffect(() => {
+    const fetchRoleId = async () => {
+      try {
+        const { data } = await api.get(`/roles/${methods.getValues("role")}`);
+        setRoleId(data._id);  // Save the role ObjectId
+      } catch (error) {
+        console.error("Failed to fetch role ID", error);
+      }
+    };
+    if (methods.getValues("role")) {
+      fetchRoleId();
+    }
+  }, [methods]);
+
+  // Handle form submission
   const onSubmit = useCallback(
     async (formData) => {
+      if (!roleId) {
+        enqueueSnackbar("Role must be selected!", { variant: "error" });
+        return; // Prevent submission if roleId is empty
+      }
+  
+      console.log("Selected Role ID:", roleId); // Log roleId to check if it's correct
+  
       try {
         const userData = {
           ...formData,
           avatar,
+          role: roleId,  // Pass the ObjectId of role
         };
         console.log(userData);
-
+  
         if (editingUser) {
           const { password, passwordConfirm, ...updateData } = userData;
           await api.patch(`/users/${editingUser._id}`, updateData);
@@ -105,13 +122,14 @@ export default function UserForm({ editingUser }) {
         });
       }
     },
-    [methods, editingUser]
+    [methods, editingUser, roleId]  // Added roleId as dependency
   );
+  
 
+  // Handle avatar drop
   const handleDrop = useCallback(
     (acceptedFiles) => {
       const file = acceptedFiles[0];
-
       if (file) {
         setValue(
           "avatar",

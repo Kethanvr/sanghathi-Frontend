@@ -22,11 +22,12 @@ const adminNavConfig = [
     icon: <PersonOutlinedIcon />,
     link: "/admin/mentor-assignment",
   },
+  { text: "Report", icon: <ReportOutlinedIcon />, link: "/report" },
 ];
 
 const facultyNavConfig = [
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
-  { text: "Report", icon: <ReportOutlinedIcon />, link: "/report" },
+  // { text: "Report", icon: <ReportOutlinedIcon />, link: "/report" },
   { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
   { text: "Chat", icon: <ChatOutlinedIcon />, link: "/chat" },
   { text: "Campus Buddy", icon: <InfoOutlinedIcon />, link: "/campus-buddy" },
@@ -36,14 +37,15 @@ const facultyNavConfig = [
 const studentNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
-  { text: "Report", icon: <ReportOutlinedIcon />, link: "/report" },
+  // { text: "Report", icon: <ReportOutlinedIcon />, link: "/report" },
   { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
   { text: "Chat", icon: <ChatOutlinedIcon />, link: "/chat" },
   { text: "Campus Buddy", icon: <InfoOutlinedIcon />, link: "/campus-buddy" },
 ];
 
-const getNavConfig = (roleName) => {
-  switch (roleName) {
+const getNavConfig = (role) => {
+  console.log("ROLE", role);
+  switch (role) {
     case "admin":
       return adminNavConfig;
     case "faculty":

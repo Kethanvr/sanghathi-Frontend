@@ -1,13 +1,32 @@
 import { useSnackbar } from "notistack";
 import { useState, useContext } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
+// @mui
 import { alpha } from "@mui/material/styles";
 import { Box, Divider, Typography, Stack, MenuItem } from "@mui/material";
+// routes
+// import { PATH_DASHBOARD, PATH_AUTH } from "../../../routes/paths";
+// hooks
+// import useAuth from '../../../hooks/useAuth';
 import useIsMountedRef from "../../hooks/useIsMountedRef";
+// components
 import MyAvatar from "../../components/MyAvatar";
 import MenuPopover from "../../components/MenuPopover";
 import IconButtonAnimate from "../../components/animate/IconButtonAnimate";
 import { AuthContext } from "../../context/AuthContext";
+
+// ----------------------------------------------------------------------
+
+const MENU_OPTIONS = [
+  {
+    label: "Home",
+    linkTo: "/",
+  },
+  {
+    label: "Profile",
+    linkTo: "/Profile",
+  },
+];
 
 // ----------------------------------------------------------------------
 
@@ -43,18 +62,6 @@ export default function AccountPopover() {
       enqueueSnackbar("Unable to logout!", { variant: "error" });
     }
   };
-
-  // Dynamically determine menu options based on user role
-  const MENU_OPTIONS = [
-    { label: "Home", linkTo: "/" },
-    {
-      label: "Profile",
-      linkTo:
-        user?.roleName === "faculty"
-          ? "/faculty/FacultyProfile"
-          : "/student/StudentProfileOnly",
-    },
-  ];
 
   return (
     <>
