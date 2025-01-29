@@ -26,6 +26,7 @@ import Thread from "./pages/Thread/Thread";
 import ThreadWindow from "./pages/Thread/ThreadWindow";
 import Report from "./pages/Report/Report";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import ViewUsers from "./pages/Admin/ViewUsers";
 import FacultyDashboard from "./pages/Faculty/FacultyDashboard";
 import MentorAssignmentDialog from "./pages/MentorAllocation/MentorAssignmentDialog";
 import MentorSuggestionMenu from "./pages/MentorAllocation/MentorSuggestionMenu";
@@ -76,6 +77,30 @@ function App() {
                     }
                   />
                   <Route
+                    path="/admin/add-user"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={User} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/admin/mentor-assignment"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={MentorAllocation} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/admin/users"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={ViewUsers} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
                     path="/chat"
                     element={
                       <ProtectedRouteWrapper>
@@ -88,14 +113,6 @@ function App() {
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={MeetingCalendar} />
-                      </ProtectedRouteWrapper>
-                    }
-                  />
-                  <Route
-                    path="/admin/add-user"
-                    element={
-                      <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={User} />
                       </ProtectedRouteWrapper>
                     }
                   />
@@ -131,14 +148,7 @@ function App() {
                       </ProtectedRouteWrapper>
                     }
                   />
-                  <Route
-                    path="/admin/mentor-assignment"
-                    element={
-                      <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={MentorAllocation} />
-                      </ProtectedRouteWrapper>
-                    }
-                  />
+                  
                   <Route
                     path="/mentees"
                     element={

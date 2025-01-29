@@ -36,7 +36,8 @@ function UserList({ onEdit }) {
   const [openDialog, setOpenDialog] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const rowsPerPageOptions = [20, 10, 25];
+  const [rowsPerPage, setRowsPerPage] = useState(rowsPerPageOptions[0]);
   const { enqueueSnackbar } = useSnackbar();
 
   const handleChangePage = (event, newPage) => {
@@ -48,8 +49,6 @@ function UserList({ onEdit }) {
     setPage(0);
   };
 
-  const rowsPerPageOptions = [20, 10, 25];
-
   const tableHeaderColor =
     theme.palette.mode === "dark" ? "#37404a" : "#e9eaeb";
 
@@ -59,7 +58,7 @@ function UserList({ onEdit }) {
       const { status, data } = await response.data;
       if (status === "success") {
         const users = data.users;
-        console.log(users);
+        console.log("Users data:",users);
         setUsers(users);
       } else {
         throw new Error("Error fetching users");
@@ -152,12 +151,14 @@ function UserList({ onEdit }) {
                           alt={user.name}
                           sx={{ width: 50, height: 50 }}
                         />
-                        <Typography sx={{ ml: 1 }}>{user.name}</Typography>
+                        <Typography sx={{ ml: 1 }}>
+                          {user.name || "N/A"}
+                        </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.phone}</TableCell>
-                    <TableCell>{user.role}</TableCell>
+                    <TableCell>{user.email || "N/A"}</TableCell>
+                    <TableCell>{user.phone || "N/A"}</TableCell>
+                    <TableCell>{typeof user.roleName === 'string' ? user.roleName : 'N/A'}</TableCell>
                     <TableCell>
                       <IconButton onClick={(event) => handleClick(event, user)}>
                         <MoreVertIcon />
@@ -203,7 +204,7 @@ function UserList({ onEdit }) {
             <TablePagination
               rowsPerPageOptions={rowsPerPageOptions}
               component="div"
-              count={users?.length}
+              count={users?.length || 0}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={handleChangePage}

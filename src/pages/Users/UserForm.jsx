@@ -76,6 +76,8 @@ export default function UserForm({ editingUser }) {
   useEffect(() => {
     const fetchRoleId = async () => {
       try {
+        const selectedRole = methods.watch("role"); // Watch for role changes
+      if (!selectedRole) return;
         const { data } = await api.get(`/roles/${methods.getValues("role")}`);
         setRoleId(data._id);  // Save the role ObjectId
       } catch (error) {
@@ -85,7 +87,7 @@ export default function UserForm({ editingUser }) {
     if (methods.getValues("role")) {
       fetchRoleId();
     }
-  }, [methods]);
+  }, [methods.watch("role")]);
 
   // Handle form submission
   const onSubmit = useCallback(
@@ -95,13 +97,14 @@ export default function UserForm({ editingUser }) {
         return; // Prevent submission if roleId is empty
       }
   
-      console.log("Selected Role ID:", roleId); // Log roleId to check if it's correct
+      console.log("Selected Role ID:", roleId); 
   
       try {
         const userData = {
           ...formData,
           avatar,
-          role: roleId,  // Pass the ObjectId of role
+          role: roleId,
+          roleName: formData.role,
         };
         console.log(userData);
   
