@@ -1,3 +1,4 @@
+// MentorAssignmentDialog.jsx
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -6,15 +7,12 @@ import {
   DialogActions,
   TextField,
   Button,
-  IconButton,
 } from "@mui/material";
-import axios from "axios";
+import api from "../../utils/axios";
 import MentorSuggestionMenu from "./MentorSuggestionMenu";
 
-import api from "../../utils/axios";
-
-const MentorAssignmentDialog = ({ open, student, onClose }) => {
-  const [selectedMentor, setSelectedMentor] = useState({});
+const MentorAssignmentDialog = ({ open, studentIds, onClose }) => {
+  const [selectedMentor, setSelectedMentor] = useState({ name: "" }); // Initialize with empty name
   const [anchorEl, setAnchorEl] = useState(null);
   const [mentors, setMentors] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
@@ -24,53 +22,60 @@ const MentorAssignmentDialog = ({ open, student, onClose }) => {
       try {
         const response = await api.get("/users?role=faculty");
         const { data } = response.data;
-        console.log(data);
         setMentors(data.users);
       } catch (error) {
         console.error(error);
       }
     };
 
-    fetchMentors();
-  }, []);
+    if (open) {
+      fetchMentors();
+    }
+  }, [open]);
 
   const handleMentorNameChange = (event) => {
-    const value = event.target.value.trim();
-    if (value !== "") {
+    const value = event.target.value;
+    setSelectedMentor({ ...selectedMentor, name: value });
+    
+    if (value.trim() !== "") {
       setSuggestions(
-        // Convert the list of names to a list of mentor objects
         mentors.filter((mentor) =>
           mentor.name.toLowerCase().startsWith(value.toLowerCase())
         )
       );
-
       setAnchorEl(event.target);
     } else {
       setSuggestions([]);
+      setAnchorEl(null);
     }
-    setSelectedMentor(event.target.value);
   };
 
   const handleSave = async () => {
     try {
-      const response = await api.post("/mentors", {
+      // Using the batch endpoint for multiple students
+      const response = await api.post("/mentors/batch", {
         mentorId: selectedMentor._id,
-        menteeId: student._id,
+        menteeIds: studentIds,
         startDate: new Date().toISOString(),
       });
-      console.log(response.data.message);
-      onClose();
+
+      console.log(response.data.message); // Log success message
+      handleCancel();
     } catch (error) {
-      console.error(error);
+      console.error("Error assigning mentor:", error);
     }
   };
 
   const handleCancel = () => {
-    setSelectedMentor({});
+    setSelectedMentor({ name: "" });
+    setSuggestions([]);
+    setAnchorEl(null);
     onClose();
   };
 
-  const handleClose = () => {
+  const handleMentorSelect = (mentor) => {
+    setSelectedMentor(mentor);
+    setSuggestions([]);
     setAnchorEl(null);
   };
 
@@ -83,7 +88,9 @@ const MentorAssignmentDialog = ({ open, student, onClose }) => {
       fullWidth={true}
       sx={{ "& .MuiPaper-root": { maxWidth: 500 } }}
     >
-      <DialogTitle id="mentor-dialog-title">Assign Mentor</DialogTitle>
+      <DialogTitle id="mentor-dialog-title">
+        Assign Mentor to {studentIds.length} Selected Student(s)
+      </DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
@@ -91,22 +98,27 @@ const MentorAssignmentDialog = ({ open, student, onClose }) => {
           label="Mentor Name"
           type="text"
           fullWidth
-          value={selectedMentor ? selectedMentor.name : ""}
+          value={selectedMentor.name || ""}
           onChange={handleMentorNameChange}
         />
         {suggestions.length > 0 && (
           <MentorSuggestionMenu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
-            onClose={handleClose}
+            onClose={() => setAnchorEl(null)}
             suggestions={suggestions}
-            onMentorSelect={setSelectedMentor}
+            onMentorSelect={handleMentorSelect}
           />
         )}
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCancel}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" color="primary">
+        <Button 
+          onClick={handleSave} 
+          variant="contained" 
+          color="primary"
+          disabled={!selectedMentor._id}
+        >
           Save
         </Button>
       </DialogActions>

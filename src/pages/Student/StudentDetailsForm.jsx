@@ -1,10 +1,9 @@
 import { useSnackbar } from "notistack";
 import { useCallback, useContext, useState, useEffect } from "react";
-
 import api from "../../utils/axios";
 
 // form
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { AuthContext } from "../../context/AuthContext";
 
 // @mui
@@ -24,11 +23,64 @@ const yesNoOptions = [
   { value: "no", label: "No" },
 ];
 
+
 export default function StudentDetailsForm() {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
   const [isDataFetched, setIsDataFetched] = useState(false);
+
   const methods = useForm();
+  const watchedValues = useWatch({
+    control: methods.control,
+    name: [
+      "studentProfile.fullName.firstName",
+      "studentProfile.fullName.middleName",
+      "studentProfile.fullName.lastName",
+      "studentProfile.department",
+      "studentProfile.sem",
+      "studentProfile.personalEmail",
+      "studentProfile.email",
+      "studentProfile.usn",
+      "studentProfile.dateOfBirth",
+      "studentProfile.bloodGroup",
+      "studentProfile.mobileNumber",
+      "studentProfile.alternatePhoneNumber",
+      "studentProfile.nationality",
+      "studentProfile.domicile",
+      "studentProfile.category",
+      "studentProfile.caste",
+      "studentProfile.aadharCardNumber",
+      "studentProfile.admissionDate",
+      "studentProfile.hostelite",
+      "studentProfile.physicallyChallenged"
+    ]
+  });
+  const shouldShrink = (fieldName) => {
+    const fieldIndex = [
+      "studentProfile.fullName.firstName",
+      "studentProfile.fullName.middleName",
+      "studentProfile.fullName.lastName",
+      "studentProfile.department",
+      "studentProfile.sem",
+      "studentProfile.personalEmail",
+      "studentProfile.email",
+      "studentProfile.usn",
+      "studentProfile.dateOfBirth",
+      "studentProfile.bloodGroup",
+      "studentProfile.mobileNumber",
+      "studentProfile.alternatePhoneNumber",
+      "studentProfile.nationality",
+      "studentProfile.domicile",
+      "studentProfile.category",
+      "studentProfile.caste",
+      "studentProfile.aadharCardNumber",
+      "studentProfile.admissionDate",
+      "studentProfile.hostelite",
+      "studentProfile.physicallyChallenged"
+    ].indexOf(fieldName);
+    return watchedValues[fieldIndex] !== undefined && watchedValues[fieldIndex] !== "" && watchedValues[fieldIndex] !== null;
+  };
+
   const {
     handleSubmit,
     reset,
@@ -42,6 +94,7 @@ export default function StudentDetailsForm() {
       const { data } = response.data;
       
       if (data) {
+        
         // Set each form field using the fetched data
         Object.keys(data.studentProfile).forEach((key) => {
           if (data.studentProfile[key] && typeof data.studentProfile[key] === "object") {
@@ -71,7 +124,10 @@ export default function StudentDetailsForm() {
 
   const onSubmit = useCallback(async (formData) => {
     try {
-      await api.post("/students/profile", formData.studentProfile);
+      await api.post("/students/profile", {
+        userId: user._id,
+        ...formData.studentProfile,
+      });
       enqueueSnackbar("Student profile updated successfully!", {
         variant: "success",
       });
@@ -120,21 +176,21 @@ export default function StudentDetailsForm() {
                 fullWidth
                 required={!isDataFetched}
                 autoComplete="given-name"
-                InputLabelProps={{ shrink: isDataFetched }}
+                InputLabelProps={{ shrink: shouldShrink("studentProfile.fullName.firstName") }}
               />
               <RHFTextField
                 name="studentProfile.fullName.middleName"
                 label="Middle Name"
                 fullWidth
                 autoComplete="additional-name"
-                InputLabelProps={{ shrink: isDataFetched }}
+                InputLabelProps={{ shrink: shouldShrink("studentProfile.fullName.middleName") }}
               />
               <RHFTextField
                 name="studentProfile.fullName.lastName"
                 label="Last Name"
                 fullWidth
                 autoComplete="family-name"
-                InputLabelProps={{ shrink: isDataFetched }}
+                InputLabelProps={{ shrink: shouldShrink("studentProfile.fullName.lastName") }}
               />
               <RHFTextField
                 name="studentProfile.department"
@@ -142,7 +198,15 @@ export default function StudentDetailsForm() {
                 fullWidth
                 required={!isDataFetched}
                 autoComplete="off"
-                InputLabelProps={{ shrink: isDataFetched }}
+                InputLabelProps={{ shrink: shouldShrink("studentProfile.department") }}
+              />
+              <RHFTextField
+                name="studentProfile.sem"
+                label="Semester"
+                fullWidth
+                required={!isDataFetched}
+                autoComplete="off"
+                InputLabelProps={{ shrink: shouldShrink("studentProfile.sem") }}
               />
               <RHFTextField
                 name="studentProfile.personalEmail"
@@ -151,7 +215,7 @@ export default function StudentDetailsForm() {
                 fullWidth
                 required={!isDataFetched}
                 autoComplete="email"
-                InputLabelProps={{ shrink: isDataFetched }}
+                InputLabelProps={{ shrink: shouldShrink("studentProfile.personalEmail") }}
               />
             </Stack>
           </Card>
@@ -168,7 +232,7 @@ export default function StudentDetailsForm() {
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="email"
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.email") }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -178,7 +242,7 @@ export default function StudentDetailsForm() {
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="off"
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.usn") }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -188,7 +252,7 @@ export default function StudentDetailsForm() {
                   type="date"
                   fullWidth
                   required={!isDataFetched}
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.dateOfBirth") }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -197,7 +261,7 @@ export default function StudentDetailsForm() {
                   label="Blood Group"
                   fullWidth
                   autoComplete="off"
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.bloodGroup") }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -208,7 +272,7 @@ export default function StudentDetailsForm() {
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="tel"
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.mobileNumber") }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -218,7 +282,7 @@ export default function StudentDetailsForm() {
                   type="tel"
                   fullWidth
                   autoComplete="tel"
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.alternatePhoneNumber") }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -228,7 +292,7 @@ export default function StudentDetailsForm() {
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="off"
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.nationality") }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -237,7 +301,7 @@ export default function StudentDetailsForm() {
                   label="Domicile"
                   fullWidth
                   autoComplete="off"
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.domicile") }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -246,7 +310,7 @@ export default function StudentDetailsForm() {
                   label="Category"
                   fullWidth
                   autoComplete="off"
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.category") }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -255,7 +319,7 @@ export default function StudentDetailsForm() {
                   label="Caste"
                   fullWidth
                   autoComplete="off"
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.caste") }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -265,7 +329,7 @@ export default function StudentDetailsForm() {
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="off"
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.aadharCardNumber") }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -275,7 +339,7 @@ export default function StudentDetailsForm() {
                   type="date"
                   fullWidth
                   required={!isDataFetched}
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.admissionDate") }}
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -283,8 +347,9 @@ export default function StudentDetailsForm() {
                   name="studentProfile.hostelite"
                   label="Hostelite"
                   fullWidth
+                  autoComplete="off"
                   required={!isDataFetched}
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.hostelite") }}
                 >
                   {yesNoOptions.map((option) => (
                     <option key={option.value}>{option.label}</option>
@@ -295,9 +360,10 @@ export default function StudentDetailsForm() {
                 <RHFSelect
                   name="studentProfile.physicallyChallenged"
                   label="Physically Challenged"
+                  autoComplete="off"
                   fullWidth
                   required={!isDataFetched}
-                  InputLabelProps={{ shrink: isDataFetched }}
+                  InputLabelProps={{ shrink: shouldShrink("studentProfile.physicallyChallenged") }}
                 >
                   {yesNoOptions.map((option) => (
                     <option key={option.value}>{option.label}</option>

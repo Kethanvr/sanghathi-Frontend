@@ -1,37 +1,61 @@
 import React from "react";
 import {
   Table,
-  TableHead,
   TableBody,
-  TableRow,
   TableCell,
+  TableHead,
+  TableRow,
+  Checkbox,
 } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
 
-const StudentTable = ({ students, onEdit }) => {
+const StudentTable = ({ students, selectedStudents, onSelectStudent }) => {
+  console.log('Students data:',students);
+  const handleSelectAll = (event) => {
+    if (event.target.checked) {
+      onSelectStudent(students.map(student => student._id));
+    } else {
+      onSelectStudent([]);
+    }
+  };
+
   return (
     <Table>
       <TableHead>
         <TableRow>
+          <TableCell padding="checkbox">
+            <Checkbox
+              checked={selectedStudents.length === students.length}
+              indeterminate={selectedStudents.length > 0 && selectedStudents.length < students.length}
+              onChange={handleSelectAll}
+            />
+          </TableCell>
           <TableCell>Name</TableCell>
           <TableCell>USN</TableCell>
-          <TableCell>Allocated Mentor</TableCell>
-          <TableCell>Action</TableCell>
+          <TableCell>Branch</TableCell>
+          <TableCell>Sem</TableCell>
+          <TableCell>Current Mentor</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
         {students.map((student) => (
           <TableRow key={student._id}>
+            <TableCell padding="checkbox">
+              <Checkbox
+                checked={selectedStudents.includes(student._id)}
+                onChange={(event) => {
+                  if (event.target.checked) {
+                    onSelectStudent([...selectedStudents, student._id]);
+                  } else {
+                    onSelectStudent(selectedStudents.filter(id => id !== student._id));
+                  }
+                }}
+              />
+            </TableCell>
             <TableCell>{student.name}</TableCell>
-            <TableCell>{student.usn}</TableCell>
-            <TableCell>
-              {student.mentor && student.mentor.name
-                ? student.mentor.name
-                : "Unassigned"}
-            </TableCell>
-            <TableCell>
-              <EditIcon onClick={() => onEdit(student)} />
-            </TableCell>
+            <TableCell>{student?.profile?.usn || 'N/A'}</TableCell>
+            <TableCell>{student?.profile?.department || 'N/A'}</TableCell>
+            <TableCell>{student?.profile?.sem || 'N/A'}</TableCell>
+            <TableCell>{student?.mentor?.name || "Not Assigned"}</TableCell>
           </TableRow>
         ))}
       </TableBody>

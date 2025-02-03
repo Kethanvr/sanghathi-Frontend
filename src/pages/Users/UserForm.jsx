@@ -26,6 +26,8 @@ const getUserSchema = (editingUser) => {
     email: Yup.string().email("Email is invalid").required("Email is required"),
     phone: Yup.string().required("Phone is required"),
     role: Yup.string().required("Role is required"),
+    department: Yup.string().required("Department is required"),
+    usn: Yup.string().required("USN is required"),
   };
 
   const passwordSchema = {
@@ -67,6 +69,8 @@ export default function UserForm({ editingUser }) {
       password: "",
       passwordConfirm: "",
       role: editingUser?.role || "admin",
+      department: "",
+      usn: "",
     },
   });
 
@@ -100,32 +104,83 @@ export default function UserForm({ editingUser }) {
       console.log("Selected Role ID:", roleId); 
   
       try {
+        // Split the name into first and last name
+        const nameParts = formData.name.split(' ');
+        const firstName = nameParts[0];
+        const lastName = nameParts.slice(1).join(' ') || '';
+  
+        // Create profile first
+        const profileData = {
+          fullName: {
+            firstName,
+            lastName
+          },
+          department: formData.department,
+          usn: formData.usn,
+          email: formData.email,
+          mobileNumber: formData.phone
+        };
+  
+        console.log('Creating profile with data:', profileData);
+        
+        const profileResponse = await api.post("/students/profile", profileData);
+        
+        if (!profileResponse.data?.data?.studentProfile?._id) {
+          throw new Error('Profile creation failed');
+        }
+  
+        const profileId = profileResponse.data.data.studentProfile._id;
+        console.log('Profile ID', profileId);
+  
+        // Create user with profile reference
         const userData = {
-          ...formData,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          passwordConfirm: formData.passwordConfirm,
           avatar,
           role: roleId,
           roleName: formData.role,
+          profile: profileId.toString() // Convert to string if needed
         };
-        console.log(userData);
   
-        if (editingUser) {
-          const { password, passwordConfirm, ...updateData } = userData;
-          await api.patch(`/users/${editingUser._id}`, updateData);
-          enqueueSnackbar("User updated successfully!", { variant: "success" });
-        } else {
-          await api.post("/users", userData);
+        console.log('Creating user with data:', userData);
+  
+        try {
+          // Create user
+          const userResponse = await api.post("/users", {
+            ...userData,
+            profile: profileId // Make sure profile ID is included in the top level
+          });
+          
+          if (userResponse.data?._id) {
+            // Update profile with user ID
+            await api.patch(`/students/profile/${profileId}`, {
+              userId: userResponse.data._id
+            });
+          }
+  
           enqueueSnackbar("User created successfully!", { variant: "success" });
           reset();
           setAvatar(null);
+        } catch (userError) {
+          // If user creation fails, delete the profile
+          await api.delete(`/students/profile/${profileId}`);
+          throw userError;
         }
+        
       } catch (error) {
-        console.error(error);
-        enqueueSnackbar("An error occurred while processing the request", {
-          variant: "error",
-        });
+        console.error('Detailed error:', error.response?.data);
+        enqueueSnackbar(
+          error.response?.data?.message || 
+          error.message || 
+          "An error occurred while processing the request", 
+          { variant: "error" }
+        );
       }
     },
-    [methods, editingUser, roleId]  // Added roleId as dependency
+    [methods, roleId, avatar, reset, enqueueSnackbar]
   );
   
 
@@ -150,7 +205,7 @@ export default function UserForm({ editingUser }) {
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
-          <Card sx={{ height: "500px", py: 10, px: 3, textAlign: "center" }}>
+          <Card sx={{ py: 10, px: 3, textAlign: "center" }}>
             <RHFUploadAvatar
               name="avatar"
               accept="image/*"
@@ -175,7 +230,7 @@ export default function UserForm({ editingUser }) {
           </Card>
         </Grid>
         <Grid item xs={12} md={8}>
-          <Card sx={{ p: 3, height: "500px" }}>
+          <Card sx={{ p: 3 }}>
             <Stack spacing={3}>
               <RHFTextField
                 name="name"
@@ -191,6 +246,18 @@ export default function UserForm({ editingUser }) {
                 required
                 fullWidth
                 autoComplete="email"
+              />
+              <RHFTextField
+                name="department"
+                label="Department"
+                required
+                fullWidth
+              />
+              <RHFTextField
+                name="usn"
+                label="USN"
+                required
+                fullWidth
               />
               <RHFTextField
                 name="phone"
@@ -251,6 +318,8 @@ export default function UserForm({ editingUser }) {
                         password: "",
                         passwordConfirm: "",
                         role: "admin",
+                        department: "",
+                        usn: "",
                       });
                       setAvatar(null);
                     }}
