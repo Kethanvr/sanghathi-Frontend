@@ -3,7 +3,6 @@ import { io } from "socket.io-client";
 import { AuthContext } from "../context/AuthContext";
 import { BASE_URL, SOCKET_URL } from "../config";
 import ChatContext from "../context/ChatContext";
-// import { AuthContext } from "../context/AuthContext";
 
 import api from "../utils/axios";
 
@@ -16,7 +15,6 @@ export default function ChatProvider({ children }) {
 
   const { user } = useContext(AuthContext);
   console.log(user);
-  // const user._id = "6440840795719c38cc99d814";
 
   useEffect(() => {
     socket.current = io(SOCKET_URL);

@@ -12,11 +12,18 @@ import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 
 const adminNavConfig = [
   {
+    text: "Home",
+    icon: <HomeOutlinedIcon />,
+    link: "/admin/dashboard",
+  },
+  {
     text: "Add User",
     icon: <PersonAddOutlinedIcon />,
     link: "/admin/add-user",
   },
-  { text: "View Users", icon: <PeopleOutlinedIcon />, link: "/admin/users" },
+  { text: "View Users", 
+    icon: <PeopleOutlinedIcon />, 
+    link: "/admin/users" },
   {
     text: "Mentor Assignment",
     icon: <PersonOutlinedIcon />,
@@ -26,8 +33,8 @@ const adminNavConfig = [
 ];
 
 const facultyNavConfig = [
+  { text: "Home", icon: <HomeOutlinedIcon />, link: "/faculty/dashboard" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
-  // { text: "Report", icon: <ReportOutlinedIcon />, link: "/report" },
   { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
   { text: "Chat", icon: <ChatOutlinedIcon />, link: "/chat" },
   { text: "Campus Buddy", icon: <InfoOutlinedIcon />, link: "/campus-buddy" },
@@ -37,7 +44,6 @@ const facultyNavConfig = [
 const studentNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
-  // { text: "Report", icon: <ReportOutlinedIcon />, link: "/report" },
   { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
   { text: "Chat", icon: <ChatOutlinedIcon />, link: "/chat" },
   { text: "Campus Buddy", icon: <InfoOutlinedIcon />, link: "/campus-buddy" },

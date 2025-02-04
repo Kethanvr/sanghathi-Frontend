@@ -14,34 +14,46 @@ import Iconify from "../../components/Iconify";
 import HeaderBreadcrumbs from "../../components/HeaderBreadcrumbs";
 // sections
 
-import UserForm from "./UserForm";
-import UserList from "./UserList";
+import marks from "./AddMarks";
+import attendance from "./AddAttendance";
 import React from "react";
 
 // ----------------------------------------------------------------------
 
-export default function User() {
+export default function Data() {
   const [editingUser, setEditingUser] = useState(null);
   const { currentTab, onChangeTab } = useTabs("Create User");
 
   const ACCOUNT_TABS = [
     {
-      value: "Create User",
+      value: "Add Attendance",
       icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
-      component: <UserForm editingUser={editingUser} />,
+      component: <marks editingUser={editingUser} />,
     },
-    // {
-    //   value: "User List",
-    //   icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
-    //   component: (
-    //     <UserList
-    //       onEdit={(user) => {
-    //         setEditingUser(user);
-    //         onChangeTab(null, "Create User");
-    //       }}
-    //     />
-    //   ),
-    // },
+    {
+      value: "Add IAT Marks",
+      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
+      component: (
+        <attendance
+          onEdit={(user) => {
+            setEditingUser(user);
+            onChangeTab(null, "Create User");
+          }}
+        />
+      ),
+    },
+    {
+      value: "Add External Marks",
+      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
+      component: (
+        <attendance
+          onEdit={(user) => {
+            setEditingUser(user);
+            onChangeTab(null, "Create User");
+          }}
+        />
+      ),
+    },
   ];
 
   return (

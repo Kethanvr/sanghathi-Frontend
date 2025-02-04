@@ -18,6 +18,7 @@ import {
 export default function CareerCounselling() {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
+  console.log(user);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const methods = useForm();
 

@@ -32,8 +32,22 @@ const Login = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { isFetching, dispatch } = useContext(AuthContext);
 
+  const [isAdminDemoChecked, setIsAdminDemoChecked] = useState(false);
   const [isFacultyDemoChecked, setIsFacultyDemoChecked] = useState(false);
   const [isStudentDemoChecked, setIsStudentDemoChecked] = useState(false);
+
+  const handleAdminDemoChange = (event) => {
+    setIsAdminDemoChecked(event.target.checked);
+    if (event.target.checked) {
+      email.current.value = "ghost@ex.com";
+      password.current.value = "ghost1234";
+      setIsStudentDemoChecked(false);
+      setIsFacultyDemoChecked(false);
+    } else {
+      email.current.value = "";
+      password.current.value = "";
+    }
+  };
 
   const handleFacultyDemoChange = (event) => {
     setIsFacultyDemoChecked(event.target.checked);
@@ -41,6 +55,7 @@ const Login = () => {
       email.current.value = "demofaculty@emithru.com";
       password.current.value = "demofacultypassword";
       setIsStudentDemoChecked(false);
+      setIsAdminDemoChecked(false);
     } else {
       email.current.value = "";
       password.current.value = "";
@@ -53,6 +68,7 @@ const Login = () => {
       email.current.value = "demostudent@emithru.com";
       password.current.value = "demostudentpassword";
       setIsFacultyDemoChecked(false);
+      setIsAdminDemoChecked(false);
     } else {
       email.current.value = "";
       password.current.value = "";
@@ -79,7 +95,6 @@ const Login = () => {
 
       // Redirect based on user's roleName
       if (data.data.user.roleName === "admin") {
-        // Redirect to admin dashboard
         navigate("/admin/dashboard");
       } else {
         // Redirect to regular user dashboard or home page
@@ -148,6 +163,15 @@ const Login = () => {
                         <Typography variant="subtitle1" gutterBottom>
                           Demo Credentials
                         </Typography>
+                        <FormControlLabel
+                          control={
+                            <Radio
+                              checked={isAdminDemoChecked}
+                              onChange={handleAdminDemoChange}
+                            />
+                          }
+                          label="Admin Demo"
+                        />
                         <FormControlLabel
                           control={
                             <Radio

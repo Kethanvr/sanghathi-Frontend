@@ -27,6 +27,7 @@ import ThreadWindow from "./pages/Thread/ThreadWindow";
 import Report from "./pages/Report/Report";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import ViewUsers from "./pages/Admin/ViewUsers";
+import Data from "./pages/Admin/Data";
 import FacultyDashboard from "./pages/Faculty/FacultyDashboard";
 import MentorAssignmentDialog from "./pages/MentorAllocation/MentorAssignmentDialog";
 import MentorSuggestionMenu from "./pages/MentorAllocation/MentorSuggestionMenu";
@@ -85,6 +86,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/admin/users"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={ViewUsers} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
                     path="/admin/mentor-assignment"
                     element={
                       <ProtectedRouteWrapper>
@@ -93,10 +102,10 @@ function App() {
                     }
                   />
                   <Route
-                    path="/admin/users"
+                    path="/admin/data"
                     element={
                       <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={ViewUsers} />
+                        <LazyLoadWrapper component={Data} />
                       </ProtectedRouteWrapper>
                     }
                   />

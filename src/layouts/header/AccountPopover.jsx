@@ -20,7 +20,7 @@ import { AuthContext } from "../../context/AuthContext";
 const MENU_OPTIONS = [
   {
     label: "Home",
-    linkTo: "/",
+    linkTo: "/admin/dashboard",
   },
   {
     label: "Profile",

@@ -1,79 +1,101 @@
-// AdminDashboard.jsx
 import React from "react";
 import {
-  Box,
+  Container,
   Typography,
   Grid,
   Card,
   CardActionArea,
   CardContent,
-  styled,
+  useTheme,
 } from "@mui/material";
 import {
   PersonAdd as PersonAddIcon,
   PeopleAlt as PeopleAltIcon,
+  Assignment as AssignmentIcon,
 } from "@mui/icons-material";
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { Link } from "react-router-dom";
+import { blueGrey } from "@mui/material/colors";
 
-const Root = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(4),
-}));
-
-const CardContainer = styled(Grid)(({ theme }) => ({
-  marginTop: theme.spacing(4),
-}));
-
-const CustomCard = styled(Card)(({ theme }) => ({
-  height: "100%",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  textAlign: "center",
-  transition: "transform 0.2s",
-  "&:hover": {
-    transform: "scale(1.05)",
-  },
-}));
-
-const CardIcon = styled(Box)(({ theme }) => ({
-  fontSize: "4rem",
-  marginBottom: theme.spacing(2),
-}));
+const AdminTile = ({ title, icon, link }) => {
+  const theme = useTheme();
+  return (
+    <Card
+      sx={{
+        transition: "transform 0.2s",
+        "&:hover": {
+          transform: "scale(1.05)",
+        },
+      }}
+    >
+      <CardActionArea component={Link} to={link}>
+        <CardContent
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+            backgroundColor: theme.palette.secondary[200],
+            color: blueGrey[100],
+            minHeight: "230px",
+            "&:hover": {
+              backgroundColor: theme.palette.primary[600],
+            },
+          }}
+        >
+          {icon}
+          <Typography variant="h6" component="div" sx={{ mt: 1 }}>
+            {title}
+          </Typography>
+        </CardContent>
+      </CardActionArea>
+    </Card>
+  );
+};
 
 const AdminDashboard = () => {
   return (
-    <Root>
-      <Typography variant="h4" gutterBottom>
+    <Container
+      maxWidth="xl"
+      sx={{
+        p: 8,
+      }}
+    >
+      <Typography
+        variant="h2"
+        align="center"
+        gutterBottom
+        sx={{
+          mb: 6,
+          fontWeight: "bold",
+        }}
+      >
         Admin Dashboard
       </Typography>
-      <CardContainer container spacing={3}>
-        <Grid item xs={12} sm={6}>
-          <CustomCard component={Link} to="/admin/add-user">
-            <CardActionArea>
-              <CardContent>
-                <CardIcon>
-                  <PersonAddIcon color="primary" />
-                </CardIcon>
-                <Typography variant="h6">Add New User</Typography>
-              </CardContent>
-            </CardActionArea>
-          </CustomCard>
+      <Grid container spacing={3}>
+        <Grid item xs={12} sm={6} md={4}>
+          <AdminTile
+            title="Add New User"
+            icon={<PersonAddIcon fontSize="large" />}
+            link="/admin/add-user"
+          />
         </Grid>
-        <Grid item xs={12} sm={6}>
-          <CustomCard component={Link} to="/admin/users">
-            <CardActionArea>
-              <CardContent>
-                <CardIcon>
-                  <PeopleAltIcon color="primary" />
-                </CardIcon>
-                <Typography variant="h6">View All Users</Typography>
-              </CardContent>
-            </CardActionArea>
-          </CustomCard>
+        <Grid item xs={12} sm={6} md={4}>
+          <AdminTile
+            title="View All Users"
+            icon={<PeopleAltIcon fontSize="large" />}
+            link="/admin/users"
+          />
         </Grid>
-      </CardContainer>
-    </Root>
+        <Grid item xs={12} sm={6} md={4}>
+          <AdminTile
+            title="Add Data"
+            icon={<AssignmentIcon fontSize="large" />}
+            link="/admin/data"
+          />
+        </Grid>
+      </Grid>
+    </Container>
   );
 };
 
