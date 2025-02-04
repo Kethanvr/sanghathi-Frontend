@@ -342,3 +342,4 @@ export default function UserForm({ editingUser }) {
     </FormProvider>
   );
 }
+export {getUserSchema};

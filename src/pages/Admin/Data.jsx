@@ -16,28 +16,34 @@ import HeaderBreadcrumbs from "../../components/HeaderBreadcrumbs";
 
 import marks from "./AddMarks";
 import attendance from "./AddAttendance";
+import AddStudents from "./AddStudents";
 import React from "react";
 
 // ----------------------------------------------------------------------
 
 export default function Data() {
   const [editingUser, setEditingUser] = useState(null);
-  const { currentTab, onChangeTab } = useTabs("Create User");
+  const { currentTab, onChangeTab } = useTabs("Add Students");
 
   const ACCOUNT_TABS = [
     {
+      value: "Add Students",
+      icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
+      component: <AddStudents editingUser={editingUser} />,
+    },
+    {
       value: "Add Attendance",
       icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
-      component: <marks editingUser={editingUser} />,
+      component: <attendance editingUser={editingUser} />,
     },
     {
       value: "Add IAT Marks",
       icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
       component: (
-        <attendance
+        <marks
           onEdit={(user) => {
             setEditingUser(user);
-            onChangeTab(null, "Create User");
+            onChangeTab(null, "Add IAT Marks");
           }}
         />
       ),
@@ -46,10 +52,10 @@ export default function Data() {
       value: "Add External Marks",
       icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
       component: (
-        <attendance
+        <marks
           onEdit={(user) => {
             setEditingUser(user);
-            onChangeTab(null, "Create User");
+            onChangeTab(null, "Add External Marks");
           }}
         />
       ),
