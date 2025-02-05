@@ -2,6 +2,10 @@ import { Container, Grid, Typography, Box, useTheme } from "@mui/material";
 import Page from "../../components/Page";
 import { Card, CardHeader, CardContent, CardActionArea } from "@mui/material";
 import { useState } from "react";
+import Thread from "../../pages/Thread/Thread"
+import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlined";
+import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+
 import {
   Dialog,
   DialogTitle,
@@ -36,6 +40,7 @@ import { Link } from "react-router-dom";
 const StudentTile = ({ title, icon, link }) => {
   const theme = useTheme();
   return (
+    
     <Card
       sx={{
         transition: "transform 0.2s",
@@ -82,9 +87,21 @@ const FacultyDashboard = () => {
       <Container
         maxWidth="xl"
         sx={{
-          p: 8,
+          p: 3,
         }}
       >
+        <Typography
+                variant="h2"
+                align="center"
+                gutterBottom
+                sx={{
+                  mb: 6,
+                  fontWeight: "bold",
+                }}
+              >
+                Faculty Dashboard
+        </Typography>
+
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={4}>
             <StudentTile
@@ -93,57 +110,26 @@ const FacultyDashboard = () => {
               link="/faculty/FacultyProfile"
             />
           </Grid>
-
           <Grid item xs={12} sm={6} md={4}>
             <StudentTile
-              title="Career review"
-              icon={<PersonIcon fontSize="large" />}
+              title="My Mentees"
+              icon={<PersonOutlinedIcon fontSize="large" />}
               link="/student/CareerReview"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
             <StudentTile
-              title="Scorecard"
-              icon={<AssignmentIcon fontSize="large" />}
-              link="/student/Scorecard"
+              title="Threads"
+              icon={<QuestionAnswerOutlinedIcon fontSize="large" />}
+              link="/threads"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <StudentTile
-              title="Placement"
-              icon={<EmojiEventsIcon fontSize="large" />}
-              link="/student/placement"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <StudentTile
-              title="Attendance"
-              icon={<TodayIcon fontSize="large" />}
-              link="/student/attendance"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <StudentTile
-              title="Parent Teacher Meeting"
-              icon={<GroupIcon fontSize="large" />}
-              link="/student/ptm"
-            />
-          </Grid>
+
+          
+          
+          
+          
         </Grid>
-        {/* <Tooltip title="Report Bug">
-          <Fab
-            color="primary"
-            aria-label="report bug"
-            onClick={handleBugReportDialogOpen}
-            sx={{ position: "fixed", bottom: 16, right: 16 }}
-          >
-            <BugReportIcon />
-          </Fab>
-        </Tooltip>
-        <BugReportDialog
-          open={bugReportDialogOpen}
-          onClose={handleBugReportDialogClose}
-        /> */}
       </Container>
     </Page>
   );

@@ -58,7 +58,7 @@ const AdminDashboard = () => {
     <Container
       maxWidth="xl"
       sx={{
-        p: 8,
+        p: 3,
       }}
     >
       <Typography

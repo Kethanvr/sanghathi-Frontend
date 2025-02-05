@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Container, Tab, Box, Tabs } from "@mui/material";
 // components
 import Page from "../../components/Page";
-import StudentDetailsForm from "../Student/StudentDetailsForm";
+import FacultyDetailsForm from "../Faculty/FacultyDetailsForm";
 
 // ----------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ export default function FacultyProfile() {
   const ACCOUNT_TABS = [
     {
       value: "Faculty Details",
-      component: <StudentDetailsForm />,
+      component: <FacultyDetailsForm />,
     },
   ];
 
