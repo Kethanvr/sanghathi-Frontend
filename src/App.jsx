@@ -54,10 +54,21 @@ function App() {
                 <Route element={<DashboardLayout />}>
                   <Route
                     path="/"
+                    
                     element={
-                      <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={Dashboard} />
-                      </ProtectedRouteWrapper>
+                      user ? (
+                        user.roleName === "faculty" ? (
+                          <Navigate replace to="/faculty/dashboard" />
+                        ) : user.roleName === "admin" ? (
+                          <Navigate replace to="/admin/dashboard" />
+                        ) : (
+                          <ProtectedRouteWrapper allowedRoles={["student"]}>
+                            <LazyLoadWrapper component={Dashboard} />
+                          </ProtectedRouteWrapper>
+                        )
+                      ) : (
+                        <Navigate replace to="/login" />
+                      )
                     }
                   />
 

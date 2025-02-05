@@ -11,7 +11,7 @@ export default function AddStudents() {
   // CSV Template Download
   const handleDownloadTemplate = () => {
     const csvContent =
-      "name,email,phone,role,department,usn,password,passwordConfirm";
+      "name,email,phone,role,department,sem,usn,password,passwordConfirm";
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -43,6 +43,7 @@ export default function AddStudents() {
                     phone,
                     role,
                     department,
+                    sem,
                     usn,
                     password,
                     passwordConfirm,
@@ -53,6 +54,7 @@ export default function AddStudents() {
                     phone,
                     role,
                     department,
+                    sem,
                     usn,
                     password,
                     passwordConfirm,
@@ -95,6 +97,7 @@ export default function AddStudents() {
                     lastName: entry.name.split(" ").slice(1).join(" "),
                   },
                   department: entry.department,
+                  sem: entry.sem,
                   usn: entry.usn,
                   email: entry.email,
                   mobileNumber: entry.phone,
