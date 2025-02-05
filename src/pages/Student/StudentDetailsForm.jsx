@@ -98,7 +98,7 @@ export default function StudentDetailsForm() {
     try {
       const response = await api.get(`/students/profile/${user._id}`);
       const { data } = response.data;
-      
+
       if (data) {
         // Set each form field using the fetched data
         Object.keys(data.studentProfile).forEach((key) => {
@@ -163,21 +163,21 @@ export default function StudentDetailsForm() {
 
   const onSubmit = useCallback(
     async (formData) => {
-    try {
-      await api.post("/students/profile", {
-        userId: user._id,
-        ...formData.studentProfile,
-      });
-      enqueueSnackbar("Student profile updated successfully!", {
-        variant: "success",
-      });
-      reset();
-    } catch (error) {
-      console.error(error);
-      enqueueSnackbar("An error occurred while processing the request", {
-        variant: "error",
-      });
-    }
+      try {
+        await api.post("/students/profile", {
+          userId: user._id,
+          ...formData.studentProfile,
+        });
+        enqueueSnackbar("Student profile updated successfully!", {
+          variant: "success",
+        });
+        reset();
+      } catch (error) {
+        console.error(error);
+        enqueueSnackbar("An error occurred while processing the request", {
+          variant: "error",
+        });
+      }
     },
     [enqueueSnackbar, reset]
   );
