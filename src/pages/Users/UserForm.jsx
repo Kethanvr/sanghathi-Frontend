@@ -26,9 +26,9 @@ const getUserSchema = (editingUser) => {
     email: Yup.string().email("Email is invalid").required("Email is required"),
     phone: Yup.string().required("Phone is required"),
     department: Yup.string().required("Department is required"),
-    sem: Yup.string().required("Sem is required"),
+    sem: Yup.string(),
+    usn: Yup.string(),
     role: Yup.string().required("Role is required"),
-    usn: Yup.string().required("USN is required"),
   };
 
   const passwordSchema = {
@@ -95,100 +95,118 @@ export default function UserForm({ editingUser }) {
     }
   }, [methods.watch("role")]);
 
-  // Handle form submission
+  //handle form submission
   const onSubmit = useCallback(
-    async (formData) => {
-      console.log("Form data:", formData);
-      if (!roleId) {
-        enqueueSnackbar("Role must be selected!", { variant: "error" });
-        return; // Prevent submission if roleId is empty
-      }
-  
-      console.log("Selected Role ID:", roleId); 
-  
-      try {
-        // Split the name into first and last name
-        const nameParts = formData.name.split(' ');
-        const firstName = nameParts[0];
-        const lastName = nameParts.slice(1).join(' ') || '';
-  
-        // Create profile first
-        const profileData = {
-          fullName: {
-            firstName,
-            lastName
-          },
-          department: formData.department,
-          sem: formData.sem,
-          usn: formData.usn,
-          email: formData.email,
-          mobileNumber: formData.phone
-        };
-  
-        console.log('Creating profile with data:', profileData);
-        
-        const profileResponse = await api.post("/students/profile", profileData);
-        console.log('Profile response:', profileResponse.data);
-        
-        if (!profileResponse.data?.data?.studentProfile?._id) {
-          throw new Error('Profile creation failed');
+      async (formData) => {
+        console.log("Form data:", formData);
+        if (!roleId) {
+          enqueueSnackbar("Role must be selected!", { variant: "error" });
+          return; // Prevent submission if roleId is empty
         }
-  
-        const profileId = profileResponse.data.data.studentProfile._id;
-        console.log('Profile ID', profileId);
-  
-        // Create user with profile reference
-        const userData = {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          passwordConfirm: formData.passwordConfirm,
-          avatar,
-          role: roleId,
-          roleName: formData.role,
-          profile: profileId
-        };
-  
-        console.log('Creating user with data:', userData);
-  
+    
+        console.log("Selected Role ID:", roleId); 
+    
         try {
-          // Create user
-          const userResponse = await api.post("/users", {
-            ...userData,
-            profile: profileId
-          });
-          
-          console.log('User Response to create User:', userResponse.data);
-          if (userResponse.data._id) {
-            // Update profile with user ID
-            await api.patch(`/students/profile/${profileId}`, {
-              userId: userResponse.data._id,
+          // Split the name into first and last name
+          const nameParts = formData.name.split(' ');
+          const firstName = nameParts[0];
+          const lastName = nameParts.slice(1).join(' ') || '';
+
+          //Create a user first
+          const userData = {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            passwordConfirm: formData.passwordConfirm,
+            avatar,
+            role: roleId,
+            roleName: formData.role,
+          };
+    
+          console.log('Creating user with data:', userData);  
+            const userResponse = await api.post("/users", {
+              ...userData,
             });
-          }
-  
-          enqueueSnackbar("User created successfully!", { variant: "success" });
-          reset();
-          setAvatar(null);
-        } catch (userError) {
-          // If user creation fails, delete the profile
-          await api.delete(`/students/profile/${profileId}`);
-          throw userError;
-        }
+            console.log('User Response to create User:', userResponse.data);
+
+            //Create a profile with userId
+            if(userData.roleName=="student"){
+              const profileData = {
+                userId: userResponse.data._id,
+                fullName: {
+                  firstName,
+                  lastName
+                },
+                department: formData.department,
+                sem: formData.sem,
+                usn: formData.usn,
+                email: formData.email,
+                mobileNumber: formData.phone
+              };
         
-      } catch (error) {
-        console.error('Detailed error:', error.response?.data);
-        enqueueSnackbar(
-          error.response?.data?.message || 
-          error.message || 
-          "An error occurred while processing the request", 
-          { variant: "error" }
-        );
-      }
-    },
-    [methods, roleId, avatar, reset, enqueueSnackbar]
+              console.log('Creating profile with data:', profileData);
+              
+              const profileResponse = await api.post("/students/profile", profileData);
+              console.log('Profile response:', profileResponse.data);
+              
+              if (!profileResponse.data?.data?.studentProfile?._id) {
+                throw new Error('Profile creation failed');
+              }
+        
+              const profileId = profileResponse.data.data.studentProfile._id;
+              console.log('Profile ID', profileId);
+              if (profileId) {
+                // Update User with Profile ID
+                await api.patch(`/users/${userResponse.data._id}`, {
+                  profileId: profileId,
+                });
+              }
+            }
+            else{
+              const profileData = {
+                userId: userResponse.data._id,
+                fullName: {
+                  firstName,
+                  lastName
+                },
+                department: formData.department,
+                email: formData.email,
+                mobileNumber: formData.phone
+              };
+        
+              console.log('Creating profile with data:', profileData);
+              
+              const profileResponse = await api.post("/faculty/profile", profileData);
+              console.log('Faculty Profile response:', profileResponse.data);
+              
+              if (!profileResponse.data?.data?.facultyProfile?._id) {
+                throw new Error('Faculty Profile creation failed');
+              }
+        
+              const profileId = profileResponse.data.data.facultyProfile._id;
+              console.log('Faculty Profile ID', profileId);
+              if (profileId) {
+                // Update User with Profile ID
+                await api.patch(`/users/${userResponse.data._id}`, {
+                  profileId: profileId,
+                });
+              }
+            }
+            enqueueSnackbar("User created successfully!", { variant: "success" });
+            reset();
+          }
+          catch (error) {
+              console.error('Detailed error:', error.response?.data);
+              enqueueSnackbar(
+                error.response?.data?.message || 
+                error.message || 
+                "An error occurred while processing the request", 
+                { variant: "error" }
+              );
+          }
+    },[methods, roleId, avatar, reset, enqueueSnackbar]
   );
-  
 
   // Handle avatar drop
   const handleDrop = useCallback(
@@ -262,13 +280,11 @@ export default function UserForm({ editingUser }) {
               <RHFTextField
                 name="sem"
                 label="sem"
-                required
                 fullWidth
               />
               <RHFTextField
                 name="usn"
                 label="USN"
-                required
                 fullWidth
               />
               <RHFTextField
