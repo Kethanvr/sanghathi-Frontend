@@ -25,8 +25,9 @@ const getUserSchema = (editingUser) => {
     name: Yup.string().required("Name is required"),
     email: Yup.string().email("Email is invalid").required("Email is required"),
     phone: Yup.string().required("Phone is required"),
-    role: Yup.string().required("Role is required"),
     department: Yup.string().required("Department is required"),
+    sem: Yup.string().required("Sem is required"),
+    role: Yup.string().required("Role is required"),
     usn: Yup.string().required("USN is required"),
   };
 
@@ -51,7 +52,7 @@ const options = [
   { label: "Admin", value: "admin" },
   { label: "Faculty", value: "faculty" },
   { label: "Student", value: "student" },
-  { label: "HOD", value: "hod" },
+  // { label: "HOD", value: "hod" },
 ];
 
 export default function UserForm({ editingUser }) {
@@ -68,8 +69,9 @@ export default function UserForm({ editingUser }) {
       phone: editingUser?.phone || "",
       password: "",
       passwordConfirm: "",
-      role: editingUser?.role || "admin",
       department: "",
+      sem: "",
+      role: editingUser?.role || "student",
       usn: "",
     },
   });
@@ -96,6 +98,7 @@ export default function UserForm({ editingUser }) {
   // Handle form submission
   const onSubmit = useCallback(
     async (formData) => {
+      console.log("Form data:", formData);
       if (!roleId) {
         enqueueSnackbar("Role must be selected!", { variant: "error" });
         return; // Prevent submission if roleId is empty
@@ -116,6 +119,7 @@ export default function UserForm({ editingUser }) {
             lastName
           },
           department: formData.department,
+          sem: formData.sem,
           usn: formData.usn,
           email: formData.email,
           mobileNumber: formData.phone
@@ -124,6 +128,7 @@ export default function UserForm({ editingUser }) {
         console.log('Creating profile with data:', profileData);
         
         const profileResponse = await api.post("/students/profile", profileData);
+        console.log('Profile response:', profileResponse.data);
         
         if (!profileResponse.data?.data?.studentProfile?._id) {
           throw new Error('Profile creation failed');
@@ -142,7 +147,7 @@ export default function UserForm({ editingUser }) {
           avatar,
           role: roleId,
           roleName: formData.role,
-          profile: profileId.toString() // Convert to string if needed
+          profile: profileId
         };
   
         console.log('Creating user with data:', userData);
@@ -151,13 +156,14 @@ export default function UserForm({ editingUser }) {
           // Create user
           const userResponse = await api.post("/users", {
             ...userData,
-            profile: profileId // Make sure profile ID is included in the top level
+            profile: profileId
           });
           
-          if (userResponse.data?._id) {
+          console.log('User Response to create User:', userResponse.data);
+          if (userResponse.data._id) {
             // Update profile with user ID
             await api.patch(`/students/profile/${profileId}`, {
-              userId: userResponse.data._id
+              userId: userResponse.data._id,
             });
           }
   
@@ -254,6 +260,12 @@ export default function UserForm({ editingUser }) {
                 fullWidth
               />
               <RHFTextField
+                name="sem"
+                label="sem"
+                required
+                fullWidth
+              />
+              <RHFTextField
                 name="usn"
                 label="USN"
                 required
@@ -319,6 +331,7 @@ export default function UserForm({ editingUser }) {
                         passwordConfirm: "",
                         role: "admin",
                         department: "",
+                        sem: "",
                         usn: "",
                       });
                       setAvatar(null);
