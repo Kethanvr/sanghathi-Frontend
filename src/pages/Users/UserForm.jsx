@@ -8,12 +8,10 @@ import api from "../../utils/axios"; // axios instance
 // @mui
 import { Box, Grid, Card, Stack, Typography } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import Divider from "@mui/material/Divider";
 
 // components
 import {
   FormProvider,
-  RHFSwitch,
   RHFSelect,
   RHFTextField,
   RHFUploadAvatar,

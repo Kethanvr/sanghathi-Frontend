@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSnackbar } from "notistack";
-import { Button, Card, Stack, Typography } from "@mui/material";
+import Papa from 'papaparse';
+import { Container, Button, Card, Stack, Typography } from "@mui/material";
 import api from "../../utils/axios";
 import { getUserSchema } from "../Users/UserForm";
 
@@ -16,7 +17,7 @@ export default function AddStudents() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "students_template.csv");
+    link.setAttribute("download", "User_template.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -25,135 +26,158 @@ export default function AddStudents() {
   // File Processing
   const processFile = async (file) => {
     setIsLoading(true);
-    const reader = new FileReader();
+    
+    try {
+      const results = await new Promise((resolve, reject) => {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => resolve(results.data),
+          error: (error) => reject(error),
+        });
+      });
 
-    reader.onload = async (e) => {
-      try {
-        const text = e.target.result;
-        const entries =
-          file.type === "application/json"
-            ? JSON.parse(text)
-            : text
-                .split("\n")
-                .slice(1)
-                .map((row) => {
-                  const [
-                    name,
-                    email,
-                    phone,
-                    role,
-                    department,
-                    sem,
-                    usn,
-                    password,
-                    passwordConfirm,
-                  ] = row.split(",");
-                  return {
-                    name,
-                    email,
-                    phone,
-                    role,
-                    department,
-                    sem,
-                    usn,
-                    password,
-                    passwordConfirm,
-                  };
-                });
+      const schema = getUserSchema(false);
+      let successfulEntries = 0;
 
-        const schema = getUserSchema(false);
+      for (const [index, entry] of results.entries()) {
+        try {
+          // Trim all string fields
+          const trimmedEntry = Object.fromEntries(
+            Object.entries(entry).map(([key, value]) => [key, value?.trim()])
+          );
 
-        // Validate entries and prepare promises for user and profile creation
-        const userCreationPromises = entries.map(async (entry) => {
-          try {
-            await schema.validate(entry);
-
-            // Get Role ID
-            const roleResponse = await api.get(`/roles/${entry.role}`);
-            const roleId = roleResponse.data._id;
-
-            // Create User Data
-            const userData = {
-              name: entry.name,
-              email: entry.email,
-              phone: entry.phone,
-              password: entry.password.trim(),
-              passwordConfirm: entry.passwordConfirm.trim(),
-              avatar: null,
-              role: roleId,
-              roleName: entry.role,
-            };
-
-            // Create User and return combined promise
-            return api.post("/users", userData).then(async (userResponse) => {
-                const userId = userResponse.data._id;
-                console.log("user Response:", userResponse);
-              
-                // Create Profile Data
-                const profileData = {
-                  userId: userId, // Ensure userId is included
-                  fullName: {
-                    firstName: entry.name.split(" ")[0],
-                    lastName: entry.name.split(" ").slice(1).join(" "),
-                  },
-                  department: entry.department,
-                  sem: entry.sem,
-                  usn: entry.usn,
-                  email: entry.email,
-                  mobileNumber: entry.phone,
-                };
-
-              // Create Profile
-            const profileResponse = await api.post("/students/profile", profileData);
-            const profileId = profileResponse.data.data.studentProfile._id;
-            console.log("Profile Id:", profileId);
-
-            // Update User with profileId
-            await api.patch(`/users/${userId}`, { profile: profileId });
-
-
-              return { success: true };
-            });
-          } catch (error) {
-            console.error("Error processing entry:", error);
-            enqueueSnackbar(
-              `Error in entry ${JSON.stringify(entry)}: ${error.message}`,
-              { variant: "error" }
-            );
-            return { success: false, error: error.message };
+          // Validate required fields
+          if (!trimmedEntry.password || !trimmedEntry.passwordConfirm) {
+            throw new Error("Missing password or password confirmation");
           }
-        });
 
-        // Execute all promises and wait for completion
-        const results = await Promise.all(userCreationPromises);
-        const successfulEntries = results.filter((result) => result.success).length;
+          await schema.validate(trimmedEntry);
 
-        enqueueSnackbar(`${successfulEntries} students added successfully!`, {
-          variant: "success",
-        });
-      } catch (error) {
-        console.error("Error processing file:", error);
-        enqueueSnackbar(error.message, { variant: "error" });
-      } finally {
-        setIsLoading(false);
+          // Rest of the user creation logic...
+          const roleResponse = await api.get(`/roles/${trimmedEntry.role.toLowerCase()}`);
+          const roleId = roleResponse.data._id;
+
+          const userData = {
+            name: trimmedEntry.name,
+            email: trimmedEntry.email,
+            phone: trimmedEntry.phone,
+            password: trimmedEntry.password,
+            passwordConfirm: trimmedEntry.passwordConfirm,
+            avatar: null,
+            role: roleId,
+            roleName: trimmedEntry.role.toLowerCase(),
+          };
+          const nameParts = userData.name.split(' ');
+          const firstName = nameParts[0];
+          const lastName = nameParts.slice(1).join(' ') || '';
+
+          const userResponse = await api.post("/users", userData);
+          const userId = userResponse.data._id;
+
+          // Profile creation and update...
+          successfulEntries++;
+
+          if(userData.roleName=="student"){
+            const profileData = {
+              userId: userResponse.data._id,
+              fullName: {
+                firstName,
+                lastName
+              },
+              department: userData.department,
+              sem: userData.sem,
+              usn: userData.usn,
+              email: userData.email,
+              mobileNumber: userData.phone
+            };
+      
+            console.log('Creating profile with data:', profileData);
+            
+            const profileResponse = await api.post("/students/profile", profileData);
+            console.log('Profile response:', profileResponse.data);
+            
+            if (!profileResponse.data?.data?.studentProfile?._id) {
+              throw new Error('Profile creation failed');
+            }
+      
+            const profileId = profileResponse.data.data.studentProfile._id;
+            console.log('Profile ID', profileId);
+            if (profileId) {
+              // Update User with Profile ID
+              await api.patch(`/users/${userResponse.data._id}`, {
+                profileId: profileId,
+              });
+            }
+          }
+          else{
+            const profileData = {
+              userId: userResponse.data._id,
+              fullName: {
+                firstName,
+                lastName
+              },
+              department: userData.department,
+              email: userData.email,
+              mobileNumber: userData.phone
+            };
+      
+            console.log('Creating profile with data:', profileData);
+            
+            const profileResponse = await api.post("/faculty/profile", profileData);
+            console.log('Faculty Profile response:', profileResponse.data);
+            
+            if (!profileResponse.data?.data?.facultyProfile?._id) {
+              throw new Error('Faculty Profile creation failed');
+            }
+      
+            const profileId = profileResponse.data.data.facultyProfile._id;
+            console.log('Faculty Profile ID', profileId);
+            if (profileId) {
+              // Update User with Profile ID
+              await api.patch(`/users/${userResponse.data._id}`, {
+                profileId: profileId,
+              });
+            }
+          }
+          
+        } catch (error) {
+          enqueueSnackbar(`Line ${index + 2}: ${error.message}`, {
+            variant: "error",
+          });
+        }
       }
-    };
 
-    reader.onerror = () => {
-      console.error("Error reading file");
-      enqueueSnackbar("Error reading file", { variant: "error" });
+      enqueueSnackbar(`${successfulEntries} Users added successfully!`, {
+        variant: "success",
+      });
+
+    } catch (error) {
+      enqueueSnackbar(error.message, { variant: "error" });
+    } finally {
       setIsLoading(false);
-    };
-
-    reader.readAsText(file);
+    }
   };
 
   
 
   return (
+    <Container>
     <Card sx={{ p: 3 }}>
       <Stack spacing={3}>
-        <Typography variant="h4">Upload Student Data</Typography>
+        <Typography variant="h4">Add Students <br/> 
+        <Typography variant="caption"
+                  sx={{
+                    fontSize: 15,
+                    mt:1,
+                    mx: "auto",
+                    display: "block",
+                    color: "text.secondary",
+                  }}
+                >
+        (Download the template and fill the data accordingly)
+        </Typography>
+        </Typography>
 
         <Stack direction="row" spacing={2}>
           <Button
@@ -187,5 +211,102 @@ export default function AddStudents() {
         {isLoading && <Typography>Processing file...</Typography>}
       </Stack>
     </Card>
+    <Card sx={{ p: 3, mt:1 }}>
+      <Stack spacing={3}>
+      <Typography variant="h4">Add Faculty <br/> 
+        <Typography variant="caption"
+                  sx={{
+                    fontSize: 15,
+                    mt:1,
+                    mx: "auto",
+                    display: "block",
+                    color: "text.secondary",
+                  }}
+                >
+        (Download the template and fill the data accordingly)
+        </Typography>
+        </Typography>
+
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            onClick={handleDownloadTemplate}
+            disabled={isLoading}
+          >
+            Download Template
+          </Button>
+
+          <Button
+            variant="outlined"
+            component="label"
+            disabled={isLoading}
+          >
+            Upload Data
+            <input
+              type="file"
+              hidden
+              accept=".csv,.json"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  processFile(file);
+                }
+              }}
+            />
+          </Button>
+        </Stack>
+
+        {isLoading && <Typography>Processing file...</Typography>}
+      </Stack>
+    </Card>
+    <Card sx={{ p: 3, mt:1, mb:2}}>
+      <Stack spacing={3}>
+      <Typography variant="h4">Add Admin <br/> 
+        <Typography variant="caption"
+                  sx={{
+                    fontSize: 15,
+                    mt:1,
+                    mx: "auto",
+                    display: "block",
+                    color: "text.secondary",
+                  }}
+                >
+        (Download the template and fill the data accordingly)
+        </Typography>
+        </Typography>
+
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            onClick={handleDownloadTemplate}
+            disabled={isLoading}
+          >
+            Download Template
+          </Button>
+
+          <Button
+            variant="outlined"
+            component="label"
+            disabled={isLoading}
+          >
+            Upload Data
+            <input
+              type="file"
+              hidden
+              accept=".csv,.json"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  processFile(file);
+                }
+              }}
+            />
+          </Button>
+        </Stack>
+
+        {isLoading && <Typography>Processing file...</Typography>}
+      </Stack>
+    </Card>
+    </Container>
   );
 }
