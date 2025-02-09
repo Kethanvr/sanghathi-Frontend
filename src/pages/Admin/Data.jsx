@@ -15,7 +15,7 @@ import HeaderBreadcrumbs from "../../components/HeaderBreadcrumbs";
 // sections
 
 import marks from "./AddMarks";
-import attendance from "./AddAttendance";
+import AddAttendance from "./AddAttendance";
 import AddStudents from "./AddStudents";
 import React from "react";
 
@@ -34,7 +34,7 @@ export default function Data() {
     {
       value: "Add Attendance",
       icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
-      component: <attendance editingUser={editingUser} />,
+      component: <AddAttendance editingUser={editingUser} />,
     },
     {
       value: "Add IAT Marks",

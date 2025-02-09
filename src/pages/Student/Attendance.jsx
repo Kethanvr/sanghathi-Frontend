@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   Box,
   Table,
@@ -10,92 +10,70 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-
-const attendanceData = [
-  {
-    subjectCode: "SUB-101",
-    subjectName: "Mathematics",
-    semester: 1,
-    year: 2022,
-    months: [
-      {
-        month: 1,
-        classesTaken: 20,
-        classesAttended: 16,
-      },
-      {
-        month: 2,
-        classesTaken: 20,
-        classesAttended: 15,
-      },
-      {
-        month: 3,
-        classesTaken: 20,
-        classesAttended: 18,
-      },
-    ],
-  },
-  {
-    subjectCode: "SUB-102",
-    subjectName: "Science",
-    semester: 1,
-    year: 2022,
-    months: [
-      {
-        month: 1,
-        classesTaken: 20,
-        classesAttended: 18,
-      },
-      {
-        month: 2,
-        classesTaken: 20,
-        classesAttended: 17,
-      },
-      {
-        month: 3,
-        classesTaken: 20,
-        classesAttended: 19,
-      },
-    ],
-  },
-  // Add data for more semesters
-];
+import axios from "axios";
+import { AuthContext } from "../../context/AuthContext";
 
 const Attendance = () => {
+  const { user } = useContext(AuthContext);
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [selectedSemester, setSelectedSemester] = useState(1);
   const [selectedMonth, setSelectedMonth] = useState(0);
 
-  const handleSemesterChange = (event) => {
-    setSelectedSemester(event.target.value);
-  };
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/api/students/attendance/${user._id}`
+        );
+        const attendanceData = response.data.data.attendance;
+        const transformed = transformBackendData(attendanceData);
+        setAttendanceData(transformed);
+        
+        // Update selected semester based on fetched data
+        if (transformed.length > 0) {
+          setSelectedSemester(transformed[0].semester);
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to fetch attendance data");
+        setLoading(false);
+      }
+    };
 
-  const handleMonthChange = (event) => {
-    setSelectedMonth(event.target.value);
-  };
+    fetchAttendance();
+  }, [user.id]);
+  const transformBackendData = (backendData) => {
+    if (!backendData || !backendData.subjects || backendData.subjects.length === 0) {
+      console.warn("No valid data found in backend response.");
+      return [];
+    }
+    const subjectsMap = {};
 
-  const getMonthAttendance = (subject) => {
-    const attendance = subject.months.find(
-      (month) => month.month === selectedMonth
-    );
-    return attendance
-      ? `${attendance.classesAttended}/${attendance.classesTaken} (${(
-          (attendance.classesAttended / attendance.classesTaken) *
-          100
-        ).toFixed(2)}%)`
-      : "-";
+    return backendData.subjects.map((subject) => ({
+      subjectName: subject.subjectName,
+      semester: backendData.semester,
+      subjectCode: subject.subjectCode || "N/A",
+      months: [
+        {
+          month: backendData.month,
+          classesTaken: subject.totalClasses,
+          classesAttended: subject.attendedClasses,
+        },
+      ],
+    }));
   };
 
   const getCumulativeAttendance = (subject) => {
-    const attended = subject.months.reduce(
-      (total, month) => total + month.classesAttended,
-      0
-    );
-    const taken = subject.months.reduce(
-      (total, month) => total + month.classesTaken,
-      0
-    );
-    const percentage = ((attended / taken) * 100).toFixed(2);
-    return `${attended}/${taken} (${percentage}%)`;
+    const totalAttended = subject.months.reduce((sum, month) => sum + month.classesAttended, 0);
+    const totalTaken = subject.months.reduce((sum, month) => sum + month.classesTaken, 0);
+    
+    if (totalTaken === 0) return "No Data"; // Prevent division by zero
+  
+    const percentage = ((totalAttended / totalTaken) * 100).toFixed(2);
+    return `${totalAttended}/${totalTaken} (${percentage}%)`;
   };
 
   const getOverallAttendance = () => {
@@ -121,6 +99,25 @@ const Attendance = () => {
     // Add code to send notification if overall attendance is less than 75%
   }, [getOverallAttendance()]);
 
+  const getMonthAttendance = (subject) => {
+    if (selectedMonth === 0) { // If "All" is selected, show total attendance
+      const totalAttended = subject.months.reduce((sum, m) => sum + m.classesAttended, 0);
+      const totalTaken = subject.months.reduce((sum, m) => sum + m.classesTaken, 0);
+      if (totalTaken === 0) return "No Data";
+      const percentage = ((totalAttended / totalTaken) * 100).toFixed(2);
+      return `${totalAttended}/${totalTaken} (${percentage}%)`;
+    }
+  
+    // If a specific month is selected
+    const monthData = subject.months.find(m => m.month === selectedMonth);
+    if (!monthData) return "No Data";
+    
+    const { classesAttended, classesTaken } = monthData;
+    const percentage = ((classesAttended / classesTaken) * 100).toFixed(2);
+    return `${classesAttended}/${classesTaken} (${percentage}%)`;
+  };
+  
+
   return (
     <Box sx={{ p: 2 }}>
       <h1 sx={{ textAlign: "center", mb: 2 }}>Attendance Report</h1>
@@ -129,7 +126,7 @@ const Attendance = () => {
           Select Semester:
           <Select
             value={selectedSemester}
-            onChange={handleSemesterChange}
+            // onChange={handleSemesterChange}
             sx={{ ml: 1 }}
           >
             {Array.from({ length: 8 }, (_, index) => (
@@ -144,7 +141,7 @@ const Attendance = () => {
             Select Month:
             <Select
               value={selectedMonth}
-              onChange={handleMonthChange}
+              // onChange={handleMonthChange}
               sx={{ ml: 1 }}
             >
               <MenuItem value={0}>All</MenuItem>
