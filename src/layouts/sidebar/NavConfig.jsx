@@ -1,14 +1,12 @@
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import EventOutlinedIcon from "@mui/icons-material/EventOutlined";
 import ChatOutlinedIcon from "@mui/icons-material/ChatOutlined";
-import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlined";
-import ReportOutlinedIcon from "@mui/icons-material/ReportOutlined";
-import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
+import SummarizeOutlinedIcon from '@mui/icons-material/SummarizeOutlined';
 
 const adminNavConfig = [
   {
@@ -29,7 +27,7 @@ const adminNavConfig = [
     icon: <PersonOutlinedIcon />,
     link: "/admin/mentor-assignment",
   },
-  { text: "Report", icon: <ReportOutlinedIcon />, link: "/report" },
+  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
 ];
 
 const facultyNavConfig = [
