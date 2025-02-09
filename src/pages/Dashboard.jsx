@@ -69,7 +69,6 @@ const StudentTile = ({ title, icon, link }) => {
   );
 };
 
-
 const Dashboard = () => {
   const [bugReportDialogOpen, setBugReportDialogOpen] = useState(false);
   const handleBugReportDialogOpen = () => {
@@ -131,20 +130,6 @@ const Dashboard = () => {
             />
           </Grid>
         </Grid>
-        {/* <Tooltip title="Report Bug">
-          <Fab
-            color="primary"
-            aria-label="report bug"
-            onClick={handleBugReportDialogOpen}
-            sx={{ position: "fixed", bottom: 16, right: 16 }}
-          >
-            <BugReportIcon />
-          </Fab>
-        </Tooltip>
-        <BugReportDialog
-          open={bugReportDialogOpen}
-          onClose={handleBugReportDialogClose}
-        /> */}
       </Container>
     </Page>
   );

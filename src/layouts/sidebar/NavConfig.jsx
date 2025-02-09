@@ -47,6 +47,7 @@ const studentNavConfig = [
   { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
   { text: "Chat", icon: <ChatOutlinedIcon />, link: "/chat" },
   { text: "Campus Buddy", icon: <InfoOutlinedIcon />, link: "/campus-buddy" },
+  { text: "Mentor Details", icon: <PersonOutlinedIcon />, link: "/mentor-details" },
 ];
 
 const getNavConfig = (role) => {

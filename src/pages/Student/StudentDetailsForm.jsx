@@ -26,6 +26,8 @@ const yesNoOptions = [
 export default function StudentDetailsForm() {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
+  console.log(user._id);
+  
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [mentorName, setMentorName] = useState("Loading...");
 
