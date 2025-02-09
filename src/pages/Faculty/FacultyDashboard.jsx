@@ -123,12 +123,7 @@ const FacultyDashboard = () => {
               icon={<QuestionAnswerOutlinedIcon fontSize="large" />}
               link="/threads"
             />
-          </Grid>
-
-          
-          
-          
-          
+          </Grid>          
         </Grid>
       </Container>
     </Page>
