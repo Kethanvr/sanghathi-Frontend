@@ -35,6 +35,7 @@ import CareerReview from "./pages/CareerReview/CareerReview";
 import ScoreCard from "./pages/Scorecard/ScoreCard";
 import StudentProfileOnly from "./pages/Student/StudentProfileOnly";
 import FacultyProfile from "./pages/Faculty/FacultyProfile";
+import FacultyProfileInfo from "./pages/Faculty/FacultyProfileInfo";
 // TODO : Need to remove routing logic from app component
 function App() {
   const { user } = useContext(AuthContext);
@@ -54,7 +55,6 @@ function App() {
                 <Route element={<DashboardLayout />}>
                   <Route
                     path="/"
-                    
                     element={
                       user ? (
                         user.roleName === "faculty" ? (
@@ -168,7 +168,7 @@ function App() {
                       </ProtectedRouteWrapper>
                     }
                   />
-                  
+
                   <Route
                     path="/mentees"
                     element={
@@ -177,6 +177,16 @@ function App() {
                       </ProtectedRouteWrapper>
                     }
                   />
+
+                  <Route
+                    path="/mentor-details"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={FacultyProfileInfo} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+
                   <Route
                     path="/student/ptm"
                     element={
