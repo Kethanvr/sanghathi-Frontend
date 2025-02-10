@@ -13,9 +13,11 @@ import {
   PeopleAlt as PeopleAltIcon,
   Assignment as AssignmentIcon,
 } from "@mui/icons-material";
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import PersonIcon from '@mui/icons-material/Person';
 import { Link } from "react-router-dom";
 import { blueGrey } from "@mui/material/colors";
+import SummarizeOutlinedIcon from '@mui/icons-material/SummarizeOutlined';
+
 
 const AdminTile = ({ title, icon, link }) => {
   const theme = useTheme();
@@ -75,9 +77,23 @@ const AdminDashboard = () => {
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6} md={4}>
           <AdminTile
+            title="Profile"
+            icon={<PersonIcon fontSize="large" />}
+            link="/faculty/FacultyProfile"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <AdminTile
             title="Add New User"
             icon={<PersonAddIcon fontSize="large" />}
             link="/admin/add-user"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <AdminTile
+            title="Add Data"
+            icon={<AssignmentIcon fontSize="large" />}
+            link="/admin/data"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
@@ -89,9 +105,16 @@ const AdminDashboard = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
           <AdminTile
-            title="Add Data"
-            icon={<AssignmentIcon fontSize="large" />}
-            link="/admin/data"
+            title="Assign Mentors"
+            icon={<PeopleAltIcon fontSize="large" />}
+            link="/admin/mentor-assignment"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <AdminTile
+            title="Thread Reports"
+            icon={<SummarizeOutlinedIcon fontSize="large" />}
+            link="/report"
           />
         </Grid>
       </Grid>

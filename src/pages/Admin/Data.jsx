@@ -15,7 +15,7 @@ import HeaderBreadcrumbs from "../../components/HeaderBreadcrumbs";
 // sections
 
 import marks from "./AddMarks";
-import attendance from "./AddAttendance";
+import AddAttendance from "./AddAttendance";
 import AddStudents from "./AddStudents";
 import React from "react";
 
@@ -23,18 +23,18 @@ import React from "react";
 
 export default function Data() {
   const [editingUser, setEditingUser] = useState(null);
-  const { currentTab, onChangeTab } = useTabs("Add Students");
+  const { currentTab, onChangeTab } = useTabs("Add Users");
 
   const ACCOUNT_TABS = [
     {
-      value: "Add Students",
+      value: "Add Users",
       icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
       component: <AddStudents editingUser={editingUser} />,
     },
     {
       value: "Add Attendance",
       icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
-      component: <attendance editingUser={editingUser} />,
+      component: <AddAttendance editingUser={editingUser} />,
     },
     {
       value: "Add IAT Marks",
