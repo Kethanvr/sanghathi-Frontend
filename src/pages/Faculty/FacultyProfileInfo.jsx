@@ -89,8 +89,8 @@ const FacultyProfileInfo = () => {
       maxWidth="xl"
       sx={{
         p: 8,
-        backgroundColor: theme.palette.background.default, // Use theme's background color
-        color: theme.palette.text.primary, // Theme text color
+        backgroundColor: theme.palette.background.default, 
+        color: theme.palette.text.primary, 
         minHeight: "100vh",
       }}
     >
@@ -111,7 +111,7 @@ const FacultyProfileInfo = () => {
             maxWidth: 600,
             margin: "auto",
             border: `1px solid ${theme.palette.divider}`,
-            backgroundColor: theme.palette.background.paper, // Use theme's paper background
+            backgroundColor: theme.palette.background.paper, 
           }}
         >
           <Table>
