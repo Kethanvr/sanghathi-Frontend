@@ -91,15 +91,15 @@ const FacultyDashboard = () => {
         }}
       >
         <Typography
-                variant="h2"
-                align="center"
-                gutterBottom
-                sx={{
-                  mb: 6,
-                  fontWeight: "bold",
-                }}
-              >
-                Faculty Dashboard
+          variant="h2"
+          align="center"
+          gutterBottom
+          sx={{
+            mb: 6,
+            fontWeight: "bold",
+          }}
+        >
+          Faculty Dashboard
         </Typography>
 
         <Grid container spacing={3}>
@@ -114,7 +114,7 @@ const FacultyDashboard = () => {
             <StudentTile
               title="My Mentees"
               icon={<PersonOutlinedIcon fontSize="large" />}
-              link="/student/CareerReview"
+              link="/mentees"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
@@ -123,7 +123,7 @@ const FacultyDashboard = () => {
               icon={<QuestionAnswerOutlinedIcon fontSize="large" />}
               link="/threads"
             />
-          </Grid>          
+          </Grid>
         </Grid>
       </Container>
     </Page>
