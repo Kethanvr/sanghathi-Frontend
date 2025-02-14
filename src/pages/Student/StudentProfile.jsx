@@ -1,6 +1,6 @@
 import { capitalCase } from "change-case";
-
-import { useState } from "react";
+import { AuthContext } from "../../context/AuthContext";
+import { useState, useContext } from "react";
 // @mui
 import { Container, Tab, Box, Tabs } from "@mui/material";
 // routes

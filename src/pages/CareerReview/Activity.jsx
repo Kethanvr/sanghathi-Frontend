@@ -7,10 +7,16 @@ import { Box, Grid, Card, Stack, Button, IconButton, Typography, TextField } fro
 import { LoadingButton } from "@mui/lab";
 import { Delete as DeleteIcon } from "@mui/icons-material";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
+import { useSearchParams } from "react-router-dom";
 
 export default function Activity() {
+    const [searchParams] = useSearchParams();
+    const menteeId = searchParams.get('menteeId');
+
   const { enqueueSnackbar } = useSnackbar();
     const { user } = useContext(AuthContext);
+    console.log("User : ",user);
+    console.log("id: ",menteeId);
     const methods = useForm({
       defaultValues: {
         activity: [{ eventType: "", eventTitle: "", description: "", eventDate: "" }],
@@ -25,7 +31,11 @@ export default function Activity() {
 
     const fetchActivity = useCallback(async () => {
       try {
-        const response = await api.get(`/activity-data/activity/${user._id}`);
+        let response;
+        if(menteeId)
+          response = await api.get(`/activity-data/activity/${menteeId}`);
+        else
+          response = await api.get(`/activity-data/activity/${user._id}`);
         const { data } = response.data;
     
         if (data && Array.isArray(data.activity)) {

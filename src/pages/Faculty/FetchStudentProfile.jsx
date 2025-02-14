@@ -10,7 +10,9 @@ import {
   TableRow,
   Paper,
   Typography,
+  Button,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 const fetchStudentProfiles = async (userId) => {
   try {
@@ -30,6 +32,7 @@ const MenteesList = () => {
   const [profiles, setProfiles] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
@@ -93,7 +96,6 @@ const MenteesList = () => {
       </Typography>
       <Table>
         <TableHead sx={{ bgcolor: "#2a2d32" }}>
-          {" "}
           <TableRow>
             <TableCell sx={{ color: "white" }}>
               <b>Full Name</b>
@@ -104,12 +106,14 @@ const MenteesList = () => {
             <TableCell sx={{ color: "white" }}>
               <b>Phone</b>
             </TableCell>
-
             <TableCell sx={{ color: "white" }}>
               <b>Department</b>
             </TableCell>
             <TableCell sx={{ color: "white" }}>
               <b>Semester</b>
+            </TableCell>
+            <TableCell sx={{ color: "white" }}>
+              <b>Actions</b>
             </TableCell>
           </TableRow>
         </TableHead>
@@ -126,12 +130,20 @@ const MenteesList = () => {
                 <TableCell sx={{ color: "white" }}>{mentee.name}</TableCell>
                 <TableCell sx={{ color: "white" }}>{mentee.email}</TableCell>
                 <TableCell sx={{ color: "white" }}>{mentee.phone}</TableCell>
-
                 <TableCell sx={{ color: "white" }}>
                   {profiles[mentee._id]?.department || "N/A"}
                 </TableCell>
                 <TableCell sx={{ color: "white" }}>
                   {profiles[mentee._id]?.sem || "N/A"}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => navigate(`/faculty/mentee-profile/${mentee._id}`)} // Pass mentee._id
+                  >
+                    Dashboard
+                  </Button>
                 </TableCell>
               </TableRow>
             ))

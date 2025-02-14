@@ -7,10 +7,16 @@ import { Box, Grid, Card, Stack, Button, IconButton, Typography, TextField } fro
 import { LoadingButton } from "@mui/lab";
 import { Delete as DeleteIcon } from "@mui/icons-material";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
+import { useSearchParams } from "react-router-dom";
 
 export default function ClubEvents() {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
+  const [searchParams] = useSearchParams();
+  const menteeId = searchParams.get('menteeId');
+  console.log("User : ",user);
+  console.log("id: ",menteeId);
+
   const methods = useForm({
     defaultValues: {
       clubs: [{ clubName: "", eventTitle: "", eventDate: null }],
@@ -24,7 +30,12 @@ export default function ClubEvents() {
 
   const fetchClubEvents = useCallback(async () => {
     try {
-      const response = await api.get(`/career-counselling/clubevent/${user._id}`);
+      let response;
+      if(menteeId)
+        response = await api.get(`/career-counselling/clubevent/${menteeId}`);
+      else
+        response = await api.get(`/career-counselling/clubevent/${user._id}`);
+
       console.log("Club event data fetched: ", response.data);
       const { data } = response.data;
   
