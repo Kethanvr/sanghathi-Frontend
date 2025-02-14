@@ -7,11 +7,17 @@ import { Box, Grid, Card, Stack, Button, IconButton, Typography, TextField } fro
 import { LoadingButton } from "@mui/lab";
 import { Delete as DeleteIcon } from "@mui/icons-material";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
+import { useSearchParams } from "react-router-dom";
 
 
 export default function Mooc() {
   const { enqueueSnackbar } = useSnackbar();
     const { user } = useContext(AuthContext);
+    const [searchParams] = useSearchParams();
+    const menteeId = searchParams.get('menteeId');
+    console.log("User : ",user);
+    console.log("id: ",menteeId);
+
     const methods = useForm({
       defaultValues: {
         mooc: [{ portal: "", title: "", startDate: null, completedDate: null, score: null, certificateLink: "" }],
@@ -26,7 +32,11 @@ export default function Mooc() {
 
     const fetchMooc = useCallback(async () => {
       try {
-        const response = await api.get(`/mooc-data/mooc/${user._id}`);
+        let response;
+        if(menteeId)
+          response = await api.get(`/mooc-data/mooc/${menteeId}`);
+        else
+          response = await api.get(`/mooc-data/mooc/${user._id}`);
         const { data } = response.data;
     
         if (data && Array.isArray(data.mooc)) {

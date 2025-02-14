@@ -7,10 +7,16 @@ import { Box, Grid, Card, Stack, Button, IconButton, Typography, TextField } fro
 import { LoadingButton } from "@mui/lab";
 import { Delete as DeleteIcon } from "@mui/icons-material";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
+import { useSearchParams } from "react-router-dom";
 
 export default function MiniProject() {
   const { enqueueSnackbar } = useSnackbar();
     const { user } = useContext(AuthContext);
+    const [searchParams] = useSearchParams();
+    const menteeId = searchParams.get('menteeId');
+    console.log("User : ",user);
+    console.log("id: ",menteeId);
+    
     const methods = useForm({
       defaultValues: {
         miniproject: [{ title: "",manHours: "",startDate: null,completedDate: null, }],
@@ -25,7 +31,11 @@ export default function MiniProject() {
 
     const fetchMiniProjects = useCallback(async () => {
       try {
-        const response = await api.get(`/project/miniproject/${user._id}`);
+        let response;
+        if(menteeId)
+          response = await api.get(`/project/miniproject/${menteeId}`);
+        else
+          response = await api.get(`/project/miniproject/${user._id}`);
         console.log("Raw API Response:", response.data);
         const { data } = response.data;
     

@@ -6,6 +6,7 @@ import { AuthContext } from "../../context/AuthContext";
 import { Box, Grid, Card, Stack, Typography } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
+import { useSearchParams } from "react-router-dom";
 
 const defaultValues = {
   hobby: "",
@@ -24,6 +25,11 @@ const defaultValues = {
 export default function Hobbies() {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
+  const [searchParams] = useSearchParams();
+  const menteeId = searchParams.get('menteeId');
+  console.log("User : ",user);
+  console.log("id: ",menteeId);
+
   const [isDataFetched, setIsDataFetched] = useState(false);
   const methods = useForm({
     defaultValues,
@@ -37,10 +43,14 @@ export default function Hobbies() {
 
   const fetchHobbies = useCallback(async () => {
     try {
-      const response = await api.get(`/hobbies-data/hobbies/${user._id}`);
+      let response;
+      if(menteeId)
+        response = await api.get(`/hobbies-data/hobbies/${menteeId}`);
+      else
+        response = await api.get(`/hobbies-data/hobbies/${user._id}`);
       const { data } = response.data;
   
-      if (data && data.hobbies) { // Check if data and data.hobbies exist
+      if (data && data.hobbies) {
         Object.keys(data.hobbies).forEach((key) => {
           setValue(key, data.hobbies[key]);
         });

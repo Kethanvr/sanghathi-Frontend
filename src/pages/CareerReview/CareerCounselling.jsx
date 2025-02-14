@@ -8,6 +8,7 @@ import { AuthContext } from "../../context/AuthContext";
 
 import { Box, Grid, Card, Stack } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
+import { useSearchParams } from "react-router-dom";
 
 import {
   FormProvider,
@@ -18,6 +19,11 @@ import {
 export default function CareerCounselling() {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
+  const [searchParams] = useSearchParams();
+  const menteeId = searchParams.get('menteeId');
+  console.log("User : ",user);
+  console.log("id: ",menteeId);
+  
   console.log(user);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const methods = useForm();
@@ -31,7 +37,11 @@ export default function CareerCounselling() {
 
   const fetchCareerCounselling = useCallback(async () => {
     try {
-      const response = await api.get(`/career-counselling/career/${user._id}`);
+      let response;
+      if(menteeId)
+        response = await api.get(`/career-counselling/career/${menteeId}`);
+      else
+        response = await api.get(`/career-counselling/career/${user._id}`);
       const { data } = response.data;
   
       if (!data.careers) {

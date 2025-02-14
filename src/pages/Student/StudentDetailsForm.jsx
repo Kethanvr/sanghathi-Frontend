@@ -1,7 +1,7 @@
 import { useSnackbar } from "notistack";
 import { useCallback, useContext, useState, useEffect } from "react";
 import api from "../../utils/axios";
-
+import { useSearchParams } from "react-router-dom";
 // form
 import { useForm, useWatch } from "react-hook-form";
 import { AuthContext } from "../../context/AuthContext";
@@ -24,9 +24,12 @@ const yesNoOptions = [
 ];
 
 export default function StudentDetailsForm() {
+  const [searchParams] = useSearchParams();
+  const menteeId = searchParams.get('menteeId');
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
-  console.log(user._id);
+  console.log("User : ",user);
+  console.log("id: ",menteeId);
   
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [mentorName, setMentorName] = useState("Loading...");
@@ -98,7 +101,12 @@ export default function StudentDetailsForm() {
 
   const fetchStudentData = useCallback(async () => {
     try {
-      const response = await api.get(`/students/profile/${user._id}`);
+      let response;
+      if(menteeId){
+        response = await api.get(`/students/profile/${menteeId}`);
+      }
+      else
+        response = await api.get(`/students/profile/${user._id}`);
       const { data } = response.data;
 
       if (data) {

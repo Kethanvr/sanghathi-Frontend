@@ -34,7 +34,6 @@ const facultyNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/faculty/dashboard" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
   { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
-  { text: "Chat", icon: <ChatOutlinedIcon />, link: "/chat" },
   { text: "Campus Buddy", icon: <InfoOutlinedIcon />, link: "/campus-buddy" },
   { text: "My Mentees", icon: <PersonOutlinedIcon />, link: "/mentees" },
 ];

@@ -37,6 +37,7 @@ import StudentProfileOnly from "./pages/Student/StudentProfileOnly";
 import FacultyProfile from "./pages/Faculty/FacultyProfile";
 import FacultyProfileInfo from "./pages/Faculty/FacultyProfileInfo";
 import FetchStudentProfile from "./pages/Faculty/FetchStudentProfile";
+import StudentDashboard from "./pages/Faculty/StudentDashboard";
 // TODO : Need to remove routing logic from app component
 function App() {
   const { user } = useContext(AuthContext);
@@ -82,6 +83,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/faculty/mentee-profile/:menteeId"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["faculty"]}>
+                        <LazyLoadWrapper component={StudentDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
                     path="/admin/dashboard"
                     element={
                       <ProtectedRouteWrapper allowedRoles={["admin"]}>
@@ -121,14 +130,14 @@ function App() {
                       </ProtectedRouteWrapper>
                     }
                   />
-                  <Route
+                  {/* <Route
                     path="/chat"
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={Chat} />
                       </ProtectedRouteWrapper>
                     }
-                  />
+                  /> */}
                   <Route
                     path="/meetings"
                     element={
