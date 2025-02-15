@@ -32,7 +32,7 @@ export default function StudentDetailsForm() {
   console.log("id: ",menteeId);
   
   const [isDataFetched, setIsDataFetched] = useState(false);
-  const [mentorName, setMentorName] = useState("Loading...");
+  const [setMentorName] = useState("Loading...");
 
   const methods = useForm();
   const watchedValues = useWatch({
@@ -44,7 +44,7 @@ export default function StudentDetailsForm() {
       "studentProfile.department",
       "studentProfile.sem",
       "studentProfile.personalEmail",
-      "studentProfile.mentorName",
+      // "studentProfile.mentorName",
       "studentProfile.email",
       "studentProfile.usn",
       "studentProfile.dateOfBirth",
@@ -69,7 +69,7 @@ export default function StudentDetailsForm() {
       "studentProfile.department",
       "studentProfile.sem",
       "studentProfile.personalEmail",
-      "studentProfile.mentorName",
+      // "studentProfile.mentorName",
       "studentProfile.email",
       "studentProfile.usn",
       "studentProfile.dateOfBirth",
@@ -280,14 +280,14 @@ export default function StudentDetailsForm() {
                 }}
               />
 
-              <RHFTextField
+              {/* <RHFTextField
                 name="mentor.name"
                 label="Mentor Name"
                 fullWidth
                 
                 value={mentorName} 
                 InputLabelProps={{ shrink: true }}
-              />
+              /> */}
             </Stack>
           </Card>
         </Grid>

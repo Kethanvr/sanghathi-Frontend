@@ -15,11 +15,11 @@ import { AuthContext } from "../../context/AuthContext";
 
 const Attendance = () => {
   const { user } = useContext(AuthContext);
-  const [attendanceData, setAttendanceData] = useState([]);
+  const [attendanceData, setAttendanceData] = useState([]); // Store the *nested* data
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedSemester, setSelectedSemester] = useState(1);
-  const [selectedMonth, setSelectedMonth] = useState(0);
+  const [selectedSemester, setSelectedSemester] = useState(null); // Initialize to null
+  const [selectedMonth, setSelectedMonth] = useState(0); // 0 for "All"
 
   useEffect(() => {
     const fetchAttendance = async () => {
@@ -27,15 +27,19 @@ const Attendance = () => {
         const response = await axios.get(
           `http://localhost:8000/api/students/attendance/${user._id}`
         );
-        const attendanceData = response.data.data.attendance;
-        const transformed = transformBackendData(attendanceData);
-        setAttendanceData(transformed);
-        
-        // Update selected semester based on fetched data
-        if (transformed.length > 0) {
-          setSelectedSemester(transformed[0].semester);
+        const data = response.data.data.attendance;
+
+        if (data && data.semesters) {
+            setAttendanceData(data.semesters); // Store the semesters array directly
+
+            // Set initial selected semester if data exists
+            if (data.semesters.length > 0) {
+              setSelectedSemester(data.semesters[0].semester);
+            }
+        } else {
+            setAttendanceData([]); // Handle cases where there's no attendance data
         }
-        
+
         setLoading(false);
       } catch (err) {
         setError("Failed to fetch attendance data");
@@ -44,79 +48,103 @@ const Attendance = () => {
     };
 
     fetchAttendance();
-  }, [user.id]);
-  const transformBackendData = (backendData) => {
-    if (!backendData || !backendData.subjects || backendData.subjects.length === 0) {
-      console.warn("No valid data found in backend response.");
-      return [];
+  }, [user._id]);
+
+  // No need for transformBackendData in the old way
+
+    const getCumulativeAttendance = (subjectName, semester) => {
+        const semesterData = attendanceData.find(s => s.semester === semester);
+        if (!semesterData) return "No Data";
+
+        let totalAttended = 0;
+        let totalTaken = 0;
+
+        semesterData.months.forEach(monthData => {
+            const sub = monthData.subjects.find(s => s.subjectName === subjectName);
+            if (sub) {
+                totalAttended += sub.attendedClasses;
+                totalTaken += sub.totalClasses;
+            }
+        });
+
+        if (totalTaken === 0) return "No Data";
+        const percentage = ((totalAttended / totalTaken) * 100).toFixed(2);
+        return `${totalAttended}/${totalTaken} (${percentage}%)`;
+    };
+    const getOverallAttendance = (semester) => {
+        const semesterData = attendanceData.find(s => s.semester === semester);
+        if (!semesterData) return "No Data";
+        let totalAttended = 0;
+        let totalTaken = 0;
+
+        semesterData.months.forEach((monthData) => {
+          monthData.subjects.forEach((subject) => {
+            totalAttended += subject.attendedClasses;
+            totalTaken += subject.totalClasses;
+          });
+        });
+        if (totalTaken === 0) return "No Data";
+
+        const percentage = ((totalAttended / totalTaken) * 100).toFixed(2);
+        return `${totalAttended}/${totalTaken} (${percentage}%)`;
+      };
+
+  const getMonthAttendance = (subjectName, semester, month) => {
+    if (month === 0) {
+      // "All" months: show cumulative for the semester
+      return getCumulativeAttendance(subjectName, semester);
     }
-    const subjectsMap = {};
 
-    return backendData.subjects.map((subject) => ({
-      subjectName: subject.subjectName,
-      semester: backendData.semester,
-      subjectCode: subject.subjectCode || "N/A",
-      months: [
-        {
-          month: backendData.month,
-          classesTaken: subject.totalClasses,
-          classesAttended: subject.attendedClasses,
-        },
-      ],
-    }));
-  };
+    const semesterData = attendanceData.find((s) => s.semester === semester);
+    if (!semesterData) return "No Data";
 
-  const getCumulativeAttendance = (subject) => {
-    const totalAttended = subject.months.reduce((sum, month) => sum + month.classesAttended, 0);
-    const totalTaken = subject.months.reduce((sum, month) => sum + month.classesTaken, 0);
-    
-    if (totalTaken === 0) return "No Data"; // Prevent division by zero
-  
-    const percentage = ((totalAttended / totalTaken) * 100).toFixed(2);
-    return `${totalAttended}/${totalTaken} (${percentage}%)`;
-  };
-
-  const getOverallAttendance = () => {
-    const attended = attendanceData.reduce((total, subject) => {
-      const attended = subject.months.reduce(
-        (total, month) => total + month.classesAttended,
-        0
-      );
-      return total + attended;
-    }, 0);
-    const taken = attendanceData.reduce((total, subject) => {
-      const taken = subject.months.reduce(
-        (total, month) => total + month.classesTaken,
-        0
-      );
-      return total + taken;
-    }, 0);
-    const percentage = ((attended / taken) * 100).toFixed(2);
-    return `${attended}/${taken} (${percentage}%)`;
-  };
-
-  useEffect(() => {
-    // Add code to send notification if overall attendance is less than 75%
-  }, [getOverallAttendance()]);
-
-  const getMonthAttendance = (subject) => {
-    if (selectedMonth === 0) { // If "All" is selected, show total attendance
-      const totalAttended = subject.months.reduce((sum, m) => sum + m.classesAttended, 0);
-      const totalTaken = subject.months.reduce((sum, m) => sum + m.classesTaken, 0);
-      if (totalTaken === 0) return "No Data";
-      const percentage = ((totalAttended / totalTaken) * 100).toFixed(2);
-      return `${totalAttended}/${totalTaken} (${percentage}%)`;
-    }
-  
-    // If a specific month is selected
-    const monthData = subject.months.find(m => m.month === selectedMonth);
+    const monthData = semesterData.months.find((m) => m.month === month);
     if (!monthData) return "No Data";
-    
-    const { classesAttended, classesTaken } = monthData;
-    const percentage = ((classesAttended / classesTaken) * 100).toFixed(2);
-    return `${classesAttended}/${classesTaken} (${percentage}%)`;
+
+    const subject = monthData.subjects.find((s) => s.subjectName === subjectName);
+    if (!subject) return "No Data";
+
+    const { attendedClasses, totalClasses } = subject;
+    if (totalClasses === 0) return "No Data";
+    const percentage = ((attendedClasses / totalClasses) * 100).toFixed(2);
+    return `${attendedClasses}/${totalClasses} (${percentage}%)`;
   };
-  
+
+  const handleSemesterChange = (event) => {
+    setSelectedSemester(parseInt(event.target.value, 10)); // Ensure it's a number
+    setSelectedMonth(0); // Reset month selection
+  };
+
+  const handleMonthChange = (event) => {
+    setSelectedMonth(parseInt(event.target.value, 10)); // Ensure it's a number
+  };
+
+  const getAvailableMonths = () => {
+    if (!selectedSemester) return []; // No semester selected
+    const semesterData = attendanceData.find((s) => s.semester === selectedSemester);
+    if (!semesterData) return []; // No data for the selected semester
+    const months = semesterData.months.map((m) => m.month);
+    return [0, ...months]; // Add 0 for "All"
+  };
+
+    // Helper function to get unique subjects for the selected semester
+    const getSubjectsForSemester = () => {
+        if (!selectedSemester) return [];
+        const semesterData = attendanceData.find(s => s.semester === selectedSemester);
+        if (!semesterData) return [];
+
+        const subjectsMap = new Map(); // Use a Map to ensure uniqueness
+        semesterData.months.forEach(monthData => {
+            monthData.subjects.forEach(subject => {
+                subjectsMap.set(subject.subjectName, {
+                    subjectName: subject.subjectName,
+                    subjectCode: subject.subjectCode || "N/A", // Ensure you have subjectCode in your model
+                });
+            });
+        });
+
+        return Array.from(subjectsMap.values());
+    };
 
   return (
     <Box sx={{ p: 2 }}>
@@ -126,12 +154,12 @@ const Attendance = () => {
           Select Semester:
           <Select
             value={selectedSemester}
-            // onChange={handleSemesterChange}
+            onChange={handleSemesterChange}
             sx={{ ml: 1 }}
           >
-            {Array.from({ length: 8 }, (_, index) => (
-              <MenuItem key={index + 1} value={index + 1}>
-                Semester {index + 1}
+            {attendanceData.map((sem) => (
+              <MenuItem key={sem.semester} value={sem.semester}>
+                Semester {sem.semester}
               </MenuItem>
             ))}
           </Select>
@@ -141,13 +169,12 @@ const Attendance = () => {
             Select Month:
             <Select
               value={selectedMonth}
-              // onChange={handleMonthChange}
+              onChange={handleMonthChange}
               sx={{ ml: 1 }}
             >
-              <MenuItem value={0}>All</MenuItem>
-              {Array.from({ length: 3 }, (_, index) => (
-                <MenuItem key={index + 1} value={index + 1}>
-                  Month {index + 1}
+              {getAvailableMonths().map((month) => (
+                <MenuItem key={month} value={month}>
+                  {month === 0 ? "All" : `Month ${month}`}
                 </MenuItem>
               ))}
             </Select>
@@ -173,9 +200,7 @@ const Attendance = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {attendanceData
-              .filter((subject) => subject.semester === selectedSemester)
-              .map((subject) => (
+            {getSubjectsForSemester().map((subject) => (
                 <TableRow key={subject.subjectCode}>
                   <TableCell sx={{ border: "1px solid gray" }}>
                     {subject.subjectCode}
@@ -184,19 +209,19 @@ const Attendance = () => {
                     {subject.subjectName}
                   </TableCell>
                   <TableCell sx={{ border: "1px solid gray" }}>
-                    {getMonthAttendance(subject)}
+                    {getMonthAttendance(subject.subjectName, selectedSemester, selectedMonth)}
                   </TableCell>
                   <TableCell sx={{ border: "1px solid gray" }}>
-                    {getCumulativeAttendance(subject)}
+                    {getCumulativeAttendance(subject.subjectName, selectedSemester)}
                   </TableCell>
                 </TableRow>
               ))}
             <TableRow sx={{ fontWeight: "bold" }}>
               <TableCell colSpan={2}>Overall Attendance</TableCell>
               <TableCell>
-                {getOverallAttendance()}{" "}
+                {getOverallAttendance(selectedSemester)}
                 <Box component="span" sx={{ ml: 1 }}>
-                  (for all subjects)
+                  (for selected semester)
                 </Box>
               </TableCell>
               <TableCell></TableCell>
