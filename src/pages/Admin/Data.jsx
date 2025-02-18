@@ -14,7 +14,7 @@ import Iconify from "../../components/Iconify";
 import HeaderBreadcrumbs from "../../components/HeaderBreadcrumbs";
 // sections
 
-import marks from "./AddMarks";
+import AddIat from "./AddIat";
 import AddAttendance from "./AddAttendance";
 import AddStudents from "./AddStudents";
 import React from "react";
@@ -40,7 +40,7 @@ export default function Data() {
       value: "Add IAT Marks",
       icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
       component: (
-        <marks
+        <AddIat
           onEdit={(user) => {
             setEditingUser(user);
             onChangeTab(null, "Add IAT Marks");
