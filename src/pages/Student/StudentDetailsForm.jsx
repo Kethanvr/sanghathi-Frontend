@@ -18,10 +18,12 @@ import {
   RHFUploadAvatar,
 } from "../../components/hook-form";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
 const yesNoOptions = [
   { value: "yes", label: "Yes" },
   { value: "no", label: "No" },
 ];
+
 
 export default function StudentDetailsForm() {
   const [searchParams] = useSearchParams();
@@ -147,7 +149,7 @@ export default function StudentDetailsForm() {
 
     try {
       const response = await api.get(
-        `http://localhost:8000/api/mentorship/mentor/${user._id}`
+        `${BASE_URL}/mentorship/mentor/${user._id}`
       );
       const mentor = response.data.mentor;
 

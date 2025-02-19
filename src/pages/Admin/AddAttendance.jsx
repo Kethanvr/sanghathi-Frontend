@@ -3,6 +3,8 @@ import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import Papa from "papaparse";
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+
 const AddAttendance = () => {
   const [processing, setProcessing] = useState(false);
   const [successCount, setSuccessCount] = useState(0);
@@ -91,8 +93,7 @@ const AddAttendance = () => {
           });
         }
 
-        //axios needs to be changed to api.get. This is only for testing as api.get is not working for now
-        const response = await axios.get(`http://localhost:8000/api/users/usn/${row.USN}`);
+        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`);
         console.log("Response: ",response);
         if (!response.data?.userId) {
           throw new Error(`User with USN ${row.USN} not found`);
@@ -108,7 +109,7 @@ const AddAttendance = () => {
         console.log("Attendance Data: ", attendanceData);
 
         //Do not use axios.post directly (above as well)
-        await axios.post(`http://localhost:8000/api/students/attendance/${userId}`, attendanceData);
+        await axios.post(`${BASE_URL}/students/attendance/${userId}`, attendanceData);
         success++;
       } catch (error) {
         errors++;

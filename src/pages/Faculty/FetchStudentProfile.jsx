@@ -13,11 +13,12 @@ import {
   Button,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const fetchStudentProfiles = async (userId) => {
   try {
     const response = await axios.get(
-      `http://localhost:8000/api/student-profiles/${userId}`
+      `${BASE_URL}/student-profiles/${userId}`
     );
     return response.data;
   } catch (error) {
@@ -44,7 +45,7 @@ const MenteesList = () => {
     const fetchMentees = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/mentorship/${user._id}/mentees`
+          `${BASE_URL}/mentorship/${user._id}/mentees`
         );
         setMentees(response.data.mentees);
       } catch (err) {

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
 const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -16,7 +17,7 @@ const Signup = () => {
     const roleName = role === "student" ? "student" : "admin"; 
   
     try {
-      const response = await axios.post("http://localhost:8000/api/users/signup", {
+      const response = await axios.post(`${BASE_URL}/users/signup`, {
         name,
         email,
         password,

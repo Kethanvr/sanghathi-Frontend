@@ -34,6 +34,7 @@ import { blueGrey } from "@mui/material/colors";
 import { Link, useParams } from "react-router-dom"; // Import useParams
 import axios from "axios"; // Import axios
 
+const BASE_URL = import.meta.env.VITE_API_URL;
 const StudentTile = ({ title, icon, link, menteeId }) => {
   const theme = useTheme();
     const updatedLink = link.includes('?') ? `${link}&menteeId=${menteeId}` : `${link}?menteeId=${menteeId}`;
@@ -92,7 +93,7 @@ const StudentDashboard = () => {
         // Example: Fetch basic mentee profile data.  You'll likely need
         // separate API calls for each section (profile, career review, etc.)
         const response = await axios.get(
-          `http://localhost:8000/api/student-profiles/${menteeId}`
+          `${BASE_URL}/student-profiles/${menteeId}`
         );
         setMenteeData(response.data);
       } catch (err) {

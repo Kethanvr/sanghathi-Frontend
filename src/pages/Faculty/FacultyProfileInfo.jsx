@@ -14,6 +14,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { AuthContext } from "../../context/AuthContext";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const FacultyProfileInfo = () => {
   const theme = useTheme(); // Use theme for consistent styling
@@ -31,7 +32,7 @@ const FacultyProfileInfo = () => {
 
     try {
       const response = await axios.get(
-        `http://localhost:8000/api/mentorship/mentor/${user._id}`
+        `${BASE_URL}/api/mentorship/mentor/${user._id}`
       );
       const mentor = response.data?.mentor;
 
@@ -52,7 +53,7 @@ const FacultyProfileInfo = () => {
 
     try {
       const response = await axios.get(
-        `http://localhost:8000/api/faculty/profile/${mentorId}`
+        `${BASE_URL}/api/faculty/profile/${mentorId}`
       );
       const faculty = response.data?.data?.facultyProfile;
 

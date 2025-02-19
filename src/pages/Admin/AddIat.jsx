@@ -3,6 +3,8 @@ import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import Papa from "papaparse";
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+
 const AddIat = () => {
   const [processing, setProcessing] = useState(false);
   const [successCount, setSuccessCount] = useState(0);
@@ -100,7 +102,7 @@ const AddIat = () => {
       try {
         // Get userId by USN (as before)
         const response = await axios.get(
-          `http://localhost:8000/api/users/usn/${data.usn}`
+          `${BASE_URL}/users/usn/${data.usn}`
         );
         if (!response.data?.userId) {
           throw new Error(`User with USN ${data.usn} not found`);
@@ -115,7 +117,7 @@ const AddIat = () => {
 
         // Submit IAT data
         await axios.post(
-          `http://localhost:8000/api/students/iat/${userId}`,
+          `${BASE_URL}/api/students/iat/${userId}`,
           iatData
         );
         success++;

@@ -13,6 +13,7 @@ import {
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 
+const BASE_URL = import.meta.env.VITE_API_URL;
 const Attendance = () => {
   const { user } = useContext(AuthContext);
   const [attendanceData, setAttendanceData] = useState([]); // Store the *nested* data
@@ -25,7 +26,7 @@ const Attendance = () => {
     const fetchAttendance = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/students/attendance/${user._id}`
+          `${BASE_URL}/students/attendance/${user._id}`
         );
         const data = response.data.data.attendance;
 

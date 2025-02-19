@@ -27,7 +27,7 @@ const Iat = () => {
       try {
         //  Adapt the endpoint to your IAT data endpoint
         const response = await axios.get(
-          `http://localhost:8000/api/students/iat/${user._id}` //  Replace with your actual endpoint
+          `${BASE_URL}/students/iat/${user._id}` //  Replace with your actual endpoint
         );
         const data = response.data.data.iat; // Adjust based on your API response structure
 
