@@ -110,9 +110,12 @@ export default function StudentDetailsForm() {
       else
         response = await api.get(`/students/profile/${user._id}`);
       const { data } = response.data;
-
+      
       if (data) {
-        // Set each form field using the fetched data
+        //Formatting dates
+        data.studentProfile.dateOfBirth = new Date(data.studentProfile.dateOfBirth).toISOString().split('T')[0];
+        data.studentProfile.admissionDate = new Date(data.studentProfile.admissionDate).toISOString().split('T')[0];
+        
         Object.keys(data.studentProfile).forEach((key) => {
           if (
             data.studentProfile[key] &&
@@ -139,34 +142,6 @@ export default function StudentDetailsForm() {
   useEffect(() => {
     fetchStudentData();
   }, [fetchStudentData]);
-
-  const fetchMentorName = useCallback(async () => {
-    if (!user || !user._id) {
-      console.error("User ID not found");
-      setMentorName("User ID Missing");
-      return;
-    }
-
-    try {
-      const response = await api.get(
-        `${BASE_URL}/mentorship/mentor/${user._id}`
-      );
-      const mentor = response.data.mentor;
-
-      if (mentor && mentor.name) {
-        setMentorName(mentor.name);
-      } else {
-        setMentorName("Not Assigned");
-      }
-    } catch (error) {
-      console.error("Error fetching mentor name:", error);
-      setMentorName("Error Loading");
-    }
-  }, [user?._id]);
-
-  useEffect(() => {
-    fetchMentorName();
-  }, [fetchMentorName]);
 
   const handleReset = () => {
     reset();
@@ -324,7 +299,7 @@ export default function StudentDetailsForm() {
               </Grid>
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="studentProfile.dateOfBirth.split"
+                  name="studentProfile.dateOfBirth"
                   label="Date of Birth"
                   type="date"
                   fullWidth
