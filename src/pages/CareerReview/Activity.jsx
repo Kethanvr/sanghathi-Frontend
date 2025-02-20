@@ -68,7 +68,7 @@ export default function Activity() {
           enqueueSnackbar("Activity data updated successfully!", {
             variant: "success",
           });
-          fetchActivity();
+          await fetchActivity();
         } catch (error) {
           console.error(error);
           enqueueSnackbar("An error occurred while processing the request", {

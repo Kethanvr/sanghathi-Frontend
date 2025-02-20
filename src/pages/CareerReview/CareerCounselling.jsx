@@ -84,7 +84,7 @@ export default function CareerCounselling() {
         enqueueSnackbar("Career profile updated successfully!", {
             variant: "success",
         });
-        fetchCareerCounselling();
+        await fetchCareerCounselling();
       } catch (error) {
         console.error(error);
         enqueueSnackbar("An error occurred while processing the requesst", {

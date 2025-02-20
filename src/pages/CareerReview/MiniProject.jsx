@@ -71,7 +71,7 @@ export default function MiniProject() {
           enqueueSnackbar("miniproject data updated successfully!", {
             variant: "success",
           });
-          fetchMiniProjects();
+          await fetchMiniProjects();
         } catch (error) {
           console.error(error);
           enqueueSnackbar("An error occurred while processing the request", {

@@ -117,13 +117,24 @@ const StudentDashboard = () => {
     return <Typography color="error">{error}</Typography>;
   }
   return (
-    <Page title="Home">
+    <Page title="Mentee Dashboard">
       <Container
         maxWidth="xl"
         sx={{
-          p: 8,
+          p: 2,
         }}
       >
+        <Typography
+          variant="h2"
+          align="center"
+          gutterBottom
+          sx={{
+            mb: 6,
+            fontWeight: "bold",
+          }}
+        >
+          Mentee Dashboard
+        </Typography>
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={4}>
             <StudentTile

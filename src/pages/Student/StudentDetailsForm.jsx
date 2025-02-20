@@ -183,7 +183,7 @@ export default function StudentDetailsForm() {
         enqueueSnackbar("Student profile updated successfully!", {
           variant: "success",
         });
-        reset();
+        await fetchStudentData();
       } catch (error) {
         console.error(error);
         enqueueSnackbar("An error occurred while processing the request", {
@@ -324,13 +324,13 @@ export default function StudentDetailsForm() {
               </Grid>
               <Grid item xs={12} md={6}>
                 <RHFTextField
-                  name="studentProfile.dateOfBirth"
+                  name="studentProfile.dateOfBirth.split"
                   label="Date of Birth"
                   type="date"
                   fullWidth
                   required={!isDataFetched}
                   InputLabelProps={{
-                    shrink: shouldShrink("studentProfile.dateOfBirth"),
+                    shrink: true,
                   }}
                 />
               </Grid>
@@ -435,7 +435,7 @@ export default function StudentDetailsForm() {
                   fullWidth
                   required={!isDataFetched}
                   InputLabelProps={{
-                    shrink: shouldShrink("studentProfile.admissionDate"),
+                    shrink: true,
                   }}
                 />
               </Grid>
@@ -447,7 +447,7 @@ export default function StudentDetailsForm() {
                   autoComplete="off"
                   required={!isDataFetched}
                   InputLabelProps={{
-                    shrink: shouldShrink("studentProfile.hostelite"),
+                    shrink: true,
                   }}
                 >
                   {yesNoOptions.map((option) => (
@@ -463,7 +463,7 @@ export default function StudentDetailsForm() {
                   fullWidth
                   required={!isDataFetched}
                   InputLabelProps={{
-                    shrink: shouldShrink("studentProfile.physicallyChallenged"),
+                    shrink: true,
                   }}
                 >
                   {yesNoOptions.map((option) => (

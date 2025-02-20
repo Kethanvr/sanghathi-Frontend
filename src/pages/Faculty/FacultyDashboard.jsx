@@ -83,7 +83,7 @@ const FacultyDashboard = () => {
     setBugReportDialogOpen(false);
   };
   return (
-    <Page title="Home">
+    <Page title="Faculty Dashboard">
       <Container
         maxWidth="xl"
         sx={{
@@ -124,6 +124,21 @@ const FacultyDashboard = () => {
               link="/threads"
             />
           </Grid>
+          <Grid item xs={12} sm={6} md={4}>
+            <StudentTile
+              title="Meetings"
+              icon={<PersonIcon fontSize="large" />}
+              link="/meetings"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4}>
+            <StudentTile
+              title="Campus Buddy"
+              icon={<PersonOutlinedIcon fontSize="large" />}
+              link="/campus-buddy"
+            />
+          </Grid>
+          
         </Grid>
       </Container>
     </Page>
