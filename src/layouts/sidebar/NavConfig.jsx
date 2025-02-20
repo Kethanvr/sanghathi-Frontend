@@ -32,19 +32,19 @@ const adminNavConfig = [
 
 const facultyNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/faculty/dashboard" },
+  { text: "My Mentees", icon: <PersonOutlinedIcon />, link: "/mentees" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
   { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
   { text: "Campus Buddy", icon: <InfoOutlinedIcon />, link: "/campus-buddy" },
-  { text: "My Mentees", icon: <PersonOutlinedIcon />, link: "/mentees" },
 ];
 
 const studentNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
   { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
+  { text: "Mentor Details", icon: <PersonOutlinedIcon />, link: "/mentor-details" },
   // { text: "Chat", icon: <ChatOutlinedIcon />, link: "/chat" },
   { text: "Campus Buddy", icon: <InfoOutlinedIcon />, link: "/campus-buddy" },
-  { text: "Mentor Details", icon: <PersonOutlinedIcon />, link: "/mentor-details" },
 ];
 
 const getNavConfig = (role) => {
