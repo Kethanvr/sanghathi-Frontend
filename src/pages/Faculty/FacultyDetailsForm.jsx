@@ -91,7 +91,7 @@ export default function FacultyDetailsForm() {
       console.log(data);
       
       if (data) {
-        
+        data.facultyProfile.dateOfBirth = new Date(data.facultyProfile.dateOfBirth).toISOString().split('T')[0];
         Object.keys(data.facultyProfile).forEach((key) => {
           if (data.facultyProfile[key] && typeof data.facultyProfile[key] === "object") {
             Object.keys(data.facultyProfile[key]).forEach((innerKey) => {
@@ -127,7 +127,7 @@ export default function FacultyDetailsForm() {
       enqueueSnackbar("Faculty profile updated successfully!", {
         variant: "success",
       });
-      reset();
+      await fetchFacultyData();
     } catch (error) {
       console.error(error);
       enqueueSnackbar("An error occurred while processing the request", {
