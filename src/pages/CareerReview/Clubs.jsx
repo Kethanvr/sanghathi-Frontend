@@ -65,7 +65,7 @@ export default function ClubEvents() {
   const onSubmit = useCallback(
     async (formData) => {
       try {
-        await api.post("/career-counselling/club", { clubs: formData.clubs, userId: user._id });
+        await api.post("/career-counselling/clubs", { clubs: formData.clubs, userId: user._id });
         enqueueSnackbar("Club data updated successfully!", {
           variant: "success",
         });
