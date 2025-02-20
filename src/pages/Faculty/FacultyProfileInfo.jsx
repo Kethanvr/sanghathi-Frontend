@@ -32,7 +32,7 @@ const FacultyProfileInfo = () => {
 
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/mentorship/mentor/${user._id}`
+        `${BASE_URL}/mentorship/mentor/${user._id}`
       );
       const mentor = response.data?.mentor;
 
@@ -53,7 +53,7 @@ const FacultyProfileInfo = () => {
 
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/faculty/profile/${mentorId}`
+        `${BASE_URL}/faculty/profile/${mentorId}`
       );
       const faculty = response.data?.data?.facultyProfile;
 
