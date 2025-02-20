@@ -73,7 +73,7 @@ export default function ProffessionalBodiesEvents() {
           enqueueSnackbar("Proffessional Bodies data updated successfully!", {
             variant: "success",
           });
-          fetchProffessionalBodies();
+          await fetchProffessionalBodies();
         } catch (error) {
           console.error("Error updating proffessional bodies data:", error);
           enqueueSnackbar("Error updating proffessional bodies data", {

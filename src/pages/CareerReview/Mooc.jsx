@@ -70,7 +70,7 @@ export default function Mooc() {
           enqueueSnackbar("Mooc data updated successfully!", {
             variant: "success",
           });
-          fetchMooc();
+          await fetchMooc();
         } catch (error) {
           console.error(error);
           enqueueSnackbar("An error occurred while processing the request", {

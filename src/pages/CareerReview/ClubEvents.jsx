@@ -70,7 +70,7 @@ export default function ClubEvents() {
         enqueueSnackbar("Club data updated successfully!", {
           variant: "success",
         });
-        fetchClubEvents();
+        await fetchClubEvents();
       } catch (error) {
         console.error(error);
         enqueueSnackbar("An error occurred while processing the request", {

@@ -172,7 +172,7 @@ export default function FacultyDetailsForm() {
                 required={!isDataFetched}
                 fullWidth
                 autoComplete="additional-name"
-                InputLabelProps={{ shrink: shouldShrink("facultyProfile.fullName.middleName") }}
+                InputLabelProps={{ shrink: shouldShrink("facultyProfile.fullName.firstName") }}
               />
               <RHFTextField
                 name="facultyProfile.fullName.middleName"
@@ -238,7 +238,7 @@ export default function FacultyDetailsForm() {
                   type="date"
                   fullWidth
                   required={!isDataFetched}
-                  InputLabelProps={{ shrink: shouldShrink("facultyProfile.dateOfBirth") }}
+                  InputLabelProps={{ shrink: true }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -325,7 +325,7 @@ export default function FacultyDetailsForm() {
                   autoComplete="off"
                   fullWidth
                   required={!isDataFetched}
-                  InputLabelProps={{ shrink: shouldShrink("facultyProfile.physicallyChallenged") }}
+                  InputLabelProps={{ shrink: true }}
                 >
                   {yesNoOptions.map((option) => (
                     <option key={option.value}>{option.label}</option>
@@ -339,7 +339,7 @@ export default function FacultyDetailsForm() {
                   autoComplete="off"
                   fullWidth
                   required={!isDataFetched}
-                  InputLabelProps={{ shrink: shouldShrink("facultyProfile.isForeigner") }}
+                  InputLabelProps={{ shrink: true }}
                 >
                   {yesNoOptions.map((option) => (
                     <option key={option.value}>{option.label}</option>

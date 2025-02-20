@@ -59,7 +59,7 @@ const FacultyProfileInfo = () => {
 
       if (faculty) {
         setFacultyProfile({
-          fullName: `${faculty.fullName.firstName} ${faculty.fullName.middleName} ${faculty.fullName.lastName}`,
+          fullName: `${faculty.fullName.firstName} ${faculty.fullName.middleName || ' '} ${faculty.fullName.lastName || ' '}`,
           department: faculty.department,
           email: faculty.email,
           mobileNumber: faculty.mobileNumber,
