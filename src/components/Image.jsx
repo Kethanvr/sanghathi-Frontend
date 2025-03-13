@@ -2,7 +2,6 @@ import PropTypes from 'prop-types';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 // @mui
 import { Box } from '@mui/material';
-
 // ----------------------------------------------------------------------
 
 Image.propTypes = {
@@ -40,7 +39,7 @@ export default function Image({ ratio, disabledEffect = false, effect = 'blur', 
           component={LazyLoadImage}
           wrapperClassName="wrapper"
           effect={disabledEffect ? undefined : effect}
-          placeholderSrc="https://zone-assets-api.vercel.app/assets/img_placeholder.svg"
+          placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3C/svg%3E"
           sx={{ width: 1, height: 1, objectFit: 'cover' }}
           {...other}
         />
@@ -63,7 +62,7 @@ export default function Image({ ratio, disabledEffect = false, effect = 'blur', 
         component={LazyLoadImage}
         wrapperClassName="wrapper"
         effect={disabledEffect ? undefined : effect}
-        placeholderSrc="https://zone-assets-api.vercel.app/assets/img_placeholder.svg"
+        placeholderSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3C/svg%3E"
         sx={{ width: 1, height: 1, objectFit: 'cover' }}
         {...other}
       />

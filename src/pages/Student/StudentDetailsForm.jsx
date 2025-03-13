@@ -36,7 +36,13 @@ export default function StudentDetailsForm() {
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [setMentorName] = useState("Loading...");
 
-  const methods = useForm();
+  const methods = useForm({
+    defaultValues: {
+      studentProfile: {
+        photo:'',
+      }
+    }
+  });
   const watchedValues = useWatch({
     control: methods.control,
     name: [
@@ -99,6 +105,8 @@ export default function StudentDetailsForm() {
     reset,
     formState: { isSubmitting },
     setValue,
+    watch,
+    trigger,
   } = methods;
 
   const fetchStudentData = useCallback(async () => {
@@ -108,52 +116,54 @@ export default function StudentDetailsForm() {
         response = await api.get(`/students/profile/${menteeId}`);
       }
       else
-        response = await api.get(`/students/profile/${user._id}`);
-      const { data } = response.data;
+      response = await api.get(`/students/profile/${user._id}`);
+    const { data } = response.data;
+    
+    if (data) {
+      //Formatting dates
+      data.studentProfile.dateOfBirth = new Date(data.studentProfile.dateOfBirth).toISOString().split('T')[0];
+      data.studentProfile.admissionDate = new Date(data.studentProfile.admissionDate).toISOString().split('T')[0];
       
-      if (data) {
-        //Formatting dates
-        data.studentProfile.dateOfBirth = new Date(data.studentProfile.dateOfBirth).toISOString().split('T')[0];
-        data.studentProfile.admissionDate = new Date(data.studentProfile.admissionDate).toISOString().split('T')[0];
-        
-        Object.keys(data.studentProfile).forEach((key) => {
-          if (
-            data.studentProfile[key] &&
-            typeof data.studentProfile[key] === "object"
-          ) {
-            Object.keys(data.studentProfile[key]).forEach((innerKey) => {
-              setValue(
-                `studentProfile.${key}.${innerKey}`,
-                data.studentProfile[key][innerKey]
-              );
-            });
-          } else {
-            setValue(`studentProfile.${key}`, data.studentProfile[key]);
-          }
-        });
-        setIsDataFetched(true);
-      }
-      console.log("Student data fetched successfully:", data);
-    } catch (error) {
-      console.error("Error fetching student data:", error.response || error);
+      Object.keys(data.studentProfile).forEach((key) => {
+        if (
+          data.studentProfile[key] &&
+          typeof data.studentProfile[key] === "object"
+        ) {
+          Object.keys(data.studentProfile[key]).forEach((innerKey) => {
+            setValue(
+              `studentProfile.${key}.${innerKey}`,
+              data.studentProfile[key][innerKey]
+            );
+          });
+        } else {
+          setValue(`studentProfile.${key}`, data.studentProfile[key]);
+        }
+      });
+      setIsDataFetched(true);
     }
-  }, [user._id, setValue]);
+    console.log("Student data fetched successfully:", data);
+  } catch (error) {
+    console.error("Error fetching student data:", error.response || error);
+  }
+}, [user._id, setValue]);
 
-  useEffect(() => {
-    fetchStudentData();
-  }, [fetchStudentData]);
+useEffect(() => {
+  fetchStudentData();
+}, [fetchStudentData]);
 
-  const handleReset = () => {
-    reset();
-    setIsDataFetched(false);
-  };
+const handleReset = () => {
+  reset();
+  setIsDataFetched(false);
+};
 
   const onSubmit = useCallback(
     async (formData) => {
       try {
+        const photoData = formData.studentProfile.photo;
         await api.post("/students/profile", {
           userId: user._id,
           ...formData.studentProfile,
+          photo: photoData,
         });
         enqueueSnackbar("Student profile updated successfully!", {
           variant: "success",
@@ -169,31 +179,103 @@ export default function StudentDetailsForm() {
     [enqueueSnackbar, reset]
   );
 
-  return (
-    <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+  const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.7) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Get the compressed base64 string
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        };
+      };
+    });
+  };
+
+  const handleDropAvatar = useCallback(
+    async (acceptedFiles) => {
+      const file = acceptedFiles[0];
+      
+      if (file) {
+        console.log("File received:", file);
+        
+        try {
+          // Compress/resize the image before converting to base64
+          const compressedBase64 = await compressImage(file, 800, 800, 0.7);
+          console.log("Image compressed and converted to base64");
+          
+          // Create a preview URL for display
+          const previewUrl = URL.createObjectURL(file);
+          
+          // Update form with both the compressed base64 string and preview URL
+          setValue('studentProfile.photo', compressedBase64);
+          setValue('studentProfile.photoPreview', previewUrl);
+          
+          // Force a re-render if needed
+          trigger('studentProfile.photo');
+        } catch (error) {
+          console.error("Error processing image:", error);
+          enqueueSnackbar("Error processing image", { variant: "error" });
+        }
+      }
+    },
+    [setValue, trigger, enqueueSnackbar]
+  );
+  
+
+return (
+  <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
           <Card sx={{ height: "100%", py: 10, px: 3, textAlign: "center" }}>
-            <RHFUploadAvatar
-              name="studentProfile.photo"
-              accept="image/*"
-              maxSize={3145728}
-              helperText={
-                <Box
-                  component="span"
-                  sx={{
-                    mt: 2,
-                    mx: "auto",
-                    display: "block",
-                    textAlign: "center",
-                    color: "text.secondary",
-                  }}
-                >
-                  Allowed *.jpeg, *.jpg, *.png, *.gif
-                  <br /> max size of 3MB
-                </Box>
-              }
-            />
+          <RHFUploadAvatar
+            name="studentProfile.photo"
+            accept="image/*"
+            maxSize={3145728}
+            onDrop={handleDropAvatar}
+            file={watch('studentProfile.photoPreview')}
+            helperText={
+              <Box
+                component="span"
+                sx={{
+                  mt: 2,
+                  mx: "auto",
+                  display: "block",
+                  textAlign: "center",
+                  color: "text.secondary",
+                }}
+              >
+                Allowed *.jpeg, *.jpg, *.png, *.gif
+                <br /> max size of 3MB
+              </Box>
+            }
+          />
           </Card>
         </Grid>
         <Grid item xs={12} md={8}>
