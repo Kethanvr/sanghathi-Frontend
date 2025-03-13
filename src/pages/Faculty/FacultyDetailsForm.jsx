@@ -29,7 +29,13 @@ export default function FacultyDetailsForm() {
   const { user } = useContext(AuthContext);
   const [isDataFetched, setIsDataFetched] = useState(false);
 
-  const methods = useForm();
+  const methods = useForm({
+    defaultValues: {
+      facultyProfile: {
+        photo:'',
+      }
+    }
+  });
   const watchedValues = useWatch({
     control: methods.control,
     name: [
@@ -82,6 +88,8 @@ export default function FacultyDetailsForm() {
     reset,
     formState: { isSubmitting },
     setValue,
+    watch,
+    trigger,
   } = methods;
 
   const fetchFacultyData = useCallback(async () => {
@@ -120,9 +128,11 @@ export default function FacultyDetailsForm() {
 
   const onSubmit = useCallback(async (formData) => {
     try {
+      const photoData = formData.facultyProfile.photo;
       await api.post("/faculty/profile", {
         userId: user._id,
         ...formData.facultyProfile,
+        photo: photoData,
       });
       enqueueSnackbar("Faculty profile updated successfully!", {
         variant: "success",
@@ -136,31 +146,102 @@ export default function FacultyDetailsForm() {
     }
   }, [enqueueSnackbar, reset]);
 
+  const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.7) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Get the compressed base64 string
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        };
+      };
+    });
+  };
+
+  const handleDropAvatar = useCallback(
+    async (acceptedFiles) => {
+      const file = acceptedFiles[0];
+      
+      if (file) {
+        console.log("File received:", file);
+        
+        try {
+          // Compress/resize the image before converting to base64
+          const compressedBase64 = await compressImage(file, 800, 800, 0.7);
+          console.log("Image compressed and converted to base64");
+          
+          // Create a preview URL for display
+          const previewUrl = URL.createObjectURL(file);
+          
+          // Update form with both the compressed base64 string and preview URL
+          setValue('facultyProfile.photo', compressedBase64);
+          setValue('facultyProfile.photoPreview', previewUrl);
+          
+          // Force a re-render if needed
+          trigger('facultyProfile.photo');
+        } catch (error) {
+          console.error("Error processing image:", error);
+          enqueueSnackbar("Error processing image", { variant: "error" });
+        }
+      }
+    },
+    [setValue, trigger, enqueueSnackbar]
+  );
+
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
           <Card sx={{ height: "100%", py: 10, px: 3, textAlign: "center" }}>
             <RHFUploadAvatar
-              name="facultyProfile.photo"
-              accept="image/*"
-              maxSize={3145728}
-              helperText={
-                <Box
-                  component="span"
-                  sx={{
-                    mt: 2,
-                    mx: "auto",
-                    display: "block",
-                    textAlign: "center",
-                    color: "text.secondary",
-                  }}
-                >
-                  Allowed *.jpeg, *.jpg, *.png, *.gif
-                  <br /> max size of 3MB
-                </Box>
-              }
-            />
+            name="facultyProfile.photo"
+            accept="image/*"
+            maxSize={3145728}
+            onDrop={handleDropAvatar}
+            file={watch('facultyProfile.photoPreview')}
+            helperText={
+              <Box
+                component="span"
+                sx={{
+                  mt: 2,
+                  mx: "auto",
+                  display: "block",
+                  textAlign: "center",
+                  color: "text.secondary",
+                }}
+              >
+                Allowed *.jpeg, *.jpg, *.png, *.gif
+                <br /> max size of 3MB
+              </Box>
+            }
+          />
           </Card>
         </Grid>
         <Grid item xs={12} md={8}>

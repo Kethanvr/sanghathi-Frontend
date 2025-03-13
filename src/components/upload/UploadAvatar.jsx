@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useEffect, useState } from 'react'; // Add useState and useEffect
 import isString from 'lodash/isString';
 import { useDropzone } from 'react-dropzone';
 // @mui
@@ -62,9 +63,26 @@ UploadAvatar.propTypes = {
   file: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   helperText: PropTypes.node,
   sx: PropTypes.object,
+  onFileChange: PropTypes.func, // Add this prop
 };
 
-export default function UploadAvatar({ error, file, helperText, sx, ...other }) {
+export default function UploadAvatar({ error, file, helperText, sx, onFileChange, ...other }) {
+  console.log("UploadAvatar received file:", file);
+  console.log("File type:", typeof file);
+  console.log("Is string:", isString(file));
+  
+  // Convert file to base64 when it changes and it's not a string
+  useEffect(() => {
+    if (file && !isString(file) && onFileChange) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // reader.result contains the base64 string
+        onFileChange(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, [file, onFileChange]);
+
   const { getRootProps, getInputProps, isDragActive, isDragReject, fileRejections } = useDropzone({
     multiple: false,
     ...other,
@@ -88,7 +106,17 @@ export default function UploadAvatar({ error, file, helperText, sx, ...other }) 
         >
           <input {...getInputProps()} />
 
-          {file && <Image alt="avatar" src={isString(file) ? file : file.preview} sx={{ zIndex: 8 }} />}
+          {file && 
+          <Image 
+            alt="avatar" 
+            src={isString(file) && file.startsWith('data:') 
+              ? file // If it's a base64 string, use as is
+              : isString(file) && !file.startsWith('http') 
+                ? `http://localhost:8000${file.startsWith('/') ? '' : '/'}${file}` // If it's a path, prepend API URL
+                : file.preview || URL.createObjectURL(file) // If it's a file object
+            }
+            sx={{ zIndex: 8 }} 
+          />}
 
           <PlaceholderStyle
             className="placeholder"
