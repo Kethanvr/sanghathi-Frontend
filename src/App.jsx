@@ -52,11 +52,7 @@ import MentorMenteeConversation from "./pages/MentorMentee/MentorMenteeConversat
 import MyChatBot from "./mychatbot";
 import { useLocation } from 'react-router-dom';
 import { initGA, trackPageView } from "./ga";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword   from "./pages/ResetPassword";
-import FeedbackForm from "./pages/Feedback/feedback";
 
-import FeedbackTable from "./pages/Feedback/feedback";
 // TODO : Need to remove routing logic from app component
 function App() {
   // Track page views on route change using Google Analytics GA4
@@ -416,21 +412,11 @@ function App() {
                       </ProtectedRouteWrapper>
                     }
                   />
-                </Route>
                   <Route
-                  path="/mentor-mentee-conversation"
-                  element={
-                    <ProtectedRouteWrapper>
-                      <LazyLoadWrapper component={MentorMenteeConversation} />
-                    </ProtectedRouteWrapper>
-                    
-                    }
-                  />
-                  <Route
-                    path="/feedbackpage"
+                    path="/mentor-mentee-conversation"
                     element={
                       <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={FeedbackTable} />
+                        <LazyLoadWrapper component={MentorMenteeConversation} />
                       </ProtectedRouteWrapper>
                     }
                   />
