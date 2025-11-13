@@ -65,19 +65,10 @@ const getCloudinaryPublicId = (url) => {
   }
 };
 
-export default function 
-StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
+export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
   const [isDataFetched, setIsDataFetched] = useState(false);
-
-  // Check if the current user is faculty
-  const isFaculty = user?.roleName === "faculty";
-  
-  // Fields should be editable only if:
-  // 1. User is a student (not faculty)
-  // 2. OR if it's admin edit mode
-  const isEditable = !isFaculty || isAdminEdit;
 
   const methods = useForm({
     defaultValues: {
@@ -397,13 +388,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-      {isFaculty && (
-        <Box sx={{ mb: 2, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
-          <Typography variant="body2" color="warning.dark">
-            You are viewing this student profile in read-only mode. Only students can edit their own profiles.
-          </Typography>
-        </Box>
-      )}
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
           <Card sx={{ height: "100%", py: 10, px: 3, textAlign: "center" }}>
@@ -411,7 +395,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
               name="studentProfile.photo"
               value={watch('studentProfile.photo')}
               onChange={(url) => setValue('studentProfile.photo', url)}
-              disabled={!isEditable}
             />
             <Typography variant="caption" sx={{ mt: 2, display: 'block', color: 'text.secondary' }}>
               Allowed formats: JPG, PNG, GIF. Max size: 3MB
@@ -428,10 +411,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                 fullWidth
                 required={!isDataFetched}
                 autoComplete="given-name"
-                disabled={!isEditable}
-                InputProps={{
-                  readOnly: !isEditable,
-                }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.fullName.firstName"),
                 }}
@@ -441,10 +420,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                 label="Middle Name"
                 fullWidth
                 autoComplete="additional-name"
-                disabled={!isEditable}
-                InputProps={{
-                  readOnly: !isEditable,
-                }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.fullName.middleName"),
                 }}
@@ -455,10 +430,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                 fullWidth
                 required={!isDataFetched}
                 autoComplete="family-name"
-                disabled={!isEditable}
-                InputProps={{
-                  readOnly: !isEditable,
-                }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.fullName.lastName"),
                 }}
@@ -467,9 +438,9 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                 name="studentProfile.department"
                 label="Department"
                 fullWidth
-                disabled={!isEditable}
+                disabled={!isAdminEdit}
                 InputProps={{
-                  readOnly: !isEditable,
+                  readOnly: !isAdminEdit,
                 }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.department"),
@@ -486,10 +457,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                 label="Semester"
                 fullWidth
                 required={!isDataFetched}
-                disabled={!isEditable}
-                InputProps={{
-                  readOnly: !isEditable,
-                }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.sem"),
                 }}
@@ -507,10 +474,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                 fullWidth
                 required={!isDataFetched}
                 autoComplete="email"
-                disabled={!isEditable}
-                InputProps={{
-                  readOnly: !isEditable,
-                }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.personalEmail"),
                 }}
@@ -528,9 +491,9 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   label="College Email"
                   type="email"
                   fullWidth
-                  disabled={!isEditable}
+                  disabled={!isAdminEdit}
                   InputProps={{
-                    readOnly: !isEditable,
+                    readOnly: !isAdminEdit,
                   }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.email"),
@@ -542,9 +505,9 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   name="studentProfile.usn"
                   label="USN"
                   fullWidth
-                  disabled={!isEditable}
+                  disabled={!isAdminEdit}
                   InputProps={{
-                    readOnly: !isEditable,
+                    readOnly: !isAdminEdit,
                   }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.usn"),
@@ -558,10 +521,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   type="date"
                   fullWidth
                   required={!isDataFetched}
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -573,10 +532,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   label="Blood Group"
                   fullWidth
                   autoComplete="off"
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.bloodGroup"),
                   }}
@@ -590,10 +545,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="tel"
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.mobileNumber"),
                   }}
@@ -606,10 +557,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   type="tel"
                   fullWidth
                   autoComplete="tel"
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.alternatePhoneNumber"),
                   }}
@@ -622,10 +569,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="off"
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.nationality"),
                   }}
@@ -643,10 +586,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   label="Domicile"
                   fullWidth
                   autoComplete="off"
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.domicile"),
                   }}
@@ -658,10 +597,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   label="Category"
                   fullWidth
                   autoComplete="off"
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.category"),
                   }}
@@ -673,10 +608,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   label="Caste"
                   fullWidth
                   autoComplete="off"
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.caste"),
                   }}
@@ -689,10 +620,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="off"
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                   InputLabelProps={{
                     shrink: shouldShrink("studentProfile.aadharCardNumber"),
                   }}
@@ -705,10 +632,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   type="date"
                   fullWidth
                   required={!isDataFetched}
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -721,10 +644,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="off"
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -743,10 +662,6 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
                   fullWidth
                   required={!isDataFetched}
                   autoComplete="off"
-                  disabled={!isEditable}
-                  InputProps={{
-                    readOnly: !isEditable,
-                  }}
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -762,20 +677,18 @@ StudentDetailsForm({ colorMode, menteeId, isAdminEdit }) {
 
             <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
               <Box display="flex" gap={1}>
-                {import.meta.env.MODE === "development" && isEditable && (
+                {import.meta.env.MODE === "development" && (
                   <LoadingButton variant="outlined" onClick={handleReset}>
                     Reset
                   </LoadingButton>
                 )}
-                {isEditable && (
-                  <LoadingButton
-                    type="submit"
-                    variant="contained"
-                    loading={isSubmitting}
-                  >
-                    Save Changes
-                  </LoadingButton>
-                )}
+                <LoadingButton
+                  type="submit"
+                  variant="contained"
+                  loading={isSubmitting}
+                >
+                  Save Changes
+                </LoadingButton>
               </Box>
             </Stack>
           </Card>

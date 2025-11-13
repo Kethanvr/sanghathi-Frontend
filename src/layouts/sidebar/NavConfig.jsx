@@ -15,6 +15,18 @@ import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 // Campus buddy icon needs special treatment as it represents a feature
 // NavItemButton already handles the correct color for all icons based on theme mode
 // This setup keeps the config simpler
+const HodNavConfig = [
+  {
+    text: "Home",
+    icon: <HomeOutlinedIcon />,
+    link: "/hod/dashboard",
+  },
+  { text: "View Users", 
+    icon: <PeopleOutlinedIcon />, 
+    link: "/hod/users" },
+  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
+  { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
+];
 
 const adminNavConfig = [
   {
@@ -48,6 +60,25 @@ const facultyNavConfig = [
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
 
+const hodNavConfig = [
+  { text: "Home", icon: <HomeOutlinedIcon />, link: "/hod/dashboard" },
+  { text: "Department Mentors", icon: <PeopleIcon />, link: "/hod/mentors" },
+  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
+  { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
+  { text: "Campus Buddy", icon: <HdrStrongIcon />, link: "/campus-buddy" },
+  { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
+];
+
+const directorNavConfig = [
+  { text: "Home", icon: <HomeOutlinedIcon />, link: "/director/dashboard" },
+  { text: "All Mentors", icon: <PeopleIcon />, link: "/director/mentors" },
+  { text: "View Users", icon: <PeopleOutlinedIcon />, link: "/director/users" },
+  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
+  { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
+  { text: "Campus Buddy", icon: <HdrStrongIcon />, link: "/campus-buddy" },
+  { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
+];
+
 const studentNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
@@ -64,6 +95,10 @@ const getNavConfig = (role) => {
       return adminNavConfig;
     case "faculty":
       return facultyNavConfig;
+    case "hod":
+      return hodNavConfig;
+    case "director":
+      return directorNavConfig;
     case "student":
       return studentNavConfig;
     default:
