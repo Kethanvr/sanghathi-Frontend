@@ -45,7 +45,9 @@ const MentorMenteeConversation = () => {
   const [error, setError] = useState(null);
   const [existingConversation, setExistingConversation] = useState(null);
   const [checkingConversation, setCheckingConversation] = useState(false);
-
+  const [selectedSemester, setSelectedSemester] = useState("");
+  const [mentorStatus, setMentorStatus] = useState(null);
+  const [limitReached, setLimitReached] = useState(false);
   useEffect(() => {
     if (!user) {
       setError("User not authenticated.");
@@ -78,49 +80,59 @@ const MentorMenteeConversation = () => {
 
   // Check if conversation already exists for selected mentee
   useEffect(() => {
-    const checkExistingConversation = async () => {
-      if (!selectedStudent || !user) {
+  const checkExistingConversation = async () => {
+    if (!selectedStudent || !user) {
+      setExistingConversation(null);
+      return;
+    }
+
+    try {
+      setCheckingConversation(true);
+      console.log("🔍 Checking for existing conversation...", {
+        mentorId: user._id,
+        menteeId: selectedStudent,
+      });
+
+      const response = await api.get("/conversations");
+      const conversations = response.data;
+
+      const existing = conversations.find(
+        (conv) =>
+          conv.mentorId === user._id &&
+          conv.menteeId === selectedStudent &&
+          conv.isOffline === true &&
+          conv.description 
+      );
+
+      if (existing) {
+        console.log("✅ Found existing conversation:", existing);
+        setExistingConversation(existing);
+      } else {
+        console.log("📝 No existing conversation found");
         setExistingConversation(null);
-        return;
       }
+    } catch (error) {
+      console.error("❌ Error checking existing conversation:", error);
+      setExistingConversation(null);
+    } finally {
+      setCheckingConversation(false);
+    }
+  };
 
-      try {
-        setCheckingConversation(true);
-        console.log("🔍 Checking for existing conversation...", {
-          mentorId: user._id,
-          menteeId: selectedStudent,
-        });
+  checkExistingConversation();
+}, [selectedStudent, user]);
 
-        const response = await api.get("/conversations");
-        const conversations = response.data;
+useEffect(() => {
+  if (!selectedStudent || !selectedSemester) return;
 
-        // Find conversation for this mentor-mentee pair
-        const existing = conversations.find(
-          (conv) =>
-            conv.mentorId === user._id &&
-            conv.menteeId === selectedStudent &&
-            conv.isOffline === true &&
-            conv.description // Has AI-generated summary
-        );
-
-        if (existing) {
-          console.log("✅ Found existing conversation:", existing);
-          setExistingConversation(existing);
-        } else {
-          console.log("📝 No existing conversation found");
-          setExistingConversation(null);
-        }
-      } catch (error) {
-        console.error("❌ Error checking existing conversation:", error);
-        setExistingConversation(null);
-      } finally {
-        setCheckingConversation(false);
-      }
-    };
-
-    checkExistingConversation();
-  }, [selectedStudent, user]);
-
+  fetch(`/api/conversation/status?menteeId=${selectedStudent}&semester=${selectedSemester}`)
+    .then(res => res.json())
+    .then(data => {
+      setMentorStatus(data);
+      setLimitReached(data.totalSessions >= 2);
+    })
+    .catch(err => console.error("Status fetch error:", err));
+}, [selectedStudent, selectedSemester]);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -257,54 +269,82 @@ const MentorMenteeConversation = () => {
                   </MenuItem>
                 ))}
               </TextField>
-
-            {/* Existing Conversation Alert */}
-            {checkingConversation && (
-              <Box sx={{ mb: 3, textAlign: "center" }}>
-                <CircularProgress size={20} />
-                <Typography variant="caption" sx={{ ml: 1 }}>
-                  Checking for existing conversation...
-                </Typography>
-              </Box>
-            )}
-
-            {existingConversation && !checkingConversation && (
-              <Alert 
-                severity="success" 
-                sx={{ 
-                  mb: 3,
-                  bgcolor: "#e8f5e9",
-                  border: "2px solid #4caf50"
-                }}
-                action={
-                  <Button 
-                    color="inherit" 
-                    size="small" 
-                    onClick={handleCreateNew}
-                    sx={{ fontWeight: "bold" }}
-                  >
-                    Create New
-                  </Button>
-                }
+              
+              <TextField
+                select
+                label="Select Semester"
+                value={selectedSemester}
+                onChange={(e) => setSelectedSemester(e.target.value)}
+                fullWidth
+                required
+                sx={{ mb: 3 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: 600, color: "#2e7d32", mb: 1 }}>
-                  Mentoring Already Done for This Person
-                </Typography>
-                <Typography variant="caption" sx={{ color: "#1b5e20", display: "block", mb: 1 }}>
-                  <strong>Date:</strong> {new Date(existingConversation.date).toLocaleDateString("en-US", { 
-                    year: "numeric", 
-                    month: "long", 
-                    day: "numeric" 
-                  })}
-                </Typography>
-                {existingConversation.title && (
-                  <Typography variant="caption" sx={{ color: "#1b5e20", display: "block", mb: 1 }}>
-                    <strong>Title:</strong> {existingConversation.title}
-                  </Typography>
-                )}
-                
-              </Alert>
-            )}
+                <MenuItem value="Sem 1">Sem 1</MenuItem>
+                <MenuItem value="Sem 2">Sem 2</MenuItem>
+                <MenuItem value="Sem 3">Sem 3</MenuItem>
+                <MenuItem value="Sem 4">Sem 4</MenuItem>
+                <MenuItem value="Sem 5">Sem 5</MenuItem>
+                <MenuItem value="Sem 6">Sem 6</MenuItem>
+                <MenuItem value="Sem 7">Sem 7</MenuItem>
+                <MenuItem value="Sem 8">Sem 8</MenuItem>
+              </TextField>
+
+
+            {/* Semester-wise record */}
+{existingConversation && existingConversation.length > 0 && (
+  <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: "#f6fff6", border: "2px solid #4caf50" }}>
+    <Typography sx={{ fontWeight: "bold", color: "#2e7d32", mb: 1 }}>
+      📌 Mentoring History Found
+    </Typography>
+
+    {existingConversation.map((item, index) => (
+      <Box key={index} sx={{ mb: 2, p: 1, borderBottom: "1px solid #ddd" }}>
+        <Typography sx={{ fontSize: "14px", fontWeight: 600 }}>
+          Semester: {item.semester}
+        </Typography>
+
+        <Typography sx={{ fontSize: "13px" }}>
+          Sessions Count: <strong>{item.sessionsCount}</strong>
+        </Typography>
+
+        <Typography sx={{ fontSize: "13px" }}>
+          Last Session: {new Date(item.lastDate).toLocaleDateString()}
+        </Typography>
+
+        <Button 
+          size="small" 
+          sx={{ mt: 1 }} 
+          variant="outlined"
+          onClick={handleCreateNew}
+        >
+          Add New Session
+        </Button>
+      </Box>
+    ))}
+  </Paper>
+)}
+{mentorStatus && (
+  <Paper sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: "#f6faff" }}>
+    <Typography sx={{ fontWeight: "bold", mb: 1 }}>
+      📌 Semester Progress
+    </Typography>
+
+    <Typography>Semester: {selectedSemester}</Typography>
+    <Typography>Sessions Completed: {mentorStatus.totalSessions}/2</Typography>
+
+    {mentorStatus.lastSession && (
+      <Typography>
+        Last Session: {new Date(mentorStatus.lastSession.date).toLocaleString()}
+      </Typography>
+    )}
+  </Paper>
+)}
+
+{limitReached && (
+  <Alert severity="warning" sx={{ mb: 2 }}>
+    ❌ Maximum mentoring sessions reached for this semester.
+  </Alert>
+)}
 
               {/* Title (Optional) */}
               <TextField
@@ -365,10 +405,11 @@ const MentorMenteeConversation = () => {
                 variant="contained"
                 color="primary"
                 fullWidth
-                disabled={!selectedStudent || isLoading || mentees.length === 0}
+                disabled={!selectedStudent || !selectedSemester || isLoading || limitReached}
                 startIcon={isLoading && <CircularProgress size={20} />}
-              >
-                {isLoading ? "Generating AI Summary..." : "Save Offline Conversation"}
+>
+
+                {isLoading ? "Generating Better Results..." : "Save Offline Conversation"}
               </Button>
             </form>
           </Paper>
