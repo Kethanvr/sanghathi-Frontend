@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext } from "react";
 import {
   Box,
   Card,
@@ -8,6 +8,8 @@ import {
   Button,
   Alert,
   useTheme,
+  Switch,
+  FormControlLabel
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import api from "../../utils/axios";
@@ -15,6 +17,7 @@ import { AuthContext } from "../../context/AuthContext";
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
+export const FeedbackEnabledContext = createContext({ feedbackEnabled: true });
 export default function Settings() {
   const { user } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
@@ -22,6 +25,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [feedbackEnabled, setFeedbackEnabled] = useState(false);
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const colorMode = isLight ? 'primary' : 'info';
@@ -95,11 +99,12 @@ export default function Settings() {
 
   // Add handler for Complains button
   const handleComplainsClick = () => {
-    navigate("/complain");
+    navigate("/Complain/Complaint");
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <FeedbackEnabledContext.Provider value={{ feedbackEnabled }}>
+      <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom color={colorMode}>
         Settings
       </Typography>
@@ -168,17 +173,24 @@ export default function Settings() {
         </form>
       </Card>
 
-      {/* Complains Button */}
+      {/* Complains Button and Feedback Toggle */}
       <Box sx={{ mt: 4, maxWidth: 600, mx: "auto", textAlign: "center" }}>
-        <Button
-          variant="outlined"
-          color="secondary"
-          size="large"
-          onClick={handleComplainsClick}
-        >
-          Complains
-        </Button>
+        <Stack direction="row" spacing={2} justifyContent="center" alignItems="center">
+          <Button
+            variant="outlined"
+            color="secondary"
+            size="large"
+            onClick={handleComplainsClick}
+          >
+            Complains
+          </Button>
+          <FormControlLabel
+            control={<Switch checked={feedbackEnabled} onChange={e => setFeedbackEnabled(e.target.checked)} color="primary" />}
+            label={feedbackEnabled ? "Feedback Enabled" : "Feedback Disabled"}
+          />
+        </Stack>
       </Box>
-    </Box>
+      </Box>
+    </FeedbackEnabledContext.Provider>
   );
 }
