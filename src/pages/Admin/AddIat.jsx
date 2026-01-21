@@ -41,9 +41,14 @@ const AddIat = () => {
       "SubjectName",
       "IAT1",
       "IAT2",
+      "Avg",
+      "SubjectCode", 
+      "SubjectName",
+      "IAT1",
+      "IAT2",
       "Avg"
     ];
-    const exampleRow = ["USN123", "1", "CS101", "Introduction to Programming", "50", "50","50" ];
+    const exampleRow = ["USN123", "1", "CS101", "Programming", "50", "50","50", "CS102", "Data Structures", "45", "48", "46.5"];
     const csvContent = Papa.unparse([headers, exampleRow], { quotes: true });
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
@@ -54,6 +59,76 @@ const AddIat = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const parseHorizontalCSV = (content) => {
+    // Parse CSV without header to access raw data
+    const results = Papa.parse(content, {
+      skipEmptyLines: true,
+    });
+    
+    const rows = results.data;
+    if (rows.length < 2) {
+      throw new Error("CSV file must contain headers and at least one data row");
+    }
+
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+    const processedRows = [];
+
+    // Process each data row
+    for (const dataRow of dataRows) {
+      const usn = dataRow[0];
+      const sem = dataRow[1];
+      
+      if (!usn || !sem) continue;
+
+      // Find all subject groups in this row
+      let columnIndex = 2; // Start after USN and Sem
+      const subjects = [];
+
+      // Continue reading subject groups until we find empty headers
+      while (columnIndex < headers.length) {
+        const subjectCodeHeader = headers[columnIndex];
+        const subjectNameHeader = headers[columnIndex + 1];
+        
+        // Stop if the next header is empty or undefined
+        if (!subjectCodeHeader || subjectCodeHeader.trim() === "") {
+          break;
+        }
+
+        const subjectCode = dataRow[columnIndex];
+        const subjectName = dataRow[columnIndex + 1];
+        const iat1 = dataRow[columnIndex + 2];
+        const iat2 = dataRow[columnIndex + 3];
+        const avg = dataRow[columnIndex + 4];
+
+        // Only add if we have at least subjectCode
+        if (subjectCode && subjectCode.trim() !== "") {
+          subjects.push({
+            SubjectCode: subjectCode,
+            SubjectName: subjectName || "",
+            IAT1: iat1 || undefined,
+            IAT2: iat2 || undefined,
+            Avg: avg || undefined,
+          });
+        }
+
+        // Move to next subject group (5 columns: SubjectCode, SubjectName, IAT1, IAT2, Avg)
+        columnIndex += 5;
+      }
+
+      // Create a row entry for each subject found
+      for (const subject of subjects) {
+        processedRows.push({
+          USN: usn,
+          Sem: sem,
+          ...subject,
+        });
+      }
+    }
+
+    return processedRows;
   };
 
   const handleFileUpload = (event) => {
@@ -80,12 +155,14 @@ const AddIat = () => {
           return;
         }
       } else {
-        const results = Papa.parse(content, {
-          header: true,
-          skipEmptyLines: true,
-          transform: (value) => (value === "" ? undefined : value), //  Convert empty strings to undefined
-        });
-        rows = results.data;
+        try {
+          rows = parseHorizontalCSV(content);
+        } catch (error) {
+          setErrors([`CSV parsing error: ${error.message}`]);
+          setErrorCount(1);
+          setProcessing(false);
+          return;
+        }
       }
       await processRows(rows);
     };
@@ -222,7 +299,7 @@ const AddIat = () => {
           </Typography>
           
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Please ensure your CSV file has the following columns:
+            CSV file should have a horizontal structure with repeating subject groups:
           </Typography>
           
           <Box 
@@ -230,19 +307,22 @@ const AddIat = () => {
               display: 'flex',
               flexDirection: 'column',
               gap: 0.5,
-              mb: 3,
+              mb: 2,
               pl: 2,
               borderLeft: `4px solid ${isLight ? theme.palette.primary.main : theme.palette.info.main}`,
               py: 1,
             }}
           >
-            <Typography variant="body2" color="text.secondary">• USN - Student USN</Typography>
-            <Typography variant="body2" color="text.secondary">• Sem - Semester number</Typography>
-            <Typography variant="body2" color="text.secondary">• SubjectCode - Course code</Typography>
-            <Typography variant="body2" color="text.secondary">• SubjectName - Course name</Typography>
-            <Typography variant="body2" color="text.secondary">• IAT1 - First IAT marks</Typography>
-            <Typography variant="body2" color="text.secondary">• IAT2 - Second IAT marks</Typography>
+            <Typography variant="body2" color="text.secondary">• <strong>First columns:</strong> USN, Sem</Typography>
+            <Typography variant="body2" color="text.secondary">• <strong>Then repeating groups:</strong> SubjectCode, SubjectName, IAT1, IAT2, Avg</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mt: 1 }}>
+              Example: USN | Sem | SubjectCode | SubjectName | IAT1 | IAT2 | Avg | SubjectCode | SubjectName | IAT1 | IAT2 | Avg | ...
+            </Typography>
           </Box>
+          
+          <Alert severity="info" sx={{ fontSize: '0.875rem', mb: 2 }}>
+            The system will automatically detect all subjects by reading until it finds an empty column header.
+          </Alert>
 
           <Divider sx={{ my: 3 }} />
 
