@@ -29,6 +29,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import Page from "../../components/Page";
@@ -99,6 +100,10 @@ function DirectorViewMentors() {
 
   const handleViewMentees = (mentor) => {
     navigate(`/director/mentor/${mentor._id}/mentees`);
+  };
+
+  const handleViewReports = (mentor) => {
+    navigate(`/report?mentorId=${mentor._id}&mentorName=${encodeURIComponent(mentor.name)}`);
   };
 
   const clearFilters = () => {
@@ -280,15 +285,26 @@ function DirectorViewMentors() {
                           />
                         </TableCell>
                         <TableCell align="center">
-                          <Button
-                            variant="contained"
-                            size="small"
-                            color={isLight ? "primary" : "info"}
-                            onClick={() => handleViewMentees(mentor)}
-                            disabled={!menteeCounts[mentor._id] || menteeCounts[mentor._id] === 0}
-                          >
-                            View Mentees
-                          </Button>
+                          <Stack direction="row" spacing={1} justifyContent="center">
+                            <Button
+                              variant="contained"
+                              size="small"
+                              color={isLight ? "primary" : "info"}
+                              onClick={() => handleViewMentees(mentor)}
+                              disabled={!menteeCounts[mentor._id] || menteeCounts[mentor._id] === 0}
+                            >
+                              View Mentees
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              color={isLight ? "primary" : "info"}
+                              startIcon={<AssessmentIcon />}
+                              onClick={() => handleViewReports(mentor)}
+                            >
+                              View Reports
+                            </Button>
+                          </Stack>
                         </TableCell>
                       </TableRow>
                     ))

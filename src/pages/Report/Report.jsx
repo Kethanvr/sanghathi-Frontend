@@ -1,4 +1,5 @@
 import { useState, useEffect, React } from "react";
+import { useSearchParams } from "react-router-dom";
 import ExcelJS from 'exceljs';
 
 import {
@@ -83,6 +84,7 @@ participant name should be there as comma seperate list
 const Report = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const [searchParams, setSearchParams] = useSearchParams();
   const [threads, setThreads] = useState([]);
   const [openDialogThreadId, setOpenDialogThreadId] = useState(null);
   const [openChatDialogThreadId, setOpenChatDialogThreadId] = useState(null);
@@ -91,12 +93,22 @@ const Report = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("Closed");
+  const [selectedStatus, setSelectedStatus] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
+  // Get mentor filter from URL params
+  const mentorIdFilter = searchParams.get("mentorId");
+  const mentorNameFilter = searchParams.get("mentorName");
+
   // Get the color based on the current theme mode
   const activeColor = isLight ? theme.palette.primary.main : theme.palette.info.main;
+
+  const clearMentorFilter = () => {
+    searchParams.delete("mentorId");
+    searchParams.delete("mentorName");
+    setSearchParams(searchParams);
+  };
 
   useEffect(() => {
     const fetchThreads = async () => {
@@ -149,6 +161,16 @@ const Report = () => {
     // Only filter out threads that are explicitly "open" or "in progress" AND have no topic/category
     if ((normalizedStatus === 'open' || normalizedStatus === 'in progress') && !thread.topic) {
       return false;
+    }
+
+    // Filter by mentor if mentorId is specified in URL params
+    if (mentorIdFilter) {
+      const mentorIsParticipant = thread.participants?.some(
+        (participant) => participant._id === mentorIdFilter
+      );
+      if (!mentorIsParticipant) {
+        return false;
+      }
     }
 
     // Rest of filtering logic continues...
@@ -211,6 +233,11 @@ const Report = () => {
       categoryMatches &&
       statusMatches
     );
+  }).sort((a, b) => {
+    // Sort by most recent first (descending order by createdAt)
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+    return dateB - dateA;
   });
 
   const handleSearchChange = (event) => {
@@ -351,7 +378,7 @@ const Report = () => {
     setFromDate("");
     setToDate("");
     setSelectedCategory("");
-    setSelectedStatus("Closed");
+    setSelectedStatus("");
   };
 
   return (
@@ -474,6 +501,22 @@ const Report = () => {
               </Button>
             </Stack>
           </Stack>
+
+          {/* Mentor Filter Indicator */}
+          {mentorIdFilter && (
+            <Box sx={{ mb: 2 }}>
+              <Chip
+                label={`Filtered by Mentor: ${mentorNameFilter || 'Unknown'}`}
+                color={isLight ? "primary" : "info"}
+                onDelete={clearMentorFilter}
+                deleteIcon={<CloseIcon />}
+                sx={{ 
+                  borderRadius: 2,
+                  fontWeight: 500,
+                }}
+              />
+            </Box>
+          )}
 
           {showFilters && (
             <Card
