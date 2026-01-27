@@ -93,10 +93,6 @@ export default function StudentSettings() {
     }
   };
 
-  const handleComplainsClick = () => {
-    navigate("/Complain/Complaint");
-  };
-
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom color={colorMode}>
@@ -166,18 +162,6 @@ export default function StudentSettings() {
           </Stack>
         </form>
       </Card>
-
-      {/* Complains Button only, no Feedback Toggle */}
-      <Box sx={{ mt: 4, maxWidth: 600, mx: "auto", textAlign: "center" }}>
-        <Button
-          variant="outlined"
-          color="secondary"
-          size="large"
-          onClick={handleComplainsClick}
-        >
-          Complains
-        </Button>
-      </Box>
     </Box>
   );
 }
