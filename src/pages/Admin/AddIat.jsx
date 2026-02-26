@@ -8,10 +8,7 @@ import {
   Paper,
   Stack,
   Divider,
-  Alert,
-  List,
-  ListItem,
-  ListItemText
+  Alert
 } from "@mui/material";
 import { 
   FileDownload as FileDownloadIcon,
@@ -27,137 +24,221 @@ const BASE_URL = import.meta.env.VITE_API_URL;
 const AddIat = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
-  const [processing, setProcessing] = useState(false);
-  const [successCount, setSuccessCount] = useState(0);
-  const [errorCount, setErrorCount] = useState(0);
-  const [errors, setErrors] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [file, setFile] = useState(null);
-
-  const downloadTemplate = () => {
-    const headers = [
-      "USN",
-      "Sem",
-      "SubjectCode", 
-      "SubjectName",
-      "IAT1",
-      "IAT2",
-      "Avg"
-    ];
-    const exampleRow = ["USN123", "1", "CS101", "Introduction to Programming", "50", "50","50" ];
-    const csvContent = Papa.unparse([headers, exampleRow], { quotes: true });
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.href = url;
-    link.setAttribute("download", "iat_template.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+  const token = localStorage.getItem("token");
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
-    if (!file) return;
-    
     setFile(file);
-    setProcessing(true);
-    setErrors([]);
-    setSuccessCount(0);
-    setErrorCount(0);
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const content = e.target.result;
-      let rows = [];
-      if (file.type === "application/json") {
-        try {
-          rows = JSON.parse(content);
-        } catch (error) {
-          setErrors(["Invalid JSON format."]);
-          setErrorCount(1);
-          setProcessing(false);
-          return;
-        }
-      } else {
-        const results = Papa.parse(content, {
-          header: true,
-          skipEmptyLines: true,
-          transform: (value) => (value === "" ? undefined : value), //  Convert empty strings to undefined
-        });
-        rows = results.data;
-      }
-      await processRows(rows);
-    };
-    reader.readAsText(file);
   };
 
-  const processRows = async (rows) => {
-    let success = 0;
-    let errors = 0;
-    const newErrors = [];
+  const downloadTemplate = () => {
+    // Create CSV content matching the template format
+    const headers = ["USN", "Sem", "SubjectCode", "SubjectName", "IAT1", "IAT2", "Avg"];
+    const row1 = ["USN123", "1", "CS101", "Introduction to Programming", "50", "50", "50"];
+    
+    const csvContent = [
+      headers.join(','),
+      row1.join(',')
+    ].join('\n');
 
-    // Group rows by USN and Semester
-    const groupedData = {};
-    for (const row of rows) {
-      if (!row.USN || !row.Sem || !row.SubjectCode || !row.SubjectName) {
-        newErrors.push(`Row with missing USN, Sem, SubjectCode, or SubjectName: ${JSON.stringify(row)}`);
-        errors++;
-        continue; // Skip to the next row
-      }
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'iat_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
 
-      const key = `${row.USN}-${row.Sem}`;
-      if (!groupedData[key]) {
-        groupedData[key] = {
-          usn: row.USN,
-          semester: parseInt(row.Sem, 10),
-          subjects: [],
-        };
-      }
-      groupedData[key].subjects.push({
-        subjectCode: row.SubjectCode,
-        subjectName: row.SubjectName,
-        iat1: row.IAT1 !== undefined ? parseInt(row.IAT1, 10) : undefined, // Parse, handle undefined
-        iat2: row.IAT2 !== undefined ? parseInt(row.IAT2, 10) : undefined,
-        avg: row.Avg !== undefined ? parseInt(row.Avg, 10) : undefined,
-      });
-    }
+  const processCSV = (csvData) => {
+    const studentGroups = new Map(); // Group by student USN first
+    
+    // Skip header row and process data
+    for (let i = 1; i < csvData.length; i++) {
+      const row = csvData[i];
+      // Check if row has all required fields
+      if (row.length >= 7) {
+        const usn = row[0].trim();
+        const sem = parseInt(row[1]);
+        const subjectCode = row[2];
+        const subjectName = row[3];
+        const iat1 = parseInt(row[4]);
+        const iat2 = parseInt(row[5]);
+        const avg = parseInt(row[6]);
 
-    // Process each group (USN and Semester combination)
-    for (const key in groupedData) {
-      const data = groupedData[key];
-      try {
-        // Get userId by USN (as before)
-        const response = await axios.get(
-          `${BASE_URL}/users/usn/${data.usn}`
-        );
-        if (!response.data?.userId) {
-          throw new Error(`User with USN ${data.usn} not found`);
+        if (!isNaN(sem) && usn && subjectCode && subjectName && !isNaN(iat1)) {
+          if (!studentGroups.has(usn)) {
+            studentGroups.set(usn, new Map());
+          }
+          
+          const semesterGroups = studentGroups.get(usn);
+          if (!semesterGroups.has(sem)) {
+            semesterGroups.set(sem, []);
+          }
+          
+          semesterGroups.get(sem).push({
+            subjectCode,
+            subjectName,
+            iat1: isNaN(iat1) ? null : iat1,
+            iat2: isNaN(iat2) ? null : iat2,
+            avg: isNaN(avg) ? null : avg,
+          });
         }
-        const userId = response.data.userId;
-
-        // Prepare the data for the IAT API
-        const iatData = {
-          semester: data.semester,
-          subjects: data.subjects,
-        };
-
-        // Submit IAT data
-        await axios.post(
-          `${BASE_URL}/students/iat/${userId}`,
-          iatData
-        );
-        success++;
-      } catch (error) {
-        errors++;
-        newErrors.push(`Error for USN ${data.usn}, Semester ${data.semester}: ${error.message}`);
       }
     }
+    
+    return studentGroups;
+  };
 
-    setSuccessCount(success);
-    setErrorCount(errors);
-    setErrors(newErrors);
-    setProcessing(false);
+  // Function to look up a student's userId by their USN
+  const fetchUserIdByUSN = async (usn) => {
+    try {
+      // Call the API to get user ID from USN
+      const response = await axios.get(`${BASE_URL}/users/usn/${usn}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (response.data && response.data.userId) {
+        return response.data.userId;
+      } else {
+        console.error(`No userId found for USN: ${usn}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Error looking up userId for USN ${usn}:`, error.response?.data || error.message);
+      return null;
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    if (!file) {
+      setError("Please select a CSV file");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const csvText = event.target.result;
+          const parsedData = Papa.parse(csvText).data;
+          const studentGroups = processCSV(parsedData);
+          
+          // Create an array to track results for each student
+          const results = [];
+          
+          // Process each student
+          for (const [usn, semesterGroups] of studentGroups) {
+            try {
+              // First look up student ID by USN
+              console.log(`Looking up student with USN: ${usn}`);
+              
+              let studentId = null;
+              try {
+                console.log(`Making API call to fetch user ID for USN: ${usn}`);
+                studentId = await fetchUserIdByUSN(usn);
+                console.log(`Result of user lookup for USN ${usn}:`, studentId ? `Found: ${studentId}` : "Not found");
+              } catch (lookupError) {
+                console.error(`Error looking up student with USN ${usn}:`, lookupError);
+              }
+              
+              if (!studentId) {
+                console.warn(`Could not find userId for USN ${usn}`);
+                results.push({ 
+                  usn, 
+                  status: 'error', 
+                  message: `User not found for USN: ${usn}`
+                });
+                continue;
+              }
+              
+              // Submit data for each semester
+              for (const [semester, subjects] of semesterGroups) {
+                console.log(`Submitting semester ${semester} data for USN ${usn}:`, subjects);
+                
+                // Make sure we're sending all fields properly
+                const formattedSubjects = subjects.map(subject => ({
+                  subjectCode: subject.subjectCode,
+                  subjectName: subject.subjectName,
+                  iat1: subject.iat1 || null,
+                  iat2: subject.iat2 || null,
+                  avg: subject.avg || null,
+                }));
+                
+                await axios.post(
+                  `${BASE_URL}/students/iat/${studentId}`, 
+                  {
+                    semester,
+                    subjects: formattedSubjects,
+                  },
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`
+                    }
+                  }
+                );
+              }
+              
+              // Add success result for this student
+              results.push({ usn, status: 'success' });
+            } catch (error) {
+              // Add failure result for this student
+              results.push({ 
+                usn, 
+                status: 'error', 
+                message: error.response?.data?.message || error.message
+              });
+              console.error(`Error processing student ${usn}:`, error);
+            }
+          }
+          
+          // Show summary results
+          const successCount = results.filter(r => r.status === 'success').length;
+          const totalCount = results.length;
+          
+          if (successCount === totalCount) {
+            setSuccess(`All ${totalCount} students processed successfully!`);
+          } else {
+            setSuccess(`Processed ${successCount} out of ${totalCount} students successfully.`);
+            setError(`Failed to process ${totalCount - successCount} students. See console for details.`);
+          }
+          
+          setFile(null);
+          // Reset file input
+          const fileInput = document.getElementById("iat-file-input");
+          if (fileInput) fileInput.value = "";
+        } catch (err) {
+          setError("Error processing CSV file: " + (err.message || "Unknown error"));
+          console.error("CSV processing error:", err);
+        }
+        setLoading(false);
+      };
+
+      reader.onerror = () => {
+        setError("Error reading file");
+        setLoading(false);
+      };
+
+      reader.readAsText(file);
+    } catch (err) {
+      setError("Error uploading marks: " + (err.message || "Unknown error"));
+      setLoading(false);
+    }
   };
 
   return (
@@ -174,7 +255,6 @@ const AddIat = () => {
           boxShadow: isLight
             ? '0 8px 32px 0 rgba(31, 38, 135, 0.15)'
             : '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
-          mb: 4
         }}
       >
         <Box 
@@ -184,7 +264,10 @@ const AddIat = () => {
           }}
         >
           <Typography 
-            variant="h4"
+            variant="h4" 
+            component="h1" 
+            gutterBottom 
+            align="center"
             sx={{
               fontWeight: 'bold',
               background: isLight 
@@ -207,22 +290,48 @@ const AddIat = () => {
           </Typography>
         </Box>
 
-        <Box
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 3,
+              borderRadius: 2,
+            }}
+          >
+            {error}
+          </Alert>
+        )}
+
+        {success && (
+          <Alert 
+            severity="success" 
+            sx={{ 
+              mb: 3,
+              borderRadius: 2,
+            }}
+          >
+            {success}
+          </Alert>
+        )}
+
+        <Box 
+          component="form" 
+          onSubmit={handleSubmit}
           sx={{
+            borderRadius: 2,
             backgroundColor: isLight 
               ? alpha(theme.palette.primary.main, 0.04)
               : alpha(theme.palette.info.main, 0.08),
             p: 3,
-            borderRadius: 2,
             mb: 3,
           }}
         >
-          <Typography variant="h6" gutterBottom>
-            Upload Instructions
-          </Typography>
-          
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Please ensure your CSV file has the following columns:
+          <Typography 
+            variant="h6" 
+            gutterBottom
+            sx={{ mb: 2 }}
+          >
+            CSV Format Instructions
           </Typography>
           
           <Box 
@@ -236,31 +345,32 @@ const AddIat = () => {
               py: 1,
             }}
           >
-            <Typography variant="body2" color="text.secondary">• USN - Student USN</Typography>
-            <Typography variant="body2" color="text.secondary">• Sem - Semester number</Typography>
-            <Typography variant="body2" color="text.secondary">• SubjectCode - Course code</Typography>
-            <Typography variant="body2" color="text.secondary">• SubjectName - Course name</Typography>
-            <Typography variant="body2" color="text.secondary">• IAT1 - First IAT marks</Typography>
-            <Typography variant="body2" color="text.secondary">• IAT2 - Second IAT marks</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 1: USN - Student USN</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 2: Sem - Semester number</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 3: SubjectCode - Course code</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 4: SubjectName - Course name</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 5: IAT1 - First IAT marks</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 6: IAT2 - Second IAT marks</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 7: Avg - Average IAT marks</Typography>
           </Box>
 
           <Divider sx={{ my: 3 }} />
 
           <Stack 
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={2}
-            alignItems="center"
+            direction={{ xs: 'column', sm: 'row' }} 
+            spacing={2} 
             justifyContent="center"
+            alignItems="center"
+            sx={{ mt: 3 }}
           >
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               onClick={downloadTemplate}
               startIcon={<FileDownloadIcon />}
               sx={{
                 borderRadius: '8px',
                 py: 1.2,
                 px: 3,
-                width: { xs: '100%', sm: 'auto' },
                 borderColor: isLight ? theme.palette.primary.main : theme.palette.info.main,
                 color: isLight ? theme.palette.primary.main : theme.palette.info.main,
                 '&:hover': {
@@ -273,129 +383,95 @@ const AddIat = () => {
             >
               Download Template
             </Button>
-            
-            <Box
-              sx={{
+
+            <Box 
+              sx={{ 
                 position: 'relative',
                 width: { xs: '100%', sm: 'auto' }
               }}
             >
               <input
-                accept=".csv,.json"
-                style={{ display: 'none' }}
-                id="upload-file"
+                id="iat-file-input"
                 type="file"
+                accept=".csv"
                 onChange={handleFileUpload}
+                style={{ display: 'none' }}
               />
-              <label htmlFor="upload-file">
-                <Button 
-                  variant="contained" 
+              <label htmlFor="iat-file-input">
+                <Button
+                  variant="outlined"
                   component="span"
                   startIcon={<CloudUploadIcon />}
-                  disabled={processing}
                   sx={{
                     borderRadius: '8px',
                     py: 1.2,
                     px: 3,
                     width: { xs: '100%', sm: 'auto' },
-                    position: 'relative',
-                    bgcolor: isLight ? theme.palette.primary.main : theme.palette.info.main,
+                    borderColor: isLight ? theme.palette.primary.main : theme.palette.info.main,
+                    color: isLight ? theme.palette.primary.main : theme.palette.info.main,
                     '&:hover': {
-                      bgcolor: isLight 
-                        ? theme.palette.primary.dark
-                        : theme.palette.info.dark,
+                      borderColor: isLight ? theme.palette.primary.main : theme.palette.info.main,
+                      backgroundColor: isLight 
+                        ? alpha(theme.palette.primary.main, 0.04)
+                        : alpha(theme.palette.info.main, 0.08),
                     }
                   }}
                 >
-                  {processing ? (
-                    <>
-                      <CircularProgress
-                        size={24}
-                        thickness={4}
-                        sx={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          marginTop: '-12px',
-                          marginLeft: '-12px',
-                          color: 'white',
-                        }}
-                      />
-                      Processing...
-                    </>
-                  ) : (
-                    `${file ? 'File Selected' : 'Upload File'}`
-                  )}
+                  {file ? file.name : "Choose File"}
                 </Button>
               </label>
             </Box>
+
+            <Button
+              variant="contained"
+              type="submit"
+              disabled={loading || !file}
+              startIcon={loading ? null : <CloudUploadIcon />}
+              sx={{ 
+                position: "relative",
+                borderRadius: '8px',
+                py: 1.2,
+                px: 3,
+                width: { xs: '100%', sm: 'auto' },
+                bgcolor: isLight ? theme.palette.primary.main : theme.palette.info.main,
+                '&:hover': {
+                  bgcolor: isLight 
+                    ? theme.palette.primary.dark
+                    : theme.palette.info.dark,
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: isLight 
+                    ? alpha(theme.palette.primary.main, 0.3)
+                    : alpha(theme.palette.info.main, 0.3),
+                }
+              }}
+            >
+              {loading ? (
+                <>
+                  <CircularProgress
+                    size={24}
+                    sx={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      marginTop: "-12px",
+                      marginLeft: "-12px",
+                      color: 'white',
+                    }}
+                  />
+                  Uploading...
+                </>
+              ) : (
+                "Upload Marks"
+              )}
+            </Button>
           </Stack>
         </Box>
-
-        {!processing && (successCount > 0 || errorCount > 0) && (
-          <Box sx={{ mt: 3 }}>
-            {successCount > 0 && (
-              <Alert 
-                severity="success" 
-                sx={{ 
-                  mb: 2,
-                  borderRadius: 2,
-                }}
-              >
-                Successfully processed: {successCount} student record(s)
-              </Alert>
-            )}
-            
-            {errorCount > 0 && (
-              <Alert 
-                severity="error" 
-                sx={{ 
-                  mb: 2,
-                  borderRadius: 2,
-                }}
-              >
-                Errors encountered: {errorCount} record(s)
-              </Alert>
-            )}
-            
-            {errors.length > 0 && (
-              <Box 
-                sx={{ 
-                  mt: 2,
-                  backgroundColor: isLight 
-                    ? alpha(theme.palette.error.main, 0.05)
-                    : alpha(theme.palette.error.dark, 0.1),
-                  borderRadius: 2,
-                  p: 2,
-                  maxHeight: 200,
-                  overflowY: "auto",
-                  border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
-                }}
-              >
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Error Details:</Typography>
-                <List dense>
-                  {errors.map((error, index) => (
-                    <ListItem key={index} sx={{ py: 0.5 }}>
-                      <ListItemText 
-                        primary={error}
-                        primaryTypographyProps={{ 
-                          variant: 'body2', 
-                          color: 'error.main' 
-                        }}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              </Box>
-            )}
-          </Box>
-        )}
 
         <Paper 
           elevation={1} 
           sx={{ 
             p: 2,
-            mt: 4,
             backgroundColor: isLight 
               ? alpha(theme.palette.warning.main, 0.05)
               : alpha(theme.palette.warning.dark, 0.05),
@@ -412,8 +488,8 @@ const AddIat = () => {
             sx={{ flexShrink: 0 }}
           />
           <Typography variant="body2" color="text.secondary">
-            <strong>Note:</strong> Make sure each USN corresponds to a registered student in the system. 
-            Missing or invalid USNs will result in errors.
+            <strong>Sample format:</strong> Each row should include USN, semester number, subject details, and IAT marks.
+            Make sure the USN matches a student in the system.
           </Typography>
         </Paper>
       </Paper>
