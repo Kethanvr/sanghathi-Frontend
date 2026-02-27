@@ -23,6 +23,7 @@ import ParentsDetails from "./ParentsDetails";
 import ContactDetails from "./ContactDetails";
 import Academic from "./Academic";
 import PrevAcademic from "./PrevAcademic";
+import VTUResults from "./VTUResults";
 
 // ----------------------------------------------------------------------
 
@@ -84,6 +85,11 @@ export default function StudentProfile() {
       value: "Admission Details",
       icon: <Iconify icon={"eva:share-fill"} width={20} height={20} />,
       component: <AdmissionDetails colorMode={colorMode} />,
+    },
+    {
+      value: "VTU Results",
+      icon: <Iconify icon={"eva:file-fill"} width={20} height={20} />,
+      component: <VTUResults />,
     },
   ];
 

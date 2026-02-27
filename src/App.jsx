@@ -85,6 +85,8 @@ function App() {
                   element={user ? <Navigate replace to="/" /> : <Login />}
                 />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/forgotPassword" element={<ForgotPassword />} />
+                <Route path="/resetPassword/:token" element={<ResetPassword />} />
 
                 <Route element={<DashboardLayout />}>
                   <Route

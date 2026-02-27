@@ -12,6 +12,12 @@ import {
   Typography,
   Button,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Alert,
 } from "@mui/material";
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
@@ -30,17 +36,18 @@ const External = () => {
   const [error, setError] = useState("");
   const [selectedSemester, setSelectedSemester] = useState(null);
   const [availableSemesters, setAvailableSemesters] = useState([1, 2, 3, 4, 5, 6, 7, 8]);
+  
+  // USN Dialog states
+  const [showUSNDialog, setShowUSNDialog] = useState(false);
+  const [usnInput, setUsnInput] = useState("");
+  const [usnError, setUsnError] = useState("");
+  const [currentUSN, setCurrentUSN] = useState(null);
 
   // Get token from local storage - using "token" instead of "accessToken"
   const token = localStorage.getItem("token");
 
-  const fetchExternalData = useCallback(async () => {
-    // Wait for semester to load before fetching
-    if (semesterLoading) {
-      return;
-    }
-
-    // Use menteeId from URL params if available, otherwise use logged-in user ID
+  // Function to fetch external data with a specific USN (used when user enters USN manually)
+  const fetchExternalDataWithUSN = async (usn) => {
     const userId = menteeId || user?._id;
     
     if (!userId || !token) {
@@ -50,47 +57,90 @@ const External = () => {
     }
 
     try {
-      console.log(`Fetching external marks for user ID: ${userId} (${menteeId ? 'menteeId from URL' : 'logged-in user'})`);
+      console.log(`Fetching external marks from VTU Official Portal for USN: ${usn}`);
       
-      const response = await axios.get(
-        `${BASE_URL}/students/external/${userId}`,
+      // Call the new VTU external fetch endpoint that gets live data from VTU portal
+      const vtuResponse = await axios.post(
+        `${BASE_URL}/vtu-results/external/fetch`,
+        { usn: usn },
         {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
           }
         }
       );
       
-      console.log("Response data:", response.data);
+      console.log("VTU Response data:", vtuResponse.data);
       
-      if (response.data && response.data.data && response.data.data.external) {
-        const data = response.data.data.external;
-        if (data.semesters && data.semesters.length > 0) {
-          setExternalData(data.semesters);
-          // Use student's current semester from profile if available and exists in data
-          const defaultSem = studentSemester && data.semesters.find(s => s.semester === studentSemester)
-            ? studentSemester
-            : data.semesters[0].semester;
-          console.log('[External] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', data.semesters[0].semester, ')');
-          setSelectedSemester(defaultSem);
-        } else {
-          setExternalData([]);
-          setSelectedSemester(studentSemester || 1); // Use student's current semester or default to 1
-        }
+      if (vtuResponse.data?.status === "success" && vtuResponse.data?.data?.external?.semesters) {
+        const externalData = vtuResponse.data.data.external.semesters;
+        
+        // Transform VTU data to match the External marks format
+        const transformedData = externalData.map(semester => ({
+          semester: semester.semester,
+          sgpa: semester.sgpa,
+          subjects: semester.subjects.map(subject => ({
+            subjectCode: subject.subjectCode,
+            subjectName: subject.subjectName,
+            externalMarks: subject.externalMarks || "-",
+            attempt: subject.attempt || "1",
+            result: subject.result || "-",
+            passingDate: subject.passingDate || "-",
+            cgpa: semester.sgpa
+          }))
+        }));
+        
+        setExternalData(transformedData);
+        
+        // Set default semester
+        const defaultSem = studentSemester && transformedData.find(s => s.semester === studentSemester)
+          ? studentSemester
+          : transformedData[0]?.semester || 1;
+        setSelectedSemester(defaultSem);
+        setError("");
+        setCurrentUSN(usn);
       } else {
+        // No VTU data found
         setExternalData([]);
-        setSelectedSemester(studentSemester || 1); // Use student's current semester or default to 1
+        setSelectedSemester(studentSemester || 1);
+        setError(`No external marks found for USN: ${usn}`);
+        setCurrentUSN(usn);
       }
-
+      
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching external marks:", err);
+      console.error("Error fetching VTU external marks:", err);
       
-      // For any error, including 404, just show an empty table
+      // Show detailed error message from backend or generic error
+      const errorMessage = err.response?.data?.message || err.message || 'Unable to fetch marks';
+      
       setExternalData([]);
-      setSelectedSemester(studentSemester || 1); // Use student's current semester or default to 1
+      setSelectedSemester(studentSemester || 1);
+      setError(errorMessage);
+      setCurrentUSN(usn);
       setLoading(false);
     }
+  };
+
+  const fetchExternalData = useCallback(async () => {
+    // Wait for semester to load before fetching
+    if (semesterLoading) {
+      return;
+    }
+
+    // Try to get USN from user profile first
+    let usn = user?.usn;
+    
+    if (!usn) {
+      // No USN found, ask user to enter it
+      setShowUSNDialog(true);
+      setLoading(false);
+      return;
+    }
+
+    // If we have a USN from the profile, use it
+    await fetchExternalDataWithUSN(usn);
   }, [user, token, menteeId, studentSemester, semesterLoading]);
 
   useEffect(() => {
@@ -130,6 +180,35 @@ const External = () => {
     fetchExternalData();
   };
 
+  const handleUSNSubmit = () => {
+    if (!usnInput.trim()) {
+      setUsnError("Please enter a valid USN");
+      return;
+    }
+    
+    // Validate USN format (typically 10 characters, e.g., 1CR24IS069)
+    if (usnInput.trim().length < 8) {
+      setUsnError("USN must be at least 8 characters long");
+      return;
+    }
+    
+    const usn = usnInput.trim();
+    setShowUSNDialog(false);
+    setUsnInput("");
+    setUsnError("");
+    setLoading(true);
+    
+    // Call the fetch function with the USN directly
+    fetchExternalDataWithUSN(usn);
+  };
+
+  const handleUSNDialogClose = () => {
+    setShowUSNDialog(false);
+    setUsnInput("");
+    setUsnError("");
+    setLoading(false);
+  };
+
   if (loading) {
     return (
       <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
@@ -140,11 +219,67 @@ const External = () => {
 
   if (error) {
     return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography color="error" gutterBottom>{error}</Typography>
-        <Button variant="outlined" onClick={handleRefresh} sx={{ mt: 2 }}>
-          Try Again
-        </Button>
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h4" component="h1" gutterBottom align="center">
+          External Marks Report
+        </Typography>
+        <Box sx={{ textAlign: 'center', mt: 4 }}>
+          <Alert severity="error" sx={{ mb: 2, justifyContent: 'center' }}>
+            {error}
+          </Alert>
+          <Button 
+            variant="contained" 
+            onClick={() => {
+              setError("");
+              setShowUSNDialog(true);
+            }} 
+            sx={{ mr: 2 }}
+          >
+            Try Different USN
+          </Button>
+          <Button variant="outlined" onClick={handleRefresh}>
+            Try Again
+          </Button>
+        </Box>
+
+        {/* USN Input Dialog */}
+        <Dialog open={showUSNDialog} onClose={handleUSNDialogClose} maxWidth="sm" fullWidth>
+          <DialogTitle>Enter USN</DialogTitle>
+          <DialogContent sx={{ pt: 2 }}>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              VTU updates external marks results every 6 months for all 8 semesters. Please enter your University Seat Number (USN) to fetch the latest data from VTU Official Portal.
+            </Alert>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="University Seat Number (USN)"
+              placeholder="e.g., 1CR24IS069"
+              fullWidth
+              variant="outlined"
+              value={usnInput}
+              onChange={(e) => {
+                setUsnInput(e.target.value);
+                setUsnError("");
+              }}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  handleUSNSubmit();
+                }
+              }}
+              error={!!usnError}
+              helperText={usnError}
+              sx={{ mt: 1 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleUSNDialogClose} color="inherit">
+              Cancel
+            </Button>
+            <Button onClick={handleUSNSubmit} variant="contained" color="primary">
+              Fetch Marks
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     );
   }
@@ -252,6 +387,45 @@ const External = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* USN Input Dialog */}
+      <Dialog open={showUSNDialog} onClose={handleUSNDialogClose} maxWidth="sm" fullWidth>
+        <DialogTitle>Enter USN</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            VTU updates external marks results every 6 months for all 8 semesters. Please enter your University Seat Number (USN) to fetch the latest data from VTU Official Portal.
+          </Alert>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="University Seat Number (USN)"
+            placeholder="e.g., 1CR24IS069"
+            fullWidth
+            variant="outlined"
+            value={usnInput}
+            onChange={(e) => {
+              setUsnInput(e.target.value);
+              setUsnError("");
+            }}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                handleUSNSubmit();
+              }
+            }}
+            error={!!usnError}
+            helperText={usnError}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleUSNDialogClose} color="inherit">
+            Cancel
+          </Button>
+          <Button onClick={handleUSNSubmit} variant="contained" color="primary">
+            Fetch Marks
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
