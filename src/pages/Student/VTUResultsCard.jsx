@@ -7,7 +7,6 @@ import {
   Typography,
   Box,
   CircularProgress,
-  LinearProgress,
   Chip,
   Button,
   useTheme,
@@ -169,11 +168,6 @@ export default function VTUResultsCard() {
                   / 8
                 </Typography>
               </Box>
-              <LinearProgress
-                variant="determinate"
-                value={(summary.totalSemesters / 8) * 100}
-                sx={{ mt: 1 }}
-              />
             </Box>
           </Grid>
 
