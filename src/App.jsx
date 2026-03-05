@@ -46,7 +46,8 @@ import FacultyProfile from "./pages/Faculty/FacultyProfile";
 import FacultyProfileInfo from "./pages/Faculty/FacultyProfileInfo";
 import FetchStudentProfile from "./pages/Faculty/FetchStudentProfile";
 import StudentDashboard from "./pages/Faculty/StudentDashboard";
-import Settings from "./pages/Settings/Settings";
+import StudentSettings from "./pages/Settings/StudentSettings";
+import FacultySettings from "./pages/Settings/FacultySettings";
 import TYLScorecard from "./pages/Student/TYLScorecard";
 import MentorMenteeConversation from "./pages/MentorMentee/MentorMenteeConversation";
 import MyChatBot from "./mychatbot";
@@ -55,7 +56,7 @@ import { initGA, trackPageView } from "./ga";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword   from "./pages/ResetPassword";
 import FeedbackForm from "./pages/Feedback/feedback";
-
+import MentorFeedbackForm from "./pages/FeedbackForm/MentorFeedback/MentorFeedback";
 import FeedbackTable from "./pages/Feedback/feedback";
 // TODO : Need to remove routing logic from app component
 function App() {
@@ -84,6 +85,8 @@ function App() {
                   element={user ? <Navigate replace to="/" /> : <Login />}
                 />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/forgotPassword" element={<ForgotPassword />} />
+                <Route path="/resetPassword/:token" element={<ResetPassword />} />
 
                 <Route element={<DashboardLayout />}>
                   <Route
@@ -380,7 +383,11 @@ function App() {
                     path="/settings"
                     element={
                       <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={Settings} />
+                        {user && user.roleName === "faculty" ? (
+                          <LazyLoadWrapper component={FacultySettings} />
+                        ) : (
+                          <LazyLoadWrapper component={StudentSettings} />
+                        )}
                       </ProtectedRouteWrapper>
                     }
                   />
@@ -421,6 +428,14 @@ function App() {
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={MentorMenteeConversation} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/mentor-feedback"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={MentorFeedbackForm} />
                       </ProtectedRouteWrapper>
                     }
                   />
