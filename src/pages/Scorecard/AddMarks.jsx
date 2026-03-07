@@ -36,7 +36,7 @@ const AddMarks = () => {
   };
 
   const downloadTemplate = () => {
-    // Create CSV content matching the template format (no quotes)
+    // Create CSV content
     const headers = ["Semester", "USN", "Subject Code", "Subject Name", "External Marks", "Attempt", "Passing Date", "CGPA", "Result"];
     const row1 = ["1", "1MS21CS001", "CS101", "Computer Science Basics", "85", "1", "2023-05-15", "8.5", "PASS"];
     const row2 = ["1", "1MS21CS001", "MA101", "Mathematics I", "75", "1", "2023-05-20", "8.5", "PASS"];
