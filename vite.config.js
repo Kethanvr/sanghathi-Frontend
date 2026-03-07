@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 // import reactRefresh from "@vitejs/plugin-react-refresh";
 import react from "@vitejs/plugin-react";
-import { terser } from "rollup-plugin-terser";
+import terser from "@rollup/plugin-terser";
 
 export default defineConfig(({ mode }) => {
   const BASE_URL = process.env.BASE_URL;
