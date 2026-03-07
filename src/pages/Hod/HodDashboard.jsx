@@ -251,7 +251,7 @@ const HodDashboard = () => {
             <HodTile
               title="View All Users"
               icon={<PeopleAltIcon />}
-              link="/Hod/users"
+              link="/director/users"
             />
           </Grid>
           
@@ -259,7 +259,7 @@ const HodDashboard = () => {
             <HodTile
               title="Assign Mentors"
               icon={<SupervisorAccountIcon />}
-              link="/Hod/mentor-assignment"
+              link="/admin/mentor-assignment"
             />
           </Grid>
           
