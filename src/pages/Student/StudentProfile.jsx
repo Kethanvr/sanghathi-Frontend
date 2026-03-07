@@ -23,7 +23,6 @@ import ParentsDetails from "./ParentsDetails";
 import ContactDetails from "./ContactDetails";
 import Academic from "./Academic";
 import PrevAcademic from "./PrevAcademic";
-import VTUResults from "./VTUResults";
 
 // ----------------------------------------------------------------------
 
@@ -34,25 +33,11 @@ export default function StudentProfile() {
   const location = useLocation();
   const isLight = theme.palette.mode === 'light';
   const colorMode = isLight ? 'primary' : 'info';
-
-  // Feedback enable/disable state
-  const [feedbackEnabled, setFeedbackEnabled] = useState(true);
-  const [pendingFeedbackEnabled, setPendingFeedbackEnabled] = useState(feedbackEnabled);
-  const [saving, setSaving] = useState(false);
-
+  
   // Check if we're in admin edit mode
   const searchParams = new URLSearchParams(location.search);
   const isAdminEdit = searchParams.get('adminEdit') === 'true';
   const menteeId = searchParams.get('menteeId');
-
-  // Save feedback enabled/disabled state (replace with API/localStorage as needed)
-  const handleSaveFeedbackEnabled = () => {
-    setSaving(true);
-    setTimeout(() => {
-      setFeedbackEnabled(pendingFeedbackEnabled);
-      setSaving(false);
-    }, 500); // Simulate save
-  };
 
   // Define all available tabs
   const ALL_TABS = [
@@ -86,11 +71,6 @@ export default function StudentProfile() {
       icon: <Iconify icon={"eva:share-fill"} width={20} height={20} />,
       component: <AdmissionDetails colorMode={colorMode} />,
     },
-    {
-      value: "VTU Results",
-      icon: <Iconify icon={"eva:file-fill"} width={20} height={20} />,
-      component: <VTUResults />,
-    },
   ];
 
   // Use only student details tab for admin edit mode, all tabs for regular student view
@@ -99,26 +79,6 @@ export default function StudentProfile() {
   return (
     <Page title="Student Profile">
       <Container maxWidth="lg">
-        {/* Feedback toggle and save button */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <label style={{ marginRight: 8 }}>
-            <input
-              type="checkbox"
-              checked={pendingFeedbackEnabled}
-              onChange={e => setPendingFeedbackEnabled(e.target.checked)}
-              style={{ marginRight: 4 }}
-            />
-            Enable Feedback
-          </label>
-          <button
-            onClick={handleSaveFeedbackEnabled}
-            disabled={saving || pendingFeedbackEnabled === feedbackEnabled}
-            style={{ marginLeft: 8 }}
-          >
-            {saving ? 'Saving...' : 'Save'}
-          </button>
-        </Box>
-
         <Tabs
           allowScrollButtonsMobile
           variant="scrollable"
@@ -149,16 +109,6 @@ export default function StudentProfile() {
         </Tabs>
 
         <Box sx={{ mb: 5 }} />
-
-        {/* Conditionally render feedback section */}
-        {feedbackEnabled && (
-          <Box sx={{ mb: 3 }}>
-            {/* Replace with your actual Feedback component/section */}
-            <div style={{ padding: '16px', background: '#222', borderRadius: '8px', color: '#fff' }}>
-              Feedback section is visible.
-            </div>
-          </Box>
-        )}
 
         {ACCOUNT_TABS.map((tab) => {
           const isMatched = tab.value === currentTab;

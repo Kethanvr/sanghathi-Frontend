@@ -1,5 +1,4 @@
 import React, { useState, useContext, useEffect } from "react";
-import { FeedbackEnabledContext } from "../Settings/Settings";
 import { AuthContext } from "../../context/AuthContext";
 import { useSnackbar } from "notistack";
 import api from "../../utils/axios";
@@ -23,8 +22,7 @@ export default function FeedbackForm() {
   const targetUserId = searchParams.get("menteeId") || user?._id;
 
   const [isDataFetched, setIsDataFetched] = useState(false);
-  const { feedbackEnabled } = useContext(FeedbackEnabledContext) || { feedbackEnabled: true };
-  const [isEditable, setIsEditable] = useState(true);
+  const [isEditable, setIsEditable] = useState(true);  // or false depending on logic
   const [existingFeedback, setExistingFeedback] = useState(null);
 
   const methods = useForm({ defaultValues: DEFAULT_VALUES });
@@ -36,12 +34,6 @@ export default function FeedbackForm() {
 
   // Optional: fetch existing feedback if any
   useEffect(() => {
-    // If feedback is disabled, make form read-only
-    if (feedbackEnabled === false) {
-      setIsEditable(false);
-    } else {
-      setIsEditable(true);
-    }
     if (!targetUserId) return;
     const fetchFeedback = async () => {
       try {
@@ -92,36 +84,11 @@ export default function FeedbackForm() {
     }
   };
 
-  const handleReadOnlyClick = () => {
-    if (!feedbackEnabled) {
-      enqueueSnackbar("Ask your mentor for the Feedback Form", { variant: "info" });
-    }
-  };
   return (
     <div>
       <Box sx={{ mb: 2, p: 2, bgcolor: "warning.light", borderRadius: 1 }}>
         <Typography>Feedback Form</Typography>
       </Box>
-      {!feedbackEnabled && (
-        <Box sx={{ mb: 2 }}>
-          <button
-            style={{
-              background: '#eee',
-              color: '#888',
-              border: '1px solid #ccc',
-              borderRadius: 4,
-              padding: '8px 16px',
-              cursor: 'not-allowed',
-              fontWeight: 'bold',
-              marginBottom: 8
-            }}
-            onClick={handleReadOnlyClick}
-            disabled
-          >
-            Feedback (Ask your mentor for the Feedback Form)
-          </button>
-        </Box>
-      )}
 
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={2}>
