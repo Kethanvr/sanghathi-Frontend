@@ -35,7 +35,6 @@ import { alpha } from "@mui/material/styles";
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import HdrStrongIcon from '@mui/icons-material/HdrStrong';
 import { Link } from "react-router-dom";
-import VTUResultsCard from "./Student/VTUResultsCard";
 
 const StudentTile = ({ title, icon, link }) => {
   const theme = useTheme();
@@ -279,17 +278,12 @@ const Dashboard = () => {
               />
             </Grid>
             
-            {/* Scorecard Section with VTU Results Below */}
             <Grid item xs={12} sm={6} md={isLight ? 6 : 6} lg={isLight ? 4 : 4}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <StudentTile
-                  title="Scorecard"
-                  icon={<AssignmentIcon />}
-                  link="/Scorecard/ScoreCard"
-                />
-                {/* VTU Results Card - Under Externals/Scorecard */}
-                <VTUResultsCard />
-              </Box>
+              <StudentTile
+                title="Scorecard"
+                icon={<AssignmentIcon />}
+                link="/Scorecard/ScoreCard"
+              />
             </Grid>
             
             <Grid item xs={12} sm={6} md={isLight ? 6 : 6} lg={isLight ? 4 : 4}>
