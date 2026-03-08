@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 // import reactRefresh from "@vitejs/plugin-react-refresh";
 import react from "@vitejs/plugin-react";
-import { terser } from "rollup-plugin-terser";
 
 export default defineConfig(({ mode }) => {
   const BASE_URL = process.env.BASE_URL;
@@ -9,20 +8,14 @@ export default defineConfig(({ mode }) => {
   
   return {
     plugins: [
-      react(),
-      mode === "production" && terser({
-        compress: {
-          drop_console: true,
-          drop_debugger: true
-        },
-        mangle: true,
-        format: {
-          comments: false
-        }
-      })
+      react()
     ],
     build: {
-      minify: mode === "production",
+      minify: mode === "production" ? "esbuild" : false,
+      esbuild: {
+        drop: ["console", "debugger"],
+        legalComments: "none"
+      },
       sourcemap: false,
       rollupOptions: {
         output: {
