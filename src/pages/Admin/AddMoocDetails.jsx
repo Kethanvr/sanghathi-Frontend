@@ -42,7 +42,10 @@ const AddMoocDetails = () => {
       "StudentName",
       "CourseName",
       "Platform",
-      "CertificateLink"
+      "CertificateLink",
+      "Man Hours",
+      "Start Date",
+      "End Date"
     ];
 
     const exampleRow = [
