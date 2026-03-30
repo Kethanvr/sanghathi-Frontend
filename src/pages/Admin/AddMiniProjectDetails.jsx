@@ -40,7 +40,10 @@ const AddMiniProjectDetails = () => {
       "SlNo",
       "USN",
       "Name",
-      "Title"
+      "Title",
+      "Man Hours",
+      "Start Date",
+      "End Date"
     ];
 
     const exampleRow = [
