@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -13,50 +13,86 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
+import useStudentSemester from "../../hooks/useStudentSemester";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const Attendance = () => {
   const { user } = useContext(AuthContext);
   const [searchParams] = useSearchParams();
+  const { semester: studentSemester, loading: semesterLoading } = useStudentSemester();
   const [attendanceData, setAttendanceData] = useState([]);
+  const [studentInfo, setStudentInfo] = useState({ usn: '', name: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedSemester, setSelectedSemester] = useState(null); // Initialize to null
   const [selectedMonth, setSelectedMonth] = useState(0); // 0 for "All"
 
-  useEffect(() => {
-    const fetchAttendance = async () => {
+  const fetchAttendance = useCallback(async () => {
+    // Wait for semester to load before fetching
+    if (semesterLoading) {
+      return;
+    }
+
+    try {
+      // Get menteeId from URL params if viewing as faculty
+      const menteeId = searchParams.get('menteeId') || user._id;
+      
+      console.log("Fetching attendance for ID:", menteeId); // Debug log
+      
+      // Fetch student info (optional - don't fail if this errors)
       try {
-        // Get menteeId from URL params if viewing as faculty
-        const menteeId = searchParams.get('menteeId') || user._id;
-        
-        console.log("Fetching attendance for ID:", menteeId); // Debug log
-        
-        const response = await axios.get(
-          `${BASE_URL}/students/attendance/${menteeId}`
+        const userResponse = await axios.get(
+          `${BASE_URL}/users/${menteeId}`
         );
         
-        console.log("Attendance API response:", response.data); // Debug log
-        
-        const data = response.data.data.attendance;
-        if (data && data.semesters) {
-          setAttendanceData(data.semesters);
-          if (data.semesters.length > 0) {
-            setSelectedSemester(data.semesters[0].semester);
-          }
-        } else {
-          setAttendanceData([]);
+        if (userResponse.data?.data?.user) {
+          setStudentInfo({
+            usn: userResponse.data.data.user.usn || '',
+            name: userResponse.data.data.user.name || ''
+          });
         }
-        setLoading(false);
-      } catch (err) {
-        console.error("Attendance fetch error:", err); // Debug log
-        setError("Failed to fetch attendance data");
-        setLoading(false);
+      } catch (userError) {
+        console.warn("Could not fetch user info:", userError);
+        // Use user from context as fallback
+        if (user) {
+          setStudentInfo({
+            usn: user.usn || '',
+            name: user.name || ''
+          });
+        }
       }
-    };
+      
+      const response = await axios.get(
+        `${BASE_URL}/students/attendance/${menteeId}`
+      );
+      
+      console.log("Attendance API response:", response.data); // Debug log
+      
+      const data = response.data.data.attendance;
+      if (data && data.semesters) {
+        setAttendanceData(data.semesters);
+        if (data.semesters.length > 0) {
+          // Use student's current semester from profile if available and exists in data
+          const defaultSem = studentSemester && data.semesters.find(s => s.semester === studentSemester)
+            ? studentSemester
+            : data.semesters[0].semester;
+          console.log('[Attendance] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', data.semesters[0].semester, ')');
+          setSelectedSemester(defaultSem);
+        }
+      } else {
+        setAttendanceData([]);
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error("Attendance fetch error:", err); // Debug log
+      setError("Failed to fetch attendance data");
+      setLoading(false);
+    }
+  }, [semesterLoading, searchParams, user._id, studentSemester]);
 
+  useEffect(() => {
     fetchAttendance();
-  }, [user._id, searchParams]); // Add searchParams to dependencies
+  }, [fetchAttendance]);
 
   // No need for transformBackendData in the old way
 
@@ -144,27 +180,44 @@ const Attendance = () => {
         // Get all subjects from all months in the selected semester
         const allSubjects = semesterData.months.flatMap(monthData => monthData.subjects);
         
-        // Create a Map to store unique subjects by subjectCode
+        // Create a Map to store unique subjects by subjectName (since subjectCode might be missing)
         const uniqueSubjects = new Map();
         
-        // Process all subjects, keeping only the most recent entry for each subjectCode
+        // Process all subjects, keeping only the most recent entry for each subject
         allSubjects.forEach(subject => {
-            if (subject.subjectCode) {
-                uniqueSubjects.set(subject.subjectCode, {
-                    subjectCode: subject.subjectCode,
-                    subjectName: subject.subjectName
+            // Use subjectName as the unique key since subjectCode might be empty
+            const key = subject.subjectName || 'Unknown Subject';
+            if (!uniqueSubjects.has(key)) {
+                uniqueSubjects.set(key, {
+                    subjectCode: subject.subjectCode || 'N/A',
+                    subjectName: subject.subjectName || 'Unknown Subject'
                 });
             }
         });
 
-        // Convert Map to array and sort by subjectCode
+        // Convert Map to array and sort by subjectName
         return Array.from(uniqueSubjects.values())
-            .sort((a, b) => a.subjectCode.localeCompare(b.subjectCode));
+            .sort((a, b) => a.subjectName.localeCompare(b.subjectName));
     };
 
   return (
     <Box sx={{ p: 2 }}>
       <h1 sx={{ textAlign: "center", mb: 2 }}>Attendance Report</h1>
+      {studentInfo.usn && (
+        <Box sx={{ mb: 2, display: 'flex', gap: 2, justifyContent: 'center' }}>
+          <strong>USN:</strong> {studentInfo.usn}
+          {studentInfo.name && (
+            <>
+              <strong>Name:</strong> {studentInfo.name}
+            </>
+          )}
+          {selectedSemester && (
+            <>
+              <strong>Semester:</strong> {selectedSemester}
+            </>
+          )}
+        </Box>
+      )}
       <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
         <label>
           Select Semester:
@@ -216,8 +269,8 @@ const Attendance = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {getSubjectsForSemester().map((subject) => (
-                <TableRow key={subject.subjectCode}>
+            {getSubjectsForSemester().map((subject, index) => (
+                <TableRow key={`${subject.subjectName}-${index}`}>
                   <TableCell sx={{ border: "1px solid gray" }}>
                     {subject.subjectCode}
                   </TableCell>
