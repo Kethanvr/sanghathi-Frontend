@@ -26,7 +26,13 @@ import Thread from "./pages/Thread/Thread";
 import ThreadWindow from "./pages/Thread/ThreadWindow";
 import Report from "./pages/Report/Report";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import DirectorDashboard from "./pages/Director/DirectorDashboard";
+import DirectorViewMentors from "./pages/Director/DirectorViewMentors";
+import DirectorMenteesList from "./pages/Director/DirectorMenteesList";
 import HodDashboard from "./pages/Hod/HodDashboard";
+import HodViewMentors from "./pages/Hod/HodViewMentors";
+import HodMenteesList from "./pages/Hod/HodMenteesList";
+import HodMentorDashboard from "./pages/Hod/HodMentorDashboard";
 import ViewUsers from "./pages/Admin/ViewUsers";
 import Data from "./pages/Admin/Data";
 import FacultyDashboard from "./pages/Faculty/FacultyDashboard";
@@ -46,6 +52,11 @@ import MentorMenteeConversation from "./pages/MentorMentee/MentorMenteeConversat
 import MyChatBot from "./mychatbot";
 import { useLocation } from 'react-router-dom';
 import { initGA, trackPageView } from "./ga";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword   from "./pages/ResetPassword";
+import FeedbackForm from "./pages/Feedback/feedback";
+
+import FeedbackTable from "./pages/Feedback/feedback";
 // TODO : Need to remove routing logic from app component
 function App() {
   // Track page views on route change using Google Analytics GA4
@@ -83,7 +94,11 @@ function App() {
                           <Navigate replace to="/faculty/dashboard" />
                         ) : user.roleName === "admin" ? (
                           <Navigate replace to="/admin/dashboard" />
-                        ) : (
+                        ) : user.roleName === "director" ? (
+                          <Navigate replace to="/director/dashboard" />
+                        ) : user.roleName === "hod" ? (
+                          <Navigate replace to="/hod/dashboard" />
+                        ): (
                           <ProtectedRouteWrapper allowedRoles={["student"]}>
                             <LazyLoadWrapper component={Dashboard} />
                           </ProtectedRouteWrapper>
@@ -127,6 +142,46 @@ function App() {
                     }
                   />
                   <Route
+                    path="/director/dashboard"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["director"]}>
+                        <LazyLoadWrapper component={DirectorDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/hod/mentors"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["hod"]}>
+                        <LazyLoadWrapper component={DirectorViewMentors} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/director/mentors"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["director"]}>
+                        <LazyLoadWrapper component={DirectorViewMentors} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/director/mentor/:mentorId/mentees"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["director","hod"]}>
+                        <LazyLoadWrapper component={DirectorMenteesList} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/director/mentee-profile/:menteeId"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["director","hod"]}>
+                        <LazyLoadWrapper component={StudentDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
                     path="/admin/add-user"
                     element={
                       <ProtectedRouteWrapper>
@@ -136,6 +191,14 @@ function App() {
                   />
                   <Route
                     path="/admin/users"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={ViewUsers} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/director/users"
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={ViewUsers} />
@@ -353,16 +416,16 @@ function App() {
                       </ProtectedRouteWrapper>
                     }
                   />
-                </Route>
                   <Route
-                  path="/mentor-mentee-conversation"
-                  element={
-                    <ProtectedRouteWrapper>
-                      <LazyLoadWrapper component={MentorMenteeConversation} />
-                    </ProtectedRouteWrapper>
-                    
+                    path="/mentor-mentee-conversation"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={MentorMenteeConversation} />
+                      </ProtectedRouteWrapper>
                     }
                   />
+                </Route>
+                
               </Routes>
             </main>
           </div>
