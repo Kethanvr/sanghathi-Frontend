@@ -36,94 +36,99 @@ const AddMarks = () => {
   };
 
   const downloadTemplate = () => {
-    // Create CSV content
-    const headers = ["Semester", "USN"];
-    for (let i = 1; i <= 2; i++) {
-      headers.push(`Subject Code ${i}`, `Subject Name ${i}`, `Internal Marks ${i}`, `External Marks ${i}`, `Total ${i}`, `Attempt ${i}`, `Result ${i}`);
-    }
-    headers.push(`Passing Date`);
-    headers.push(`sgpa`);
-    const csvContent = [headers.join(',')];
-    const row1 = [];
-    csvContent.push(row1.join(','));
-  
-    // Create blob and download
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const headers = [
+      "Semester",
+      "USN",
+
+      "Result1", "Result2", "Result3", "Result4", "Result5", "Result6", "Result7", "Result8", "Result9",
+      "Passing_Date",
+      "SGPA",
+    ];
+
+    const row1 = [
+
+    ];
+
+    const csvContent = [
+      headers.join(","),
+      row1.join(",")
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
+
     a.href = url;
-    a.download = 'external_marks_template.csv';
+    a.download = "vtu_marks_template.csv";
+
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);  
-    window.URL.revokeObjectURL(url);  
+
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
-  
+
+
   const processCSV = (csvData) => {
-  const studentsData = [];
+    const studentGroups = new Map();
 
-  for (let i = 1; i < csvData.length; i++) {
-    const row = csvData[i];
-    if (row.length >= 2 && row[0] && row[1]) {
+    for (let i = 1; i < csvData.length; i++) {
+      const row = csvData[i];
+      if (!row || row.length < 5) continue;
+
       const semester = parseInt(row[0]);
-      const usn = row[1].trim().toUpperCase();
-      const subjects = [];
+      const usn = row[1]?.trim();
 
-      // Last two fields are Passing Date and SGPA
-      const passingDate = row[row.length - 2]?.trim();
-      const sgpa = parseFloat(row[row.length - 1]);
+      if (!semester || !usn) continue;
 
-      for (let j = 2; j < row.length - 2; j += 7) {
-        const [code, name, internal, external, total, attempt, result] = row.slice(j, j + 7);
-        if (code && name && internal && external && total && attempt && result) {
-          const internalMarks = parseInt(internal);
-          const externalMarks = parseInt(external);
-          const totalMarks = parseInt(total);
-          const attemptNo = parseInt(attempt);
-          const resultStatus = result.toUpperCase();
-
-          if (!isNaN(internalMarks) && !isNaN(externalMarks) && !isNaN(totalMarks) && !isNaN(attemptNo) && (resultStatus === "P" || resultStatus === "F")) {
-            subjects.push({
-              subjectCode: code,
-              subjectName: name,
-              internalMarks,
-              externalMarks,
-              total: totalMarks,
-              attempt: attemptNo,
-              result: resultStatus === "P" ? "PASS" : "FAIL"
-            });
-          }
-        }
+      if (!studentGroups.has(usn)) {
+        studentGroups.set(usn, new Map());
       }
 
-      if (subjects.length > 0) {
-        studentsData.push({
-          semester,
-          usn,
-          subjects,
-          passingDate,
-          sgpa
+      const semesterGroups = studentGroups.get(usn);
+      if (!semesterGroups.has(semester)) {
+        semesterGroups.set(semester, []);
+      }
+
+      // 🔥 LOOP THROUGH SUBJECT1 → SUBJECT9
+      for (let s = 0; s < 9; s++) {
+        const baseIndex = 2 + s * 6;
+
+        const subjectCode = row[baseIndex];
+        const subjectName = row[baseIndex + 1];
+        const internalMarks = parseInt(row[baseIndex + 2]);
+        const externalMarks = parseInt(row[baseIndex + 3]);
+        const attempt = parseInt(row[baseIndex + 4]);
+        const result = row[baseIndex + 5]?.toUpperCase();
+
+        // Skip empty subjects
+        if (!subjectCode || !subjectName) continue;
+
+        semesterGroups.get(semester).push({
+          subjectCode,
+          subjectName,
+          internalMarks: isNaN(internalMarks) ? 0 : internalMarks,
+          externalMarks: isNaN(externalMarks) ? 0 : externalMarks,
+          attempt: isNaN(attempt) ? 1 : attempt,
+          result: result === "PASS" || result === "FAIL" ? result : "FAIL",
         });
       }
-    }
-  }
 
-  // Group by USN
-  const studentGroups = new Map();
-  for (const student of studentsData) {
-    if (!studentGroups.has(student.usn)) {
-      studentGroups.set(student.usn, []);
-    }
-    studentGroups.get(student.usn).push({
-      semester: student.semester,
-      subjects: student.subjects,
-      passingDate: student.passingDate,
-      sgpa: student.sgpa
-    });
-  }
+      // Optional global fields
+      const passingDate = row[row.length - 2];
+      const cgpa = parseFloat(row[row.length - 1]);
 
-  return studentGroups;
-};
+      // Attach metadata to first subject (used later)
+      const subjects = semesterGroups.get(semester);
+      if (subjects.length > 0) {
+        subjects[0].passingDate = passingDate || null;
+        subjects[0].cgpa = isNaN(cgpa) ? null : cgpa;
+      }
+    }
+
+    return studentGroups;
+  };
 
   // Function to look up a student's userId by their USN
   const fetchUserIdByUSN = async (usn) => {
@@ -134,7 +139,7 @@ const AddMarks = () => {
           Authorization: `Bearer ${token}`
         }
       });
-      
+
       if (response.data && response.data.userId) {
         return response.data.userId;
       } else {
@@ -165,17 +170,17 @@ const AddMarks = () => {
         try {
           const csvText = event.target.result;
           const parsedData = Papa.parse(csvText).data;
-          const studentGroups = processCSV(parsedData);  
+          const studentGroups = processCSV(parsedData);
 
           // Create an array to track results for each student
           const results = [];
-          
+
           // Process each student
           for (const [usn, semesterGroups] of studentGroups) {
             try {
               // First look up student ID by USN
               console.log(`Looking up student with USN: ${usn}`);
-              
+
               let studentId = null;
               try {
                 console.log(`Making API call to fetch user ID for USN: ${usn}`);
@@ -184,67 +189,68 @@ const AddMarks = () => {
               } catch (lookupError) {
                 console.error(`Error looking up student with USN ${usn}:`, lookupError);
               }
-              
+
               // If lookup failed, fall back to admin ID
               if (!studentId) {
                 console.warn(`Could not find userId for USN ${usn}, falling back to admin ID: ${user._id}`);
-                studentId = user._id;
+                throw new Error(`Student not found for USN: ${usn}`);
               }
-              
+
               // Submit data for each semester
-              for (const semesterData of semesterGroups) {
-                const { semester, subjects } = semesterData;
-                if (subjects && subjects.length > 0) {
-                  console.log(`Submitting semester ${semester} data for USN ${usn}:`, subjects);
-                  
-                  const formattedSubjects = subjects.map(subject => ({
-                    subjectCode: subject.subjectCode,
-                    subjectName: subject.subjectName,
-                    internalMarks: subject.internalMarks,
-                    externalMarks: subject.externalMarks,
-                    total: subject.total,
-                    attempt: subject.attempt,
-                    result: subject.result
-                  }));
-                  await axios.post(
-                    `${BASE_URL}/students/external/${studentId}`,
-                    {
-                      semester,
-                      subjects: formattedSubjects,
-                      passingDate: semesterData.passingDate,
-                      sgpa: semesterData.sgpa
-                    },
-                    {
-                      headers: { Authorization: `Bearer ${token}` }
+              for (const [semester, subjects] of semesterGroups) {
+                console.log(`Submitting semester ${semester} data for USN ${usn}:`, subjects);
+
+                // Make sure we're sending all fields properly
+                const formattedSubjects = subjects.map(subject => ({
+                  subjectCode: subject.subjectCode,
+                  subjectName: subject.subjectName,
+                  internalMarks: subject.internalMarks ?? 0,
+                  externalMarks: subject.externalMarks,
+                  total: subject.externalMarks + (subject.internalMarks || 0),
+                  attempt: subject.attempt || 1,
+                  result: subject.result || "FAIL"
+                }));
+
+                await axios.post(
+                  `${BASE_URL}/students/external/${studentId}`,
+                  {
+                    semester,
+                    subjects: formattedSubjects,
+                    passingDate: subjects[0]?.passingDate || null,
+                    sgpa: subjects[0]?.cgpa || null
+                  },
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`
                     }
-                  );
-                }
+                  }
+                );
               }
-              
+
               // Add success result for this student
               results.push({ usn, status: 'success' });
             } catch (error) {
               // Add failure result for this student
-              results.push({ 
-                usn, 
-                status: 'error', 
+              results.push({
+                usn,
+                status: 'error',
                 message: error.response?.data?.message || error.message
               });
               console.error(`Error processing student ${usn}:`, error);
             }
           }
-          
+
           // Show summary results
           const successCount = results.filter(r => r.status === 'success').length;
           const totalCount = results.length;
-          
+
           if (successCount === totalCount) {
             setSuccess(`All ${totalCount} students processed successfully!`);
           } else {
             setSuccess(`Processed ${successCount} out of ${totalCount} students successfully.`);
             setError(`Failed to process ${totalCount - successCount} students. See console for details.`);
           }
-          
+
           setFile(null);
           // Reset file input
           const fileInput = document.getElementById("csv-file-input");
@@ -275,7 +281,7 @@ const AddMarks = () => {
         sx={{
           p: 4,
           borderRadius: 2,
-          backgroundColor: isLight 
+          backgroundColor: isLight
             ? 'rgba(255, 255, 255, 0.8)'
             : alpha(theme.palette.background.paper, 0.8),
           backdropFilter: 'blur(8px)',
@@ -284,20 +290,20 @@ const AddMarks = () => {
             : '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
         }}
       >
-        <Box 
-          sx={{ 
+        <Box
+          sx={{
             textAlign: 'center',
             mb: 4
           }}
         >
-          <Typography 
-            variant="h4" 
-            component="h1" 
-            gutterBottom 
+          <Typography
+            variant="h4"
+            component="h1"
+            gutterBottom
             align="center"
             sx={{
               fontWeight: 'bold',
-              background: isLight 
+              background: isLight
                 ? `-webkit-linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`
                 : `-webkit-linear-gradient(45deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
               WebkitBackgroundClip: 'text',
@@ -307,9 +313,9 @@ const AddMarks = () => {
           >
             Upload External Marks
           </Typography>
-          
-          <Typography 
-            variant="body1" 
+
+          <Typography
+            variant="body1"
             color="text.secondary"
             sx={{ maxWidth: 600, mx: 'auto' }}
           >
@@ -318,9 +324,9 @@ const AddMarks = () => {
         </Box>
 
         {error && (
-          <Alert 
-            severity="error" 
-            sx={{ 
+          <Alert
+            severity="error"
+            sx={{
               mb: 3,
               borderRadius: 2,
             }}
@@ -330,9 +336,9 @@ const AddMarks = () => {
         )}
 
         {success && (
-          <Alert 
-            severity="success" 
-            sx={{ 
+          <Alert
+            severity="success"
+            sx={{
               mb: 3,
               borderRadius: 2,
             }}
@@ -341,28 +347,28 @@ const AddMarks = () => {
           </Alert>
         )}
 
-        <Box 
-          component="form" 
+        <Box
+          component="form"
           onSubmit={handleSubmit}
           sx={{
             borderRadius: 2,
-            backgroundColor: isLight 
+            backgroundColor: isLight
               ? alpha(theme.palette.primary.main, 0.04)
               : alpha(theme.palette.info.main, 0.08),
             p: 3,
             mb: 3,
           }}
         >
-          <Typography 
-            variant="h6" 
+          <Typography
+            variant="h6"
             gutterBottom
             sx={{ mb: 2 }}
           >
             CSV Format Instructions
           </Typography>
-          
-          <Box 
-            sx={{ 
+
+          <Box
+            sx={{
               display: 'flex',
               flexDirection: 'column',
               gap: 0.5,
@@ -372,26 +378,22 @@ const AddMarks = () => {
               py: 1,
             }}
           >
-          <Typography variant="body2" color="text.secondary">• Column 1: Semester Number</Typography>
-          <Typography variant="body2" color="text.secondary">• Column 2: USN</Typography>
-          {[...Array(1)].map((_, i) => (
-            <Box key={i} sx={{ ml: 2 }}>
-              <Typography variant="body2" color="text.secondary">{`• Column ${3 + i * 7}: Subject Code ${i + 1}`}</Typography>
-              <Typography variant="body2" color="text.secondary">{`• Column ${4 + i * 7}: Subject Name ${i + 1}`}</Typography>
-              <Typography variant="body2" color="text.secondary">{`• Column ${5 + i * 7}: Internal Marks ${i + 1}`}</Typography>
-              <Typography variant="body2" color="text.secondary">{`• Column ${6 + i * 7}: External Marks ${i + 1}`}</Typography>
-              <Typography variant="body2" color="text.secondary">{`• Column ${7 + i * 7}: Total ${i + 1}`}</Typography>
-              <Typography variant="body2" color="text.secondary">{`• Column ${8 + i * 7}: Attempt ${i + 1}`}</Typography>
-              <Typography variant="body2" color="text.secondary">{`• Column ${9 + i * 7}: Result ${i + 1} (P/F)`}</Typography>
-            </Box>
-          ))}
+            <Typography variant="body2" color="text.secondary">• Column 1: Semester Number</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 2: USN</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 3: Subject Code</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 4: Subject Name</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 5: External Marks</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 6: Attempt Number (1-4)</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 7: Passing Date (YYYY-MM-DD)</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 8: CGPA</Typography>
+            <Typography variant="body2" color="text.secondary">• Column 9: Result (PASS/FAIL)</Typography>
           </Box>
 
           <Divider sx={{ my: 3 }} />
 
-          <Stack 
-            direction={{ xs: 'column', sm: 'row' }} 
-            spacing={2} 
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
             justifyContent="center"
             alignItems="center"
             sx={{ mt: 3 }}
@@ -408,7 +410,7 @@ const AddMarks = () => {
                 color: isLight ? theme.palette.primary.main : theme.palette.info.main,
                 '&:hover': {
                   borderColor: isLight ? theme.palette.primary.main : theme.palette.info.main,
-                  backgroundColor: isLight 
+                  backgroundColor: isLight
                     ? alpha(theme.palette.primary.main, 0.04)
                     : alpha(theme.palette.info.main, 0.08),
                 }
@@ -417,8 +419,8 @@ const AddMarks = () => {
               Download Template
             </Button>
 
-            <Box 
-              sx={{ 
+            <Box
+              sx={{
                 position: 'relative',
                 width: { xs: '100%', sm: 'auto' }
               }}
@@ -444,7 +446,7 @@ const AddMarks = () => {
                     color: isLight ? theme.palette.primary.main : theme.palette.info.main,
                     '&:hover': {
                       borderColor: isLight ? theme.palette.primary.main : theme.palette.info.main,
-                      backgroundColor: isLight 
+                      backgroundColor: isLight
                         ? alpha(theme.palette.primary.main, 0.04)
                         : alpha(theme.palette.info.main, 0.08),
                     }
@@ -460,7 +462,7 @@ const AddMarks = () => {
               type="submit"
               disabled={loading || !file}
               startIcon={loading ? null : <CloudUploadIcon />}
-              sx={{ 
+              sx={{
                 position: "relative",
                 borderRadius: '8px',
                 py: 1.2,
@@ -468,12 +470,12 @@ const AddMarks = () => {
                 width: { xs: '100%', sm: 'auto' },
                 bgcolor: isLight ? theme.palette.primary.main : theme.palette.info.main,
                 '&:hover': {
-                  bgcolor: isLight 
+                  bgcolor: isLight
                     ? theme.palette.primary.dark
                     : theme.palette.info.dark,
                 },
                 '&.Mui-disabled': {
-                  backgroundColor: isLight 
+                  backgroundColor: isLight
                     ? alpha(theme.palette.primary.main, 0.3)
                     : alpha(theme.palette.info.main, 0.3),
                 }
@@ -501,11 +503,11 @@ const AddMarks = () => {
           </Stack>
         </Box>
 
-        <Paper 
-          elevation={1} 
-          sx={{ 
+        <Paper
+          elevation={1}
+          sx={{
             p: 2,
-            backgroundColor: isLight 
+            backgroundColor: isLight
               ? alpha(theme.palette.warning.main, 0.05)
               : alpha(theme.palette.warning.dark, 0.05),
             border: `1px dashed ${alpha(theme.palette.warning.main, 0.2)}`,
@@ -515,9 +517,9 @@ const AddMarks = () => {
             gap: 1,
           }}
         >
-          <HelpOutlineIcon 
-            fontSize="small" 
-            color="warning" 
+          <HelpOutlineIcon
+            fontSize="small"
+            color="warning"
             sx={{ flexShrink: 0 }}
           />
           <Typography variant="body2" color="text.secondary">
