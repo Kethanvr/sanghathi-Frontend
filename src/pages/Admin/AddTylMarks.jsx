@@ -228,7 +228,11 @@ const AddTylMarks = () => {
           }
         };
 
-        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`);
+        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        });
         const userId = response.data?._id;
         if (!userId) throw new Error("User not found");
 
