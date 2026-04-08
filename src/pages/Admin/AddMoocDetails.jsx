@@ -112,7 +112,7 @@ const AddMoocDetails = () => {
         if (!row.CourseName) throw new Error("Course Name missing");
 
         const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`);
-        const userId = response.data?.userId;
+        const userId = response.data?.userId || response.data?._id;
 
         if (!userId) throw new Error("User not found");
 

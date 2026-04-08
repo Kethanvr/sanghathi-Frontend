@@ -32,7 +32,7 @@ import AddMiniProjectDetails from "./AddMiniProjectDetails";
 import React from "react";
 
 // ----------------------------------------------------------------------
-
+``
 export default function Data() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';

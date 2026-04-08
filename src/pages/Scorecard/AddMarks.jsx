@@ -40,16 +40,7 @@ const AddMarks = () => {
       "Semester",
       "USN",
 
-      "SubjectCode1", "SubjectName1", "InternalMarks1", "ExternalMarks1", "Total", "Attempt", "Result2",
-      "SubjectCode2", "SubjectName2", "InternalMarks2", "ExternalMarks2", "Total2", "Attempt2", "Result2",
-      "SubjectCode3", "SubjectName3", "InternalMarks3", "ExternalMarks3", "Total3", "Attempt3", "Result3",
-      "SubjectCode4", "SubjectName4", "InternalMarks4", "ExternalMarks4", "Total4", "Attempt4", "Result4",
-      "SubjectCode5", "SubjectName5", "InternalMarks5", "ExternalMarks5", "Total5", "Attempt5", "Result5",
-      "SubjectCode6", "SubjectName6", "InternalMarks6", "ExternalMarks6", "Total6", "Attempt6", "Result6",
-      "SubjectCode7", "SubjectName7", "InternalMarks7", "ExternalMarks7", "Total7", "Attempt7", "Result7",
-      "SubjectCode8", "SubjectName8", "InternalMarks8", "ExternalMarks8", "Total8", "Attempt8", "Result8",
-      "SubjectCode9", "SubjectName9", "InternalMarks9", "ExternalMarks9", "Total9", "Attempt9", "Result9",
-
+      "Result1", "Result2", "Result3", "Result4", "Result5", "Result6", "Result7", "Result8", "Result9",
       "Passing_Date",
       "SGPA",
     ];
@@ -80,43 +71,59 @@ const AddMarks = () => {
 
 
   const processCSV = (csvData) => {
-    const studentGroups = new Map(); // Group by student USN first
+    const studentGroups = new Map();
 
-    // Skip header row and process data
     for (let i = 1; i < csvData.length; i++) {
       const row = csvData[i];
-      // Check if row has all required fields
-      if (row.length >= 9) {
-        const semester = parseInt(row[0]);
-        const usn = row[1].trim();
-        const subjectCode = row[2];
-        const subjectName = row[3];
-        const externalMarks = parseInt(row[4]);
-        const attempt = parseInt(row[5]);
-        const passingDate = row[6];
-        const cgpa = parseFloat(row[7]);
-        const result = row[8].toUpperCase();
+      if (!row || row.length < 5) continue;
 
-        if (!isNaN(semester) && usn && subjectCode && subjectName && !isNaN(externalMarks)) {
-          if (!studentGroups.has(usn)) {
-            studentGroups.set(usn, new Map());
-          }
+      const semester = parseInt(row[0]);
+      const usn = row[1]?.trim();
 
-          const semesterGroups = studentGroups.get(usn);
-          if (!semesterGroups.has(semester)) {
-            semesterGroups.set(semester, []);
-          }
+      if (!semester || !usn) continue;
 
-          semesterGroups.get(semester).push({
-            subjectCode,
-            subjectName,
-            externalMarks,
-            attempt: isNaN(attempt) ? 1 : attempt,
-            passingDate: passingDate || null,
-            cgpa: isNaN(cgpa) ? null : cgpa,
-            result: result === "PASS" || result === "FAIL" ? result : "FAIL",
-          });
-        }
+      if (!studentGroups.has(usn)) {
+        studentGroups.set(usn, new Map());
+      }
+
+      const semesterGroups = studentGroups.get(usn);
+      if (!semesterGroups.has(semester)) {
+        semesterGroups.set(semester, []);
+      }
+
+      // 🔥 LOOP THROUGH SUBJECT1 → SUBJECT9
+      for (let s = 0; s < 9; s++) {
+        const baseIndex = 2 + s * 6;
+
+        const subjectCode = row[baseIndex];
+        const subjectName = row[baseIndex + 1];
+        const internalMarks = parseInt(row[baseIndex + 2]);
+        const externalMarks = parseInt(row[baseIndex + 3]);
+        const attempt = parseInt(row[baseIndex + 4]);
+        const result = row[baseIndex + 5]?.toUpperCase();
+
+        // Skip empty subjects
+        if (!subjectCode || !subjectName) continue;
+
+        semesterGroups.get(semester).push({
+          subjectCode,
+          subjectName,
+          internalMarks: isNaN(internalMarks) ? 0 : internalMarks,
+          externalMarks: isNaN(externalMarks) ? 0 : externalMarks,
+          attempt: isNaN(attempt) ? 1 : attempt,
+          result: result === "PASS" || result === "FAIL" ? result : "FAIL",
+        });
+      }
+
+      // Optional global fields
+      const passingDate = row[row.length - 2];
+      const cgpa = parseFloat(row[row.length - 1]);
+
+      // Attach metadata to first subject (used later)
+      const subjects = semesterGroups.get(semester);
+      if (subjects.length > 0) {
+        subjects[0].passingDate = passingDate || null;
+        subjects[0].cgpa = isNaN(cgpa) ? null : cgpa;
       }
     }
 
@@ -186,7 +193,7 @@ const AddMarks = () => {
               // If lookup failed, fall back to admin ID
               if (!studentId) {
                 console.warn(`Could not find userId for USN ${usn}, falling back to admin ID: ${user._id}`);
-                studentId = user._id;
+                throw new Error(`Student not found for USN: ${usn}`);
               }
 
               // Submit data for each semester
@@ -197,7 +204,7 @@ const AddMarks = () => {
                 const formattedSubjects = subjects.map(subject => ({
                   subjectCode: subject.subjectCode,
                   subjectName: subject.subjectName,
-                  internalMarks: subject.internalMarks || 0,
+                  internalMarks: subject.internalMarks ?? 0,
                   externalMarks: subject.externalMarks,
                   total: subject.externalMarks + (subject.internalMarks || 0),
                   attempt: subject.attempt || 1,
