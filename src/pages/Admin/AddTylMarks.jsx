@@ -228,22 +228,23 @@ const AddTylMarks = () => {
           }
         };
 
-        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`, {
+        const normalizedUsn = row.USN
+          ?.toString()
+          .trim()
+          .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+          .toUpperCase();
+
+        const response = await axios.get(`${BASE_URL}/users/usn/${encodeURIComponent(normalizedUsn)}`, {
+          params: { _ts: Date.now() },
           headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
             Authorization: `Bearer ${localStorage.getItem("token")}`
           }
         });
-        const userId = response.data?._id;
+        const userId = response.data?.userId || response.data?._id;
         if (!userId) throw new Error("User not found");
 
-        await axios.post(`${BASE_URL}/students/tyl/${userId}`, {
-          language,
-          aptitude,
-          softskill,
-          core,
-          programming,
-          levels
-        });
         await axios.post(`${BASE_URL}/tyl-scores`, {
           userId,
           semester: 1,
