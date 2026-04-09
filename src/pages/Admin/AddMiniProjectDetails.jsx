@@ -107,14 +107,27 @@ const AddMiniProjectDetails = () => {
         if (!row.USN) throw new Error("USN missing");
         if (!row.Title) throw new Error("Project Title missing");
 
-        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`);
+        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`, {
+          params: { _ts: Date.now() },
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache"
+          }
+        });
         const userId = response.data?.userId || response.data?._id;
 
         if (!userId) throw new Error("User not found");
 
-        await axios.post(`${BASE_URL}/students/miniproject/${userId}`, {
-          studentName: row.Name,
-          title: row.Title
+        await axios.post(`${BASE_URL}/project/miniproject`, {
+          userId,
+          miniproject: [
+            {
+              title: row.Title,
+              manHours: row["Man Hours"] ? Number(row["Man Hours"]) : null,
+              startDate: row["Start Date"] || null,
+              completedDate: row["End Date"] || null
+            }
+          ]
         });
 
         success++;

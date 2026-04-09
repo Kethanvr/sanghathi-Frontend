@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   Box,
   Button,
-  CircularProgress,
   Typography,
   Container,
   Paper,
@@ -15,24 +14,18 @@ import {
 } from "@mui/material";
 import {
   FileDownload as FileDownloadIcon,
-  CloudUpload as CloudUploadIcon,
-  HelpOutline as HelpOutlineIcon
+  CloudUpload as CloudUploadIcon
 } from "@mui/icons-material";
-import { alpha, useTheme } from "@mui/material/styles";
 import Papa from "papaparse";
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 const AddMoocDetails = () => {
-  const theme = useTheme();
-  const isLight = theme.palette.mode === "light";
-
   const [processing, setProcessing] = useState(false);
   const [successCount, setSuccessCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
   const [errors, setErrors] = useState([]);
-  const [file, setFile] = useState(null);
 
   // ================= TEMPLATE DOWNLOAD =================
   const downloadTemplate = () => {
@@ -79,7 +72,6 @@ const AddMoocDetails = () => {
     const uploadedFile = event.target.files[0];
     if (!uploadedFile) return;
 
-    setFile(uploadedFile);
     setProcessing(true);
     setErrors([]);
     setSuccessCount(0);
@@ -111,16 +103,28 @@ const AddMoocDetails = () => {
         if (!row.USN) throw new Error("USN missing");
         if (!row.CourseName) throw new Error("Course Name missing");
 
-        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`);
+        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`, {
+          params: { _ts: Date.now() },
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache"
+          }
+        });
         const userId = response.data?.userId || response.data?._id;
 
         if (!userId) throw new Error("User not found");
 
-        await axios.post(`${BASE_URL}/students/mooc/${userId}`, {
-          studentName: row.StudentName,
-          courseName: row.CourseName,
-          platform: row.Platform,
-          certificateLink: row.CertificateLink
+        await axios.post(`${BASE_URL}/mooc-data/mooc`, {
+          userId,
+          mooc: [
+            {
+              portal: row.Platform,
+              title: row.CourseName,
+              startDate: row["Start Date"] || null,
+              completedDate: row["End Date"] || null,
+              certificateLink: row.CertificateLink
+            }
+          ]
         });
 
         success++;
