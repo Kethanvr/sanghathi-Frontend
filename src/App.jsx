@@ -7,7 +7,6 @@ import Dashboard from "./pages/Dashboard";
 import ProtectedRouteWrapper from "./ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
 import MeetingCalendar from "./pages/Meeting/MeetingCalendar";
-import Chat from "./pages/Chat";
 import Login from "./pages/Login";
 import User from "./pages/Users/User";
 import StudentProfile from "./pages/Student/StudentProfile";
@@ -15,9 +14,7 @@ import MotionLazyContainer from "./components/animate/MotionLazyContainer";
 import NotistackProvider from "./components/NotistackProvider";
 import { AuthContext } from "./context/AuthContext";
 import MentorAllocation from "./pages/MentorAllocation/MentorAllocation";
-import CampusBuddy from "./pages/CampusBuddy/CampusBuddy";
 import Academic from "./pages/Student/Academic";
-import AdmissionDetails from "./pages/Student/AdmissionDetails";
 import AdmissionDetailsPage from "./pages/Student/AdmissionDetailsPage";
 import Placement from "./pages/Placement/Placement";
 import Ptm from "./pages/ParentsTeacherMeeting/Ptm";
@@ -30,14 +27,9 @@ import DirectorDashboard from "./pages/Director/DirectorDashboard";
 import DirectorViewMentors from "./pages/Director/DirectorViewMentors";
 import DirectorMenteesList from "./pages/Director/DirectorMenteesList";
 import HodDashboard from "./pages/Hod/HodDashboard";
-import HodViewMentors from "./pages/Hod/HodViewMentors";
-import HodMenteesList from "./pages/Hod/HodMenteesList";
-import HodMentorDashboard from "./pages/Hod/HodMentorDashboard";
 import ViewUsers from "./pages/Admin/ViewUsers";
 import Data from "./pages/Admin/Data";
 import FacultyDashboard from "./pages/Faculty/FacultyDashboard";
-import MentorAssignmentDialog from "./pages/MentorAllocation/MentorAssignmentDialog";
-import MentorSuggestionMenu from "./pages/MentorAllocation/MentorSuggestionMenu";
 import CareerReview from "./pages/CareerReview/CareerReview";
 import ScoreCard from "./pages/Scorecard/ScoreCard";
 import POAttainmentGrading from "./pages/MenteePOAttainment/POAttainmentGrading";
@@ -52,11 +44,6 @@ import MentorMenteeConversation from "./pages/MentorMentee/MentorMenteeConversat
 import MyChatBot from "./mychatbot";
 import { useLocation } from 'react-router-dom';
 import { initGA, trackPageView } from "./ga";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword   from "./pages/ResetPassword";
-import FeedbackForm from "./pages/Feedback/feedback";
-
-import FeedbackTable from "./pages/Feedback/feedback";
 // TODO : Need to remove routing logic from app component
 function App() {
   // Track page views on route change using Google Analytics GA4
@@ -221,14 +208,6 @@ function App() {
                       </ProtectedRouteWrapper>
                     }
                   />
-                  {/* <Route
-                    path="/chat"
-                    element={
-                      <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={Chat} />
-                      </ProtectedRouteWrapper>
-                    }
-                  /> */}
                   <Route
                     path="/meetings"
                     element={
@@ -389,14 +368,6 @@ function App() {
                     element={
                       <ProtectedRouteWrapper allowedRoles={["student"]}>
                         <LazyLoadWrapper component={StudentDashboard} />
-                      </ProtectedRouteWrapper>
-                    }
-                  />
-                  <Route
-                    path="/faculty/dashboard"
-                    element={
-                      <ProtectedRouteWrapper allowedRoles={["faculty"]}>
-                        <LazyLoadWrapper component={FacultyDashboard} />
                       </ProtectedRouteWrapper>
                     }
                   />

@@ -12,7 +12,6 @@ import {
   CircularProgress,
   Grid,
   Stack,
-  Link,
   Avatar,
   useTheme,
 } from "@mui/material";
@@ -224,20 +223,6 @@ const Login = () => {
                   </Button>
                 </Stack>
 
-                <Box sx={{ textAlign: "center", mt: 2 }}>
-                  <Link 
-                    href="/forgotPassword" 
-                    underline="hover"
-                    sx={{ 
-                      color: isLight ? theme.palette.primary.main : theme.palette.info.main,
-                      '&:hover': {
-                        color: isLight ? theme.palette.primary.dark : theme.palette.info.light,
-                      }
-                    }}
-                  >
-                    Forgot password?
-                  </Link>
-                </Box>
               </Box>
             </Box>
           </Grid>
