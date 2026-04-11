@@ -1,114 +1,135 @@
-# Sanghathi
+# Sanghathi Frontend
 
-This platform provides comprehensive tools for educators, mentors, and mentees as part of the digital education ecosystem.
+Sanghathi is a React-based frontend for the mentoring and student support workflow used by educators, mentors, and students.
 
 ## Technology Stack
 
-- React (v17+)
-- Material-UI (v5)
+- React
 - Vite
-- Redux
-- Zod
-- Next JS
+- Material UI
+- Emotion
+- React Router DOM
+- React Hook Form
+- Yup
+- Socket.IO client
+- Notistack
+- Framer Motion
+- FullCalendar
+- Google Generative AI
+- Vitest
+- Testing Library
 
 ## Features
 
-1. **Authentication**: User authentication using JSON Web Tokens (JWT).
-2. **Authorization**: Role-based access control for Mentor, Mentee, HoDs, and Admin.
-3. **Admin Dashboard**: User management, mentor allocation, and reallocation.
-4. **Chat**: Real-time communication between assigned mentors and mentees.5. **Info Bot**: A chatbot trained on college datasets to assist users.
-5. **Student Profile / Career Management**: Record-keeping for historical use cases and performance evaluation. Stores both personal and semester-wise data (attendance, marks, etc.).
-6. **Approval System**: Students submit or edit data, assigned mentors receive notifications and approve the data (2-level data confirmation).
-7. **Report Generation**: HoDs can generate reports based on various data views, such as semester-wise data, students with the highest marks in a semester, and parent-teacher meeting records.
+1. **Authentication and routing**: JWT-based sign-in, sign-up, forgot-password, and protected navigation for role-specific users.
+2. **Role-based dashboards**: Admin, faculty, student, HOD, director, placement, feedback, complaint, and career-review views.
+3. **Student data management**: Profile, admission, academic, attendance, guardian, contact, and semester-wise record forms.
+4. **Mentor and mentee workflows**: Mentor allocation, mentee lists, profile lookups, and mentorship-linked data views.
+5. **Chat and meetings**: Real-time messaging, mentor-mentee conversations, and meeting calendar flows.
+6. **Scorecards and reports**: IAT, TYL, external marks, attendance, MOOC, mini-project, and reporting screens.
+7. **Notifications and UI feedback**: Snackbars, alerts, theme state, and other app-wide feedback patterns.
+8. **AI assistant**: A chatbot experience backed by the Gemini integration used in the app.
 
 ## Prerequisites
 
-- Node.js (version 14.x or higher)
+- Node.js 20 or higher
+- npm
 
 ## Getting Started
 
 ### 1. Clone the repository
 
-````bash
+```bash
 git clone https://github.com/Sanghathi/sanghathi-Frontend.git
-<<<<<<< HEAD
-cd cmrit-mentoring-tool-frontend
-=======
-cd sanghathi
->>>>>>> 8bbf7ba4e3c11d62e98232879fe2c994e6169013
-
-````
+cd sanghathi-Frontend
+```
 
 ### 2. Install dependencies
 
-````bash
-yarn install
-````
+```bash
+npm install
+```
 
 ### 3. Configure environment variables
 
 Create a `.env` file in the project root directory with the following variables:
 
-`VITE_API_URL=<your_api_base_url>/api`
-`VITE_SOCKET_URL=ws://<your_api_base_url>`
-`BASE_URL=https://<your_api_base_url>`
-`VITE_PYTHON_API=<your_api_base_url>`
+```bash
+VITE_API_URL=<your_backend_base_url>/api
+VITE_SOCKET_URL=<your_socket_url>
+BASE_URL=<your_backend_base_url>
+VITE_PYTHON_API=<your_python_service_url>
+VITE_CLOUDINARY_CLOUD_NAME=<your_cloudinary_cloud_name>
+VITE_GA_MEASUREMENT_ID=<your_ga_measurement_id>
+```
 
-VITE_CLOUDINARY_CLOUD_NAME=<ClOUD_NAME>
-VITE_PYTHON_API=<VITE_PYTHON_API>
-
-Replace `<your_api_base_url>` with the base URL of your backend server.
+`VITE_API_URL` is used for frontend API requests.
+`VITE_SOCKET_URL` is used for socket connections.
+`BASE_URL` is used by Vite tooling and configuration.
+`VITE_PYTHON_API` is used by the reporting flow.
+`VITE_CLOUDINARY_CLOUD_NAME` is used by Cloudinary image handling.
+`VITE_GA_MEASUREMENT_ID` is used by Google Analytics.
 
 ### 4. Start the development server
 
-````bash
-yarn run dev
-````
+```bash
+npm run dev
+```
 
-This will start the frontend development server.
+Vite starts on port `3000` by default unless `PORT` is set in the environment.
 
 ### 5. Open the application
 
-Open your browser and navigate to `http://localhost:3000` to view the application.
+Open your browser and navigate to `http://localhost:3000`.
 
-## Building for Production
+## Available Scripts
 
-To create a production build, run the following command:
-
-````bash
-yarn build
-````
-or
-
-````bash
+```bash
+npm run dev
 npm run build
-````
+npm run preview
+npm test
+```
 
-After the build is completed, you can serve the production build using:
+`npm run dev` starts the Vite development server.
+`npm run build` creates a production build.
+`npm run preview` serves the production build locally.
+`npm test` runs the Vitest test suite with coverage.
 
-````bash
-yarn serve
-````
+## Production Build
 
-This will start the production server, and you can access the application on `http://localhost:5000`.
+To create a production build, run:
 
-To deploy the changes to server use:
+```bash
+npm run build
+```
 
-````bash
+To preview the production build locally, run:
+
+```bash
+npm run preview
+```
+
+## Deployment
+
+This frontend is configured for static deployment on Netlify and similar Vite-friendly hosts.
+
+To deploy with the Netlify CLI, run:
+
+```bash
 netlify deploy --prod
-````
+```
 
-Incase of error: 'The term netlify is not recodnized' run the following command:
+If Netlify CLI is not installed, run:
 
-````bash
-npm install netlify-cli -g
-````
-
+```bash
+npm install -g netlify-cli
+```
 
 ## Contributing
 
-Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) to get started.
+Contributions are welcome. Please read our [contributing guidelines](contribute.md) to get started.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE)
+This project is licensed under the [MIT License](LICENSE).
