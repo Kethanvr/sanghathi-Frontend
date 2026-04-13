@@ -9,6 +9,7 @@ import api from "../../utils/axios";
 import { TextField, InputAdornment } from "@mui/material";
 import { Search } from "@mui/icons-material";
 
+import logger from "../../utils/logger.js";
 const ChatSearchBar = ({ onSearch }) => {
   const [searchValue, setSearchValue] = useState("");
 
@@ -51,10 +52,10 @@ export default function ChatSidebar() {
       try {
         const { data } = await api.get("/private-conversations/");
         const { conversations } = data.data;
-        console.log(conversations);
+        logger.info(conversations);
         setConversations(conversations);
       } catch (err) {
-        console.log(err);
+        logger.info(err);
       }
     };
 

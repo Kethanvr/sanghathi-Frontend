@@ -10,13 +10,14 @@ import { FormProvider, RHFTextField } from "../../components/hook-form";
 import { useSearchParams } from "react-router-dom";
 
 
+import logger from "../../utils/logger.js";
 export default function Mooc() {
   const { enqueueSnackbar } = useSnackbar();
     const { user } = useContext(AuthContext);
     const [searchParams] = useSearchParams();
     const menteeId = searchParams.get('menteeId');
-    console.log("User : ",user);
-    console.log("id: ",menteeId);
+    logger.info("User : ",user);
+    logger.info("id: ",menteeId);
 
     const methods = useForm({
       defaultValues: {
@@ -47,11 +48,11 @@ export default function Mooc() {
           }));
           reset({ mooc: formattedMooc });
         } else {
-          console.warn("No mooc data found for this user");
+          logger.warn("No mooc data found for this user");
           reset({ mooc: [{ portal: "", title: "", startDate: null, completedDate: null, score: null, certificateLink: "" }] });
         }
       } catch (error) {
-        console.log("Error fetching mooc data:", error);
+        logger.info("Error fetching mooc data:", error);
       }
     }, [user._id, reset, enqueueSnackbar]);
 
@@ -72,7 +73,7 @@ export default function Mooc() {
           });
           await fetchMooc();
         } catch (error) {
-          console.error(error);
+          logger.error(error);
           enqueueSnackbar("An error occurred while processing the request", {
             variant: "error",
           });

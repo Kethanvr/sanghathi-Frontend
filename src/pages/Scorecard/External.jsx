@@ -16,6 +16,7 @@ import {
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useSearchParams } from "react-router-dom";
+import logger from "../../utils/logger.js";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 const External = () => {
@@ -43,7 +44,7 @@ const External = () => {
     }
 
     try {
-      console.log(`Fetching external marks for user ID: ${userId} (${menteeId ? 'menteeId from URL' : 'logged-in user'})`);
+      logger.info(`Fetching external marks for user ID: ${userId} (${menteeId ? 'menteeId from URL' : 'logged-in user'})`);
       
       const response = await axios.get(
         `${BASE_URL}/students/external/${userId}`,
@@ -54,7 +55,7 @@ const External = () => {
         }
       );
       
-      console.log("Response data:", response.data);
+      logger.info("Response data:", response.data);
       
       if (response.data && response.data.data && response.data.data.external) {
         const data = response.data.data.external;
@@ -72,7 +73,7 @@ const External = () => {
 
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching external marks:", err);
+      logger.error("Error fetching external marks:", err);
       
       // For any error, including 404, just show an empty table
       setExternalData([{passingDate: null, sgpa: null, subjects: []}]);

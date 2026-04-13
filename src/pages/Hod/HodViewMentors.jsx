@@ -32,6 +32,7 @@ import { AuthContext } from "../../context/AuthContext";
 import Page from "../../components/Page";
 import api from "../../utils/axios";
 
+import logger from "../../utils/logger.js";
 function HodViewMentors() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -59,14 +60,14 @@ function HodViewMentors() {
   const getAssignedMentors = useCallback(async () => {
     try {
       setLoading(true);
-      console.log("=== Fetching Mentors for HOD ===");
-      console.log("HOD Department:", user?.department);
+      logger.info("=== Fetching Mentors for HOD ===");
+      logger.info("HOD Department:", user?.department);
       
       // Fetch all students with their mentor assignments (same as Admin)
       const response = await api.get("/mentors/allocation-students");
       const studentsData = response.data?.data || [];
       
-      console.log(`Fetched ${studentsData.length} total students`);
+      logger.info(`Fetched ${studentsData.length} total students`);
       
       // Filter students by HOD's department and group by mentor
       const mentorMap = new Map();
@@ -89,7 +90,7 @@ function HodViewMentors() {
         }
       });
       
-      console.log(`Found ${mentorMap.size} mentors in ${user?.department} department`);
+      logger.info(`Found ${mentorMap.size} mentors in ${user?.department} department`);
       
       if (mentorMap.size === 0) {
         setMentors([]);
@@ -102,7 +103,7 @@ function HodViewMentors() {
       const facultyResponse = await api.get("/users?role=faculty");
       const allFaculty = facultyResponse.data?.data?.users || [];
       
-      console.log(`Fetched ${allFaculty.length} faculty members`);
+      logger.info(`Fetched ${allFaculty.length} faculty members`);
       
       // Build mentor list with full details
       const mentorsList = Array.from(mentorMap.values()).map(mentorData => {
@@ -122,13 +123,13 @@ function HodViewMentors() {
       // Sort by mentee count
       mentorsList.sort((a, b) => b.menteeCount - a.menteeCount);
       
-      console.log(`Setting ${mentorsList.length} mentors:`, mentorsList);
+      logger.info(`Setting ${mentorsList.length} mentors:`, mentorsList);
       setMentors(mentorsList);
       
       enqueueSnackbar(`Found ${mentorsList.length} assigned mentors`, { variant: "success" });
       
     } catch (error) {
-      console.error("Error fetching mentors:", error);
+      logger.error("Error fetching mentors:", error);
       enqueueSnackbar("Failed to fetch mentors", { variant: "error" });
       setMentors([]);
     } finally {
@@ -138,10 +139,10 @@ function HodViewMentors() {
 
   useEffect(() => {
     if (user && user.department) {
-      console.log("useEffect triggered - fetching mentors");
+      logger.info("useEffect triggered - fetching mentors");
       getAssignedMentors();
     } else {
-      console.log("User or department not available:", { user: user?.name, dept: user?.department });
+      logger.info("User or department not available:", { user: user?.name, dept: user?.department });
     }
   }, [getAssignedMentors, user]);
 

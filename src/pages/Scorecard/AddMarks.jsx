@@ -18,6 +18,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { alpha, useTheme } from "@mui/material/styles";
+import logger from "../../utils/logger.js";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 const AddMarks = () => {
@@ -143,11 +144,11 @@ const AddMarks = () => {
       if (response.data && response.data.userId) {
         return response.data.userId;
       } else {
-        console.error(`No userId found for USN: ${usn}`);
+        logger.error(`No userId found for USN: ${usn}`);
         return null;
       }
     } catch (error) {
-      console.error(`Error looking up userId for USN ${usn}:`, error.response?.data || error.message);
+      logger.error(`Error looking up userId for USN ${usn}:`, error.response?.data || error.message);
       return null;
     }
   };
@@ -179,26 +180,26 @@ const AddMarks = () => {
           for (const [usn, semesterGroups] of studentGroups) {
             try {
               // First look up student ID by USN
-              console.log(`Looking up student with USN: ${usn}`);
+              logger.info(`Looking up student with USN: ${usn}`);
 
               let studentId = null;
               try {
-                console.log(`Making API call to fetch user ID for USN: ${usn}`);
+                logger.info(`Making API call to fetch user ID for USN: ${usn}`);
                 studentId = await fetchUserIdByUSN(usn);
-                console.log(`Result of user lookup for USN ${usn}:`, studentId ? `Found: ${studentId}` : "Not found");
+                logger.info(`Result of user lookup for USN ${usn}:`, studentId ? `Found: ${studentId}` : "Not found");
               } catch (lookupError) {
-                console.error(`Error looking up student with USN ${usn}:`, lookupError);
+                logger.error(`Error looking up student with USN ${usn}:`, lookupError);
               }
 
               // If lookup failed, fall back to admin ID
               if (!studentId) {
-                console.warn(`Could not find userId for USN ${usn}, falling back to admin ID: ${user._id}`);
+                logger.warn(`Could not find userId for USN ${usn}, falling back to admin ID: ${user._id}`);
                 throw new Error(`Student not found for USN: ${usn}`);
               }
 
               // Submit data for each semester
               for (const [semester, subjects] of semesterGroups) {
-                console.log(`Submitting semester ${semester} data for USN ${usn}:`, subjects);
+                logger.info(`Submitting semester ${semester} data for USN ${usn}:`, subjects);
 
                 // Make sure we're sending all fields properly
                 const formattedSubjects = subjects.map(subject => ({
@@ -236,7 +237,7 @@ const AddMarks = () => {
                 status: 'error',
                 message: error.response?.data?.message || error.message
               });
-              console.error(`Error processing student ${usn}:`, error);
+              logger.error(`Error processing student ${usn}:`, error);
             }
           }
 
@@ -257,7 +258,7 @@ const AddMarks = () => {
           if (fileInput) fileInput.value = "";
         } catch (err) {
           setError("Error processing CSV file: " + (err.message || "Unknown error"));
-          console.error("CSV processing error:", err);
+          logger.error("CSV processing error:", err);
         }
         setLoading(false);
       };

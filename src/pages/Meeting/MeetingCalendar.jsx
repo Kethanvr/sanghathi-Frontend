@@ -27,6 +27,7 @@ import dayjs from "dayjs";
 import api from "../../utils/axios";
 import { AuthContext } from "../../context/AuthContext";
 
+import logger from "../../utils/logger.js";
 // const EventList = ({ currentEvents }) => {
 //   return (
 //     <List>
@@ -147,7 +148,7 @@ const MeetingCalendar = () => {
   const { createMeeting, deleteMeeting } = useMeeting();
   const { user } = useContext(AuthContext);
 
-  console.log(user);
+  logger.info(user);
 
   const getAllMeetings = useCallback(async () => {
     try {
@@ -161,7 +162,7 @@ const MeetingCalendar = () => {
       }));
       setCurrentEvents(events);
     } catch (error) {
-      console.error(error);
+      logger.error(error);
     }
   }, []);
 
@@ -226,7 +227,7 @@ const MeetingCalendar = () => {
       }
       enqueueSnackbar("Meeting created successfully", { variant: "success" });
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       enqueueSnackbar(error.message || "Failed to create meeting", {
         variant: "error",
       });

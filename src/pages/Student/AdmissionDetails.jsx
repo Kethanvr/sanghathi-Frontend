@@ -18,6 +18,7 @@ import {
   Divider,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
+import logger from "../../utils/logger.js";
 import {
   FormProvider,
   RHFTextField,
@@ -85,7 +86,7 @@ export default function AdmissionDetails() {
       }
     } catch (error) {
       // if (error.response?.status !== 404) {
-        console.error("Error fetching academic details:", error);
+        logger.error("Error fetching academic details:", error);
         // enqueueSnackbar("Error fetching admission details", {
         //   variant: "error",
       //   // });
@@ -131,7 +132,7 @@ export default function AdmissionDetails() {
         variant: "success",
       });
     } catch (error) {
-      console.error("Error saving admission details:", error);
+      logger.error("Error saving admission details:", error);
       enqueueSnackbar(error.response?.data?.message || "Failed to save admission details.", {
         variant: "error",
       });

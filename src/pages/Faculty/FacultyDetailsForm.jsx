@@ -18,6 +18,7 @@ import {
 } from "../../components/hook-form";
 import RHFUploadAvatar from '../../components/RHFUploadAvatar';
 
+import logger from "../../utils/logger.js";
 const yesNoOptions = [
   { value: "yes", label: "Yes" },
   { value: "no", label: "No" },
@@ -35,10 +36,10 @@ const getCloudinaryPublicId = (url) => {
     if (!matches) return null;
     
     const fullPath = matches[1].replace(/\.[^/.]+$/, '');
-    console.log('[getCloudinaryPublicId] Extracted public ID:', fullPath);
+    logger.info('[getCloudinaryPublicId] Extracted public ID:', fullPath);
     return fullPath;
   } catch (error) {
-    console.error('[getCloudinaryPublicId] Error:', error);
+    logger.error('[getCloudinaryPublicId] Error:', error);
     return null;
   }
 };
@@ -152,7 +153,7 @@ export default function FacultyDetailsForm() {
     try {
       const response = await api.get(`/faculty/profile/${user._id}`);
       const { data } = response.data;
-      console.log(data);
+      logger.info(data);
       
       if (data) {
         data.facultyProfile.dateOfBirth = new Date(data.facultyProfile.dateOfBirth).toISOString().split('T')[0];
@@ -167,9 +168,9 @@ export default function FacultyDetailsForm() {
         });
         setIsDataFetched(true);
       }
-      console.log("Faculty data fetched successfully:", data);
+      logger.info("Faculty data fetched successfully:", data);
     } catch (error) {
-      console.error("Error fetching Faculty data:", error.response || error);
+      logger.error("Error fetching Faculty data:", error.response || error);
     }
   }, [user._id, setValue]);
 
@@ -203,15 +204,15 @@ export default function FacultyDetailsForm() {
             if (publicId) {
               try {
                 await api.delete(`v1/upload/profile-image/${encodeURIComponent(publicId)}`);
-                console.log('[Image Delete] Old image deleted');
+                logger.info('[Image Delete] Old image deleted');
               } catch (deleteError) {
-                console.error('[Image Delete] Error:', deleteError);
+                logger.error('[Image Delete] Error:', deleteError);
               }
             }
           }
   
           // Upload new image
-          console.log('[Image Upload] Starting upload');
+          logger.info('[Image Upload] Starting upload');
           const uploadResponse = await api.post('v1/upload/profile-image', {
             image: currentPhoto
           });
@@ -224,7 +225,7 @@ export default function FacultyDetailsForm() {
           photoUrl = cloudinaryUrl;
   
         } catch (error) {
-          console.error('[Image Upload] Error:', error);
+          logger.error('[Image Upload] Error:', error);
           enqueueSnackbar('Failed to upload photo', { variant: 'error' });
           return;
         }
@@ -246,7 +247,7 @@ export default function FacultyDetailsForm() {
         throw new Error('Profile update failed');
       }
     } catch (error) {
-      console.error("[FacultyDetailsForm] Error:", error);
+      logger.error("[FacultyDetailsForm] Error:", error);
       enqueueSnackbar(error.response?.data?.message || "Error updating profile", {
         variant: "error",
       });
@@ -302,7 +303,7 @@ export default function FacultyDetailsForm() {
           setValue('facultyProfile.photo', compressedBase64);
           trigger('facultyProfile.photo');
         } catch (error) {
-          console.error("Error processing image:", error);
+          logger.error("Error processing image:", error);
           enqueueSnackbar("Error processing image", { variant: "error" });
         }
       }

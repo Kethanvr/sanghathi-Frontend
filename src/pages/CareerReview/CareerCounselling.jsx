@@ -7,6 +7,7 @@ import { Box, Grid, Card, Stack, useTheme } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { useSearchParams } from "react-router-dom";
 
+import logger from "../../utils/logger.js";
 import {
   FormProvider,
   RHFTextField,
@@ -21,10 +22,10 @@ export default function CareerCounselling() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   
-  console.log("User : ",user);
-  console.log("id: ",menteeId);
+  logger.info("User : ",user);
+  logger.info("id: ",menteeId);
   
-  console.log(user);
+  logger.info(user);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const methods = useForm();
 
@@ -45,7 +46,7 @@ export default function CareerCounselling() {
       const { data } = response.data;
   
       if (!data.careers) {
-        console.warn("No Career Counselling data found.");
+        logger.warn("No Career Counselling data found.");
         return;
       }
 
@@ -55,12 +56,12 @@ export default function CareerCounselling() {
         });
         setIsDataFetched(true);
       } else {
-        console.warn("No Career Counselling data found for this user.");
+        logger.warn("No Career Counselling data found for this user.");
       }
     } catch (error) {
-      console.error("Error fetching career counselling data:", error);
+      logger.error("Error fetching career counselling data:", error);
       if (error.response && error.response.status === 404) {
-        console.log("Career profile not found, which is expected for new users.");
+        logger.info("Career profile not found, which is expected for new users.");
       } else {
         enqueueSnackbar("Error fetching career counselling data", { variant: "error" });
       }
@@ -86,7 +87,7 @@ export default function CareerCounselling() {
         });
         await fetchCareerCounselling();
       } catch (error) {
-        console.error(error);
+        logger.error(error);
         enqueueSnackbar("An error occurred while processing the requesst", {
           variant: "error",
         });

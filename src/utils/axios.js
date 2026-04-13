@@ -1,5 +1,6 @@
 import axios from "axios";
 
+import logger from "./logger.js";
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
@@ -23,7 +24,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (import.meta.env.DEV) {
-      console.error("Axios Error Details:", {
+      logger.error("Axios Error Details:", {
         status: error.response?.status,
         data: error.response?.data,
         headers: error.response?.headers,

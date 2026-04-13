@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
+import logger from "../utils/logger.js";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 /**
@@ -21,12 +22,12 @@ export const useStudentSemester = () => {
       try {
         const userId = menteeId || user?._id;
         if (!userId) {
-          console.log('[useStudentSemester] No userId available');
+          logger.info('[useStudentSemester] No userId available');
           setLoading(false);
           return;
         }
 
-        console.log('[useStudentSemester] Fetching semester for userId:', userId);
+        logger.info('[useStudentSemester] Fetching semester for userId:', userId);
 
         // Fetch admission details to get current semester
         const response = await axios.get(
@@ -38,19 +39,19 @@ export const useStudentSemester = () => {
           }
         );
 
-        console.log('[useStudentSemester] Admission response:', response.data);
+        logger.info('[useStudentSemester] Admission response:', response.data);
 
         const admissionData = response.data.data?.admissionDetails;
         if (admissionData?.semester) {
           // Convert semester string (e.g., "5th") to number (e.g., 5)
           const semesterNumber = parseInt(admissionData.semester.replace(/\D/g, ''), 10);
-          console.log('[useStudentSemester] Setting semester:', semesterNumber, 'from', admissionData.semester);
+          logger.info('[useStudentSemester] Setting semester:', semesterNumber, 'from', admissionData.semester);
           setSemester(semesterNumber);
         } else {
-          console.log('[useStudentSemester] No semester found in admission data');
+          logger.info('[useStudentSemester] No semester found in admission data');
         }
       } catch (error) {
-        console.error('[useStudentSemester] Error fetching student semester:', error);
+        logger.error('[useStudentSemester] Error fetching student semester:', error);
         // Don't show error to user, just use default semester
       } finally {
         setLoading(false);

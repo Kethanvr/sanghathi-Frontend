@@ -15,6 +15,7 @@ import MenuPopover from "../../components/MenuPopover";
 import IconButtonAnimate from "../../components/animate/IconButtonAnimate";
 import { AuthContext } from "../../context/AuthContext";
 
+import logger from "../../utils/logger.js";
 // ----------------------------------------------------------------------
 
 // ----------------------------------------------------------------------
@@ -82,7 +83,7 @@ export default function AccountPopover() {
         handleClose();
       }
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       enqueueSnackbar("Unable to logout!", { variant: "error" });
     }
   };

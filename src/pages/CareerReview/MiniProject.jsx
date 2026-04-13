@@ -9,13 +9,14 @@ import { Delete as DeleteIcon } from "@mui/icons-material";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
 import { useSearchParams } from "react-router-dom";
 
+import logger from "../../utils/logger.js";
 export default function MiniProject() {
   const { enqueueSnackbar } = useSnackbar();
     const { user } = useContext(AuthContext);
     const [searchParams] = useSearchParams();
     const menteeId = searchParams.get('menteeId');
-    console.log("User : ",user);
-    console.log("id: ",menteeId);
+    logger.info("User : ",user);
+    logger.info("id: ",menteeId);
     
     const methods = useForm({
       defaultValues: {
@@ -36,7 +37,7 @@ export default function MiniProject() {
           response = await api.get(`/project/miniproject/${menteeId}`);
         else
           response = await api.get(`/project/miniproject/${user._id}`);
-        console.log("Raw API Response:", response.data);
+        logger.info("Raw API Response:", response.data);
         const { data } = response.data;
     
         if (data && Array.isArray(data.miniproject)) {
@@ -45,14 +46,14 @@ export default function MiniProject() {
             startDate: miniproject.startDate ? new Date(miniproject.startDate).toISOString().split("T")[0] : "",
             completedDate: miniproject.completedDate ? new Date(miniproject.completedDate).toISOString().split("T")[0] : "",
           }));
-          console.log("Formatted miniproject:", formattedMiniProject); 
+          logger.info("Formatted miniproject:", formattedMiniProject); 
           reset({ miniproject: formattedMiniProject });
         } else {
-          console.warn("No miniproject data found for this user");
+          logger.warn("No miniproject data found for this user");
           reset({ miniproject: [{ title: "",manHours: "",startDate: null,completedDate: null,  }] });
         }
       } catch (error) {
-        console.log("Error fetching miniproject data:", error);
+        logger.info("Error fetching miniproject data:", error);
       }
     }, [user._id, reset, enqueueSnackbar]);
     
@@ -73,7 +74,7 @@ export default function MiniProject() {
           });
           await fetchMiniProjects();
         } catch (error) {
-          console.error(error);
+          logger.error(error);
           enqueueSnackbar("An error occurred while processing the request", {
             variant: "error",
           });

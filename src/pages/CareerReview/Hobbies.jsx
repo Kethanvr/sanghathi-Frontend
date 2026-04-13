@@ -8,6 +8,7 @@ import { LoadingButton } from "@mui/lab";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
 import { useSearchParams } from "react-router-dom";
 
+import logger from "../../utils/logger.js";
 const defaultValues = {
   hobby: "",
   nccNss: "",
@@ -55,9 +56,9 @@ export default function Hobbies() {
       }
       setIsDataFetched(true);
     } catch (error) {
-      console.error("Error fetching hobbies data:", error);
+      logger.error("Error fetching hobbies data:", error);
       if (error.response && error.response.status === 404) {
-        console.log("Hobbies profile not found, which is expected for new users.");
+        logger.info("Hobbies profile not found, which is expected for new users.");
         setIsDataFetched(true);
       } else {
         enqueueSnackbar("Error fetching hobbies data", { variant: "error" });
@@ -77,14 +78,14 @@ export default function Hobbies() {
   const onSubmit = useCallback(
     async (formData) => {
         try {
-          console.log("Form Data: ",formData)
+          logger.info("Form Data: ",formData)
             await api.post("/hobbies-data/hobbies", { ...formData, userId: user._id });
             enqueueSnackbar("Hobbies updated successfully!", {
                 variant: "success",
             });
             fetchHobbies();
         } catch (error) {
-            console.error(error);
+            logger.error(error);
             enqueueSnackbar("An error occurred while processing the request",{
                     variant: "error",
             });

@@ -22,6 +22,7 @@ import api from "../../utils/axios";
 import { MessageList, MessageInput } from "./Message/Message";
 import useSocket from "../../hooks/useSocket";
 
+import logger from "../../utils/logger.js";
 const ThreadHeader = ({ thread, onCloseThread, currentUser }) => {
   const statusColors = {
     open: "#4caf50",
@@ -168,13 +169,13 @@ export default function ThreadWindow() {
   // Join the socket room when the component mounts and threadId is available
   useEffect(() => {
     if (threadId) {
-      console.log(`Joining thread room: ${threadId}`);
+      logger.info(`Joining thread room: ${threadId}`);
       joinRoom(threadId);
     }
 
     return () => {
       if (threadId) {
-        console.log(`Leaving thread room: ${threadId}`);
+        logger.info(`Leaving thread room: ${threadId}`);
         leaveRoom(threadId);
       }
     };
@@ -188,10 +189,10 @@ export default function ThreadWindow() {
         const { data } = response.data;
         setThread(data.thread);
         setMessages(data.thread.messages);
-        console.log("THREAD ", data.thread);
+        logger.info("THREAD ", data.thread);
       }
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       enqueueSnackbar("Error loading thread", { variant: "error" });
     } finally {
       setIsLoading(false);
@@ -216,7 +217,7 @@ export default function ThreadWindow() {
       setMessages((prev) => [...prev, data.message]);
       sendMessage(data.message, threadId);
     } catch (err) {
-      console.log(err);
+      logger.info(err);
     }
   };
 
@@ -234,7 +235,7 @@ export default function ThreadWindow() {
       }
     } catch (error) {
       enqueueSnackbar("Something went wrong!", { variant: "error" });
-      console.error("ERROR OCCURRED 💥 ", error);
+      logger.error("ERROR OCCURRED 💥 ", error);
     }
   };
 

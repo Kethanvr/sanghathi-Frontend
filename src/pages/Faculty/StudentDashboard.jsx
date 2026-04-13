@@ -34,6 +34,7 @@ import {
 import { blueGrey } from "@mui/material/colors";
 import { alpha } from "@mui/material/styles";
 
+import logger from "../../utils/logger.js";
 import { Link, useParams } from "react-router-dom"; // Import useParams
 import axios from "axios"; // Import axios
 
@@ -156,7 +157,7 @@ const StudentDashboard = () => {
             }
           }
         );
-        console.log("Student profile response:", profileResponse.data);
+        logger.info("Student profile response:", profileResponse.data);
         
         let userData = profileResponse.data;
         
@@ -164,7 +165,7 @@ const StudentDashboard = () => {
         setMenteeData(userData);
       } catch (err) {
         setError("Error fetching mentee data.");
-        console.error(err);
+        logger.error(err);
       } finally {
         setLoading(false);
       }
@@ -183,7 +184,7 @@ const StudentDashboard = () => {
     return <Typography color="error">{error}</Typography>;
   }
 
-  console.log("Full menteeData structure:", menteeData);
+  logger.info("Full menteeData structure:", menteeData);
   
   // Get mentee name based on the student profile structure
   const getFullName = () => {
@@ -207,7 +208,7 @@ const StudentDashboard = () => {
   
   const menteeName = getFullName();
 
-  console.log("Extracted mentee name:", menteeName);
+  logger.info("Extracted mentee name:", menteeName);
   
   return (
     <Page title={`${menteeName}'s Dashboard`}>

@@ -15,6 +15,7 @@ import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 import useStudentSemester from "../../hooks/useStudentSemester";
 
+import logger from "../../utils/logger.js";
 const BASE_URL = import.meta.env.VITE_API_URL;
 const Attendance = () => {
   const { user } = useContext(AuthContext);
@@ -37,7 +38,7 @@ const Attendance = () => {
       // Get menteeId from URL params if viewing as faculty
       const menteeId = searchParams.get('menteeId') || user._id;
       
-      console.log("Fetching attendance for ID:", menteeId); // Debug log
+      logger.info("Fetching attendance for ID:", menteeId); // Debug log
       
       // Fetch student info (optional - don't fail if this errors)
       try {
@@ -52,7 +53,7 @@ const Attendance = () => {
           });
         }
       } catch (userError) {
-        console.warn("Could not fetch user info:", userError);
+        logger.warn("Could not fetch user info:", userError);
         // Use user from context as fallback
         if (user) {
           setStudentInfo({
@@ -66,7 +67,7 @@ const Attendance = () => {
         `${BASE_URL}/students/attendance/${menteeId}`
       );
       
-      console.log("Attendance API response:", response.data); // Debug log
+      logger.info("Attendance API response:", response.data); // Debug log
       
       const data = response.data.data.attendance;
       if (data && data.semesters) {
@@ -76,7 +77,7 @@ const Attendance = () => {
           const defaultSem = studentSemester && data.semesters.find(s => s.semester === studentSemester)
             ? studentSemester
             : data.semesters[0].semester;
-          console.log('[Attendance] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', data.semesters[0].semester, ')');
+          logger.info('[Attendance] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', data.semesters[0].semester, ')');
           setSelectedSemester(defaultSem);
         }
       } else {
@@ -84,7 +85,7 @@ const Attendance = () => {
       }
       setLoading(false);
     } catch (err) {
-      console.error("Attendance fetch error:", err); // Debug log
+      logger.error("Attendance fetch error:", err); // Debug log
       setError("Failed to fetch attendance data");
       setLoading(false);
     }

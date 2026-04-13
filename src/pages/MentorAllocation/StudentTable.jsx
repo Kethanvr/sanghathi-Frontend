@@ -12,6 +12,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import PersonIcon from "@mui/icons-material/Person";
 
+import logger from "../../utils/logger.js";
 const StudentTable = ({ students, selectedStudents, onSelectStudent, theme, isLight }) => {
   // Helper function to safely get profile data
   const getProfileData = (student, field) => {
@@ -55,7 +56,7 @@ const StudentTable = ({ students, selectedStudents, onSelectStudent, theme, isLi
       return student.mentor.mentorDetails.name;
     }
     
-    console.log("Mentor data for debugging:", student.mentor);
+    logger.info("Mentor data for debugging:", student.mentor);
     return null;
   };
   

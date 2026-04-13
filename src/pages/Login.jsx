@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 
 import Illustration from "../public/login_illustration.png";
 
+import logger from "../utils/logger.js";
 const Login = () => {
   const navigate = useNavigate();
   const email = useRef();
@@ -80,7 +81,7 @@ const Login = () => {
       );
       navigate("/");
     } catch (err) {
-      console.log(err);
+      logger.info(err);
       enqueueSnackbar(err?.response?.data?.message || "Login failed", {
         variant: "error",
       });

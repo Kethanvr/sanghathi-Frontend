@@ -32,6 +32,7 @@ import api from "../../utils/axios";
 import { getUserSchema } from "../Users/UserForm";
 import { alpha, useTheme } from "@mui/material/styles";
 
+import logger from "../../utils/logger.js";
 // Define role options with their related info
 const ROLES = [
   { 
@@ -256,7 +257,7 @@ const AddStudents = () => {
         }
 
         try {
-          console.log("Sending data:", data); // Add this for debugging
+          logger.info("Sending data:", data); // Add this for debugging
           const response = await api.post(endpoint, data);
           if (response.data) {
             success++;
@@ -264,7 +265,7 @@ const AddStudents = () => {
         } catch (error) {
           errors++;
           const errorMessage = error.response?.data?.message || error.message;
-          console.error("Error details:", error.response?.data); // Keep this for debugging
+          logger.error("Error details:", error.response?.data); // Keep this for debugging
           newErrors.push(`Row ${index + 1}: ${errorMessage}`);
         }
       } catch (error) {

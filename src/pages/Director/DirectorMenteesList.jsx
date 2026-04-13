@@ -27,6 +27,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import SchoolIcon from "@mui/icons-material/School";
 import Page from "../../components/Page";
 
+import logger from "../../utils/logger.js";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 const fetchStudentProfiles = async (userId) => {
@@ -36,7 +37,7 @@ const fetchStudentProfiles = async (userId) => {
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching student profile:", error);
+    logger.error("Error fetching student profile:", error);
     return null;
   }
 };
@@ -58,7 +59,7 @@ const DirectorMenteesList = () => {
         const response = await axios.get(`${BASE_URL}/users/${mentorId}`);
         setMentorInfo(response.data.data.user);
       } catch (err) {
-        console.error("Error fetching mentor info:", err);
+        logger.error("Error fetching mentor info:", err);
       }
     };
 

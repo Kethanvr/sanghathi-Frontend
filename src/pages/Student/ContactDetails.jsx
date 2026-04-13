@@ -8,6 +8,7 @@ import { Box, Grid, Card, Stack, FormControlLabel, Switch, Typography, Divider }
 import { LoadingButton } from "@mui/lab";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
 
+import logger from "../../utils/logger.js";
 const DEFAULT_VALUES = {
   currentAddress: {
     line1: "",
@@ -50,15 +51,15 @@ export default function ContactDetails({ userId: propUserId, colorMode }) {
   useEffect(() => {
     const fetchData = async () => {
       if (!userId) {
-        console.error('No userId available for fetching data');
+        logger.error('No userId available for fetching data');
         enqueueSnackbar("User ID is not available", { variant: "error" });
         return;
       }
       
       try {
-        console.log('Fetching contact details for userId:', userId);
+        logger.info('Fetching contact details for userId:', userId);
         const response = await api.get(`/v1/contact-details/${userId}`);
-        console.log("Fetched data:", response.data);
+        logger.info("Fetched data:", response.data);
         
         const contactData = response.data.data?.contactDetails || response.data;
         
@@ -87,7 +88,7 @@ export default function ContactDetails({ userId: propUserId, colorMode }) {
           }
         }
       } catch (error) {
-        console.error("Error fetching contact details:", error);
+        logger.error("Error fetching contact details:", error);
         // if (error.response?.status !== 404) {
         //   enqueueSnackbar(error.message || "Failed to load contact details", { variant: "error" });
         // }
@@ -115,7 +116,7 @@ export default function ContactDetails({ userId: propUserId, colorMode }) {
     }
     
     try {
-      console.log('Submitting contact details with userId:', userId);
+      logger.info('Submitting contact details with userId:', userId);
       
       // Create payload
       const payload = { 
@@ -124,14 +125,14 @@ export default function ContactDetails({ userId: propUserId, colorMode }) {
         permanentAddress: formData.permanentAddress
       };
       
-      console.log('Submission payload:', payload);
+      logger.info('Submission payload:', payload);
       
       const response = await api.post("/v1/contact-details", payload);
-      console.log('Submission response:', response.data);
+      logger.info('Submission response:', response.data);
       
       enqueueSnackbar("Contact details saved successfully!", { variant: "success" });
     } catch (error) {
-      console.error("Error saving contact details:", error);
+      logger.error("Error saving contact details:", error);
       const errorMessage = error.response?.data?.message || error.message || "An error occurred while saving contact details";
       enqueueSnackbar(errorMessage, { variant: "error" });
     }
