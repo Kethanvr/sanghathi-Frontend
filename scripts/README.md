@@ -5,22 +5,41 @@
 Use this script from the workspace root:
 
 - Start both backend and frontend:
-  - `./scripts/start-servers.sh`
+  - `./sanghathi-Frontend/scripts/start-servers.sh`
 - Start only backend:
-  - `./scripts/start-servers.sh --backend`
+  - `./sanghathi-Frontend/scripts/start-servers.sh --backend`
 - Start only frontend:
-  - `./scripts/start-servers.sh --frontend`
+  - `./sanghathi-Frontend/scripts/start-servers.sh --frontend`
 
 ## Run All Tests
 
 Use this script from the workspace root:
 
 - Run backend + frontend tests:
-  - `./scripts/run-all-tests.sh`
+  - `./sanghathi-Frontend/scripts/run-all-tests.sh`
 - Run backend tests only:
-  - `./scripts/run-all-tests.sh --backend`
+  - `./sanghathi-Frontend/scripts/run-all-tests.sh --backend`
 - Run frontend tests only:
-  - `./scripts/run-all-tests.sh --frontend`
+  - `./sanghathi-Frontend/scripts/run-all-tests.sh --frontend`
+
+## Local Database Backup and Structure
+
+- Start local MongoDB container:
+  - `./sanghathi-Frontend/scripts/start-local-mongo.sh`
+- Show local MongoDB container status:
+  - `./sanghathi-Frontend/scripts/start-local-mongo.sh --status`
+- Stop local MongoDB container:
+  - `./sanghathi-Frontend/scripts/start-local-mongo.sh --stop`
+
+- Export source DB backup + schema summary and sync into local DB:
+  - `./sanghathi-Frontend/scripts/backup-db-local.sh`
+
+- Export backup files and schema summary only (skip local sync):
+  - `./sanghathi-Frontend/scripts/backup-db-local.sh --no-local-sync`
+
+Backup output is written to:
+- `database-backups/<db-name>-<timestamp>/`
+- Includes per-collection `.jsonl` exports and `schema-summary.json` for structure review.
 
 ## Notes
 

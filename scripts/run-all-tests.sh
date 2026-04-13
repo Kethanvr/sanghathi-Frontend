@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RUN_BACKEND=true
 RUN_FRONTEND=true
 
 usage() {
   cat <<'USAGE'
-Usage: ./scripts/run-all-tests.sh [--backend|--frontend|--all]
+Usage: ./sanghathi-Frontend/scripts/run-all-tests.sh [--backend|--frontend|--all]
 
 Options:
   --backend   Run only backend tests
