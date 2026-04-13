@@ -243,7 +243,7 @@ const AdminDashboard = () => {
             <AdminTile
               title="Profile"
               icon={<PersonIcon />}
-              link="/faculty/FacultyProfile"
+              link="/faculty/profile"
             />
           </Grid>
           

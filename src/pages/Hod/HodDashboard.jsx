@@ -243,7 +243,7 @@ const HodDashboard = () => {
             <HodTile
               title="Profile"
               icon={<PersonIcon />}
-              link="/faculty/FacultyProfile"
+              link="/faculty/profile"
             />
           </Grid>
           
