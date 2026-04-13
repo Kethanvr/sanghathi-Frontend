@@ -274,7 +274,7 @@ const Dashboard = () => {
               <StudentTile
                 title={isLight ? "Career Review" : "Career Review"}
                 icon={<WorkIcon />}
-                link="/CareerReview/CareerReview"
+                link="/career-review"
               />
             </Grid>
             
@@ -282,7 +282,7 @@ const Dashboard = () => {
               <StudentTile
                 title="Scorecard"
                 icon={<AssignmentIcon />}
-                link="/Scorecard/ScoreCard"
+                link="/scorecard"
               />
             </Grid>
             
@@ -290,7 +290,7 @@ const Dashboard = () => {
               <StudentTile
                 title="Placement"
                 icon={<EmojiEventsIcon />}
-                link="/Placement/Placement"
+                link="/placement"
               />
             </Grid>
             

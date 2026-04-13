@@ -28,7 +28,7 @@ export default function AccountPopover() {
   const [open, setOpen] = useState(null);
 
   const studentlink = "/student/profile";
-  const facultylink = "/faculty/FacultyProfile";
+  const facultylink = "/faculty/profile";
   const adminlink = "/admin/dashboard";
   const hodlink = "/hod/dashboard";
 

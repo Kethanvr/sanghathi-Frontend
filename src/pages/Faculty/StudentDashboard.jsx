@@ -351,7 +351,7 @@ const StudentDashboard = () => {
               <StudentTile
                 title="Career review"
                 icon={<PersonIcon />}
-                link="/CareerReview/CareerReview"
+                link="/career-review"
                 menteeId={menteeId}
               />
             </Grid>
@@ -360,7 +360,7 @@ const StudentDashboard = () => {
               <StudentTile
                 title="Scorecard"
                 icon={<AssignmentIcon />}
-                link="/Scorecard/ScoreCard"
+                link="/scorecard"
                 menteeId={menteeId}
               />
             </Grid>
@@ -369,7 +369,7 @@ const StudentDashboard = () => {
               <StudentTile
                 title="Placement"
                 icon={<EmojiEventsIcon />}
-                link="/Placement/Placement"
+                link="/placement"
                 menteeId={menteeId}
               />
             </Grid>
