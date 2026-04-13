@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 MODE="both"
 BACKEND_PID=""
 FRONTEND_PID=""
 
 usage() {
   cat <<'USAGE'
-Usage: ./scripts/start-servers.sh [--backend|--frontend|--both]
+Usage: ./sanghathi-Frontend/scripts/start-servers.sh [--backend|--frontend|--both]
 
 Options:
   --backend   Start only backend server (npm run dev)
