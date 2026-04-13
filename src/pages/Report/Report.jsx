@@ -53,34 +53,6 @@ const baseURL = import.meta.env.VITE_PYTHON_API;
 import processTableData from "./ExportToExcel";
 
 import logger from "../../utils/logger.js";
-/* 
-TODO : The export to excel button should be on the right side
-
-On top of the card there should be a filter form 
-
-New Features for data filt:
-
-
-Add a search bar which should be able to display only the rows that contains the user
-add sort by open and close
-Add date fileter with from and to date
-add sort option for date
-Add filter for category
-
-*/
-
-/*
-
-Excel report :
-
-The header should be marked bold, with a sticky header and it should have a color,
-Remove the _id and _v field from the data,
-date should be an excel date format,
-Excel file name should be a timestamp
-participant name should be there as comma seperate list
-
-
-*/
 const Report = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';

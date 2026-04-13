@@ -1,5 +1,3 @@
-//TODO : Refactor thread component
-
 import React, { useState, useEffect, useCallback, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -25,24 +23,6 @@ import api from "../../utils/axios";
 import { AuthContext } from "../../context/AuthContext";
 
 import logger from "../../utils/logger.js";
-/* FIXME
-The ThreadList component is being rendered many times.
-This can cause performance related isuue
-
-*/
-
-/* 
-TODO
-1. The threadlist should display a loading spinner
-2. The threadlist should be on the center
-3. Add breadcrumbs and title of the section
-4. navigate to conversation item when clicked on view
-5. OnSaving the thread it should display a snackbar (no-stick)
-6. Handle error and display snackbar as well as log the error on console
-7. Fix various performance related issue that is causing the compoent to rerender multipl times.
-8. Refactor component and split in multiple smaller compenent
-9. The label of the category is not visiable in  the select dropdown
-*/
 
 const LoadingSpinner = () => (
   <Box
@@ -76,42 +56,40 @@ const Thread = () => {
       if (response.data.status === "success") {
         setThreads(response.data.data.threads);
       }
-
-      //TODO: Remove this in production
-
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 1000); // simulate delay of 1 second
+      setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
       logger.error("Error fetching threads:", error);
     }
   }, [user]);
 
-  //TODO : Change this to Fetch only the student of the mentor
-
-  const fetechUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await api.get("users");
       if (response.data.status === "success") {
-        setUsers(response.data.data.users);
+        const allUsers = response.data.data.users;
+        const shouldScopeToStudents = ["faculty", "hod", "director"].includes(
+          user?.roleName
+        );
+
+        const scopedUsers = shouldScopeToStudents
+          ? allUsers.filter((candidate) => candidate.roleName === "student")
+          : allUsers;
+
+        setUsers(scopedUsers);
       }
     } catch (error) {
       logger.error("Error fetching Users:", error);
     }
-  }, []);
+  }, [user?.roleName]);
 
   useEffect(() => {
     fetchThreads();
   }, [fetchThreads]);
 
   useEffect(() => {
-    fetechUsers();
-  }, [fetechUsers]);
-
-  /*   TODO : User should be naviagated to new route when the user clicks on the view thread @critical
-
-*/
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleThreadClick = (thread) => {
     navigate(`/threads/${thread._id}`);
@@ -123,7 +101,7 @@ const Thread = () => {
       const response = await api.post("threads", newThreadData);
       if (response.data.status === "success") {
         const newThread = response.data.data.thread;
-        setThreads([...threads, newThread]);
+        setThreads((prevThreads) => [...prevThreads, newThread]);
         setIsLoading(false);
         return Promise.resolve();
       }
@@ -133,10 +111,9 @@ const Thread = () => {
     }
   };
 
-  // TODO : Add the Thread Edit functionality
-
   const handleThreadEdit = async (thread) => {
-    logger.info("Editing Thread");
+    logger.info("Edit requested for thread", { threadId: thread._id });
+    enqueueSnackbar("Thread edit is not available yet.", { variant: "info" });
   };
 
   const handleThreadDelete = async (thread) => {
@@ -144,7 +121,9 @@ const Thread = () => {
       logger.info(`Delete thread ${thread._id}`);
       const response = await api.delete(`/threads/${thread._id}`);
       if (response.status === 204) {
-        setThreads(threads.filter((curr) => curr._id !== thread._id));
+        setThreads((prevThreads) =>
+          prevThreads.filter((curr) => curr._id !== thread._id)
+        );
         enqueueSnackbar("Thread Deleted successfully!", { variant: "success" });
       }
     } catch (error) {
