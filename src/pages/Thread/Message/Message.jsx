@@ -24,8 +24,6 @@ const MessageItem = ({ message, conversation }) => {
     marginBottom: theme.spacing(3),
   }));
 
-  //FIXME : Remove the hardcoded value
-
   const sender = conversation.participants.find(
     (participant) => participant._id === message.senderId
   );

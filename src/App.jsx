@@ -8,7 +8,6 @@ import MotionLazyContainer from "./components/animate/MotionLazyContainer";
 import NotistackProvider from "./components/NotistackProvider";
 import { AuthContext } from "./context/AuthContext";
 import { initGA, trackPageView } from "./ga";
-// TODO : Need to remove routing logic from app component
 
 const Signup = lazy(() => import("./pages/Users/Signup"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
