@@ -23,6 +23,7 @@ import {
 } from "../../components/hook-form";
 import { useSearchParams } from "react-router-dom";
 
+import logger from "../../utils/logger.js";
 const placementType = [
   { label: "In-Campus", value: "In-Campus" },
   { label: "Off-Campus", value: "Off-Campus" },
@@ -66,7 +67,7 @@ export default function PlacementDetails() {
   // Show form errors if any
   useEffect(() => {
     if (Object.keys(errors).length > 0) {
-      console.error("Form errors:", errors);
+      logger.error("Form errors:", errors);
       enqueueSnackbar("Please fill all required fields", { variant: "error" });
     }
   }, [errors, enqueueSnackbar]);
@@ -98,11 +99,11 @@ export default function PlacementDetails() {
               : [{ ...DEFAULT_EMPTY_PLACEMENT }],
         });
       } else {
-        console.warn("No placement data found for this user");
+        logger.warn("No placement data found for this user");
         reset({ placements: [{ ...DEFAULT_EMPTY_PLACEMENT }] });
       }
     } catch (error) {
-      console.error("Error fetching placement data:", error);
+      logger.error("Error fetching placement data:", error);
       enqueueSnackbar("Failed to fetch placement data", { variant: "error" });
       // If there's an error, still give a usable form
       reset({ placements: [{ ...DEFAULT_EMPTY_PLACEMENT }] });
@@ -164,7 +165,7 @@ export default function PlacementDetails() {
         });
         await fetchPlacements();
       } catch (error) {
-        console.error(error);
+        logger.error(error);
         enqueueSnackbar(
           error.message || "An error occurred while processing the request",
           {

@@ -9,14 +9,15 @@ import { Delete as DeleteIcon } from "@mui/icons-material";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
 import { useSearchParams } from "react-router-dom";
 
+import logger from "../../utils/logger.js";
 export default function Activity() {
     const [searchParams] = useSearchParams();
     const menteeId = searchParams.get('menteeId');
 
   const { enqueueSnackbar } = useSnackbar();
     const { user } = useContext(AuthContext);
-    console.log("User : ",user);
-    console.log("id: ",menteeId);
+    logger.info("User : ",user);
+    logger.info("id: ",menteeId);
     const methods = useForm({
       defaultValues: {
         activity: [{ eventType: "", eventTitle: "", description: "", eventDate: "" }],
@@ -45,11 +46,11 @@ export default function Activity() {
           }));
           reset({ activity: formattedActivity });
         } else {
-          console.warn("No activity data found for this user");
+          logger.warn("No activity data found for this user");
           reset({ activity: [{ eventType: "", eventTitle: "", description: "", eventDate: ""  }] });
         }
       } catch (error) {
-        console.log("Error fetching activity data:", error);
+        logger.info("Error fetching activity data:", error);
       }
     }, [user._id, reset, enqueueSnackbar]);
 
@@ -70,7 +71,7 @@ export default function Activity() {
           });
           await fetchActivity();
         } catch (error) {
-          console.error(error);
+          logger.error(error);
           enqueueSnackbar("An error occurred while processing the request", {
             variant: "error",
           });

@@ -32,6 +32,7 @@ import api from "../../utils/axios";
 import StudentTable from "./StudentTable";
 import MentorAssignmentDialog from "./MentorAssignmentDialog";
 
+import logger from "../../utils/logger.js";
 const MentorAllocation = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -55,23 +56,23 @@ const MentorAllocation = () => {
         // Use the dedicated allocation-students endpoint
         const response = await api.get("/mentors/allocation-students");
         const { data } = response.data;
-        console.log("Fetched students data:", data);
+        logger.info("Fetched students data:", data);
         
         // Check a sample student to understand structure
         if (data && data.length > 0) {
-          console.log("Sample student structure:", JSON.stringify(data[0], null, 2));
-          console.log("Profile data:", data[0].profile);
-          console.log("Mentor data:", data[0].mentor);
+          logger.info("Sample student structure:", JSON.stringify(data[0], null, 2));
+          logger.info("Profile data:", data[0].profile);
+          logger.info("Mentor data:", data[0].mentor);
           
           // Debug mentor structure variations
-          console.log("Direct mentor name:", data[0]?.mentor?.name);
-          console.log("Mentor ID:", data[0]?.mentorId);
-          console.log("Mentor details:", data[0]?.mentorDetails);
+          logger.info("Direct mentor name:", data[0]?.mentor?.name);
+          logger.info("Mentor ID:", data[0]?.mentorId);
+          logger.info("Mentor details:", data[0]?.mentorDetails);
         }
         
         setStudents(data || []);
       } catch (error) {
-        console.error("Error fetching students:", error);
+        logger.error("Error fetching students:", error);
       }
     };
     fetchStudents();
@@ -85,7 +86,7 @@ const MentorAllocation = () => {
       
       setStudents(data || []);
     } catch (error) {
-      console.error("Error refreshing students:", error);
+      logger.error("Error refreshing students:", error);
     }
   };
 

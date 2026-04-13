@@ -26,6 +26,7 @@ import { useSnackbar } from "notistack";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../utils/axios";
 
+import logger from "../../utils/logger.js";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 const MentorMenteeConversation = () => {
@@ -55,13 +56,13 @@ const MentorMenteeConversation = () => {
 
     const fetchMentees = async () => {
       try {
-        console.log("📥 Fetching mentees for user:", user._id);
+        logger.info("📥 Fetching mentees for user:", user._id);
         const response = await api.get(`/mentorship/${user._id}/mentees`);
-        console.log("✅ Mentees fetched successfully:", response.data.mentees);
+        logger.info("✅ Mentees fetched successfully:", response.data.mentees);
         setMentees(response.data.mentees);
       } catch (err) {
-        console.error("❌ Error fetching mentees:", err);
-        console.error("❌ Error details:", {
+        logger.error("❌ Error fetching mentees:", err);
+        logger.error("❌ Error details:", {
           message: err.message,
           response: err.response?.data,
           status: err.response?.status,
@@ -86,7 +87,7 @@ const MentorMenteeConversation = () => {
 
       try {
         setCheckingConversation(true);
-        console.log("🔍 Checking for existing conversation...", {
+        logger.info("🔍 Checking for existing conversation...", {
           mentorId: user._id,
           menteeId: selectedStudent,
         });
@@ -104,14 +105,14 @@ const MentorMenteeConversation = () => {
         );
 
         if (existing) {
-          console.log("✅ Found existing conversation:", existing);
+          logger.info("✅ Found existing conversation:", existing);
           setExistingConversation(existing);
         } else {
-          console.log("📝 No existing conversation found");
+          logger.info("📝 No existing conversation found");
           setExistingConversation(null);
         }
       } catch (error) {
-        console.error("❌ Error checking existing conversation:", error);
+        logger.error("❌ Error checking existing conversation:", error);
         setExistingConversation(null);
       } finally {
         setCheckingConversation(false);
@@ -134,7 +135,7 @@ const MentorMenteeConversation = () => {
     setIsLoading(true);
 
     try {
-      console.log("📤 Submitting offline conversation...", {
+      logger.info("📤 Submitting offline conversation...", {
         mentorId: user._id,
         menteeId: selectedStudent,
         title: title || "Offline Conversation",
@@ -154,12 +155,12 @@ const MentorMenteeConversation = () => {
         projectChecked: miniProject,
       });
 
-      console.log("✅ API Response received:", response.data);
+      logger.info("✅ API Response received:", response.data);
 
       if (response.status === 201) {
         const { aiSummary, conversation } = response.data.data;
 
-        console.log("✅ Conversation saved successfully:", {
+        logger.info("✅ Conversation saved successfully:", {
           conversationId: conversation._id,
           descriptionLength: conversation.description?.length,
           aiSummaryLength: aiSummary?.length,
@@ -173,7 +174,7 @@ const MentorMenteeConversation = () => {
           }
         );
 
-        console.log("📝 AI Generated Summary:", aiSummary);
+        logger.info("📝 AI Generated Summary:", aiSummary);
 
         // Reset form
         setSelectedStudent("");
@@ -184,8 +185,8 @@ const MentorMenteeConversation = () => {
         setTopic("");
       }
     } catch (error) {
-      console.error("❌ Error saving offline conversation:", error);
-      console.error("❌ Error details:", {
+      logger.error("❌ Error saving offline conversation:", error);
+      logger.error("❌ Error details:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,

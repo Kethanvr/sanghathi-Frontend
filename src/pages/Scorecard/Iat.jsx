@@ -16,6 +16,7 @@ import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useSearchParams } from "react-router-dom";
 import useStudentSemester from "../../hooks/useStudentSemester";
+import logger from "../../utils/logger.js";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 const Iat = () => {
@@ -45,7 +46,7 @@ const Iat = () => {
         return;
       }
       
-      console.log(`Fetching IAT marks for user ID: ${userId} (${menteeId ? 'menteeId from URL' : 'logged-in user'})`);
+      logger.info(`Fetching IAT marks for user ID: ${userId} (${menteeId ? 'menteeId from URL' : 'logged-in user'})`);
       
       //  Adapt the endpoint to your IAT data endpoint
       const response = await axios.get(
@@ -65,7 +66,7 @@ const Iat = () => {
           const defaultSem = studentSemester && data.semesters.find(s => s.semester === studentSemester)
             ? studentSemester
             : data.semesters[0].semester;
-          console.log('[Iat] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', data.semesters[0].semester, ')');
+          logger.info('[Iat] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', data.semesters[0].semester, ')');
           setSelectedSemester(defaultSem);
         }
       } else {
@@ -76,7 +77,7 @@ const Iat = () => {
     } catch (err) {
       setError("Failed to fetch IAT data");
       setLoading(false);
-      console.error(err); // Log the error for debugging
+      logger.error(err); // Log the error for debugging
     }
   }, [semesterLoading, menteeId, user?._id, studentSemester]);
 

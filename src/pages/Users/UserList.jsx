@@ -43,6 +43,7 @@ import { useEffect } from "react";
 
 import api from "../../utils/axios";
 
+import logger from "../../utils/logger.js";
 function UserList({ onEdit }) {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -77,13 +78,13 @@ function UserList({ onEdit }) {
       const response = await api.get("/users");
       if (response.data.status === "success") {
         const users = response.data.data.users;
-        console.log("All users data:", users);
+        logger.info("All users data:", users);
         setUsers(users);
       } else {
         throw new Error("Error fetching users");
       }
     } catch (error) {
-      console.log(error);
+      logger.info(error);
       enqueueSnackbar("Error fetching users", { variant: "error" });
     }
   }, [enqueueSnackbar]);
@@ -136,9 +137,9 @@ function UserList({ onEdit }) {
   
         try {
           await Promise.allSettled(deletePromises);
-          console.log(`Successfully processed deletion for user ${userId}`);
+          logger.info(`Successfully processed deletion for user ${userId}`);
         } catch (error) {
-          console.error(`Error deleting data for user ${userId}:`, error);
+          logger.error(`Error deleting data for user ${userId}:`, error);
           throw error;
         }
       };
@@ -168,7 +169,7 @@ function UserList({ onEdit }) {
       handleClose();
   
     } catch (error) {
-      console.error("Delete operation failed:", error);
+      logger.error("Delete operation failed:", error);
       enqueueSnackbar(error.message || "Failed to delete user(s)", {
         variant: "error"
       });

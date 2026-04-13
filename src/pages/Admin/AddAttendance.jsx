@@ -22,6 +22,7 @@ import { alpha, useTheme } from "@mui/material/styles";
 import Papa from "papaparse";
 import axios from "axios";
 
+import logger from "../../utils/logger.js";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 const AddAttendance = () => {
@@ -140,7 +141,7 @@ const AddAttendance = () => {
       const monthKey = rowHeaders.find(h => h.toLowerCase() === 'month');
       
       try {
-        console.log(`Processing row ${index + 1}:`, row);
+        logger.info(`Processing row ${index + 1}:`, row);
         
         // Trim all values and check for required fields
         const usn = row[usnKey]?.toString().trim();
@@ -234,25 +235,25 @@ const AddAttendance = () => {
         }
 
         const response = await axios.get(`${BASE_URL}/users/usn/${usn}`);
-        console.log("User lookup response: ", response);
+        logger.info("User lookup response: ", response);
         if (!response.data?.userId) {
           throw new Error(`User not found`);
         }
         const userId = response.data.userId;
-        console.log("UserId: ", userId);
+        logger.info("UserId: ", userId);
 
         const attendanceData = {
           semester: parseInt(sem, 10),
           month: monthValue,
           subjects,
         };
-        console.log("Attendance Data to send: ", attendanceData);
+        logger.info("Attendance Data to send: ", attendanceData);
 
         try {
           await axios.post(`${BASE_URL}/students/attendance/${userId}`, attendanceData);
           success++;
         } catch (postError) {
-          console.error("Post error details:", postError.response?.data);
+          logger.error("Post error details:", postError.response?.data);
           const errorMessage = postError.response?.data?.message || 
                              postError.response?.data?.error || 
                              postError.message || 
@@ -262,7 +263,7 @@ const AddAttendance = () => {
       } catch (error) {
         errors++;
         newErrors.push(`USN: ${row[usnKey] || 'Unknown'} - ${error.message}`);
-        console.error(`Error processing row ${index + 1}:`, error);
+        logger.error(`Error processing row ${index + 1}:`, error);
       }
     }
 

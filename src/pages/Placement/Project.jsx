@@ -22,6 +22,7 @@ import {
 } from "../../components/hook-form";
 import { useSearchParams } from "react-router-dom";
 
+import logger from "../../utils/logger.js";
 const locationOptions = [
   { label: "College", value: "College" },
   { label: "Public Section", value: "Public Section" },
@@ -66,7 +67,7 @@ export default function Project() {
   // Show form errors if any
   useEffect(() => {
     if (Object.keys(errors).length > 0) {
-      console.error("Form errors:", errors);
+      logger.error("Form errors:", errors);
       enqueueSnackbar("Please fill all required fields", { variant: "error" });
     }
   }, [errors, enqueueSnackbar]);
@@ -100,11 +101,11 @@ export default function Project() {
               : [{ ...DEFAULT_EMPTY_PROJECT }],
         });
       } else {
-        console.warn("No project data found for this user");
+        logger.warn("No project data found for this user");
         reset({ projects: [{ ...DEFAULT_EMPTY_PROJECT }] });
       }
     } catch (error) {
-      console.error("Error fetching project data:", error);
+      logger.error("Error fetching project data:", error);
       enqueueSnackbar("Failed to fetch project data", { variant: "error" });
       reset({ projects: [{ ...DEFAULT_EMPTY_PROJECT }] });
     }
@@ -175,7 +176,7 @@ export default function Project() {
 
         await fetchProjects(); // Refresh form with latest data
       } catch (error) {
-        console.error(error);
+        logger.error(error);
         enqueueSnackbar(
           error?.response?.data?.message ||
             error.message ||

@@ -24,6 +24,7 @@ import {
 } from "@mui/material";
 import { Close, Search } from "@mui/icons-material";
 
+import logger from "../../utils/logger.js";
 const NewThreadDialog = ({ open, onClose, users, currentUser, onSave, colorMode = 'primary' }) => {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
@@ -100,7 +101,7 @@ const NewThreadDialog = ({ open, onClose, users, currentUser, onSave, colorMode 
       })
       .catch((error) => {
         enqueueSnackbar("Error creating thread!", { variant: "error" });
-        console.error("Error creating new thread:", error);
+        logger.error("Error creating new thread:", error);
       });
 
     handleCloseDialog();

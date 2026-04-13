@@ -18,6 +18,7 @@ import api from "../../utils/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useSearchParams } from "react-router-dom";
 
+import logger from "../../utils/logger.js";
 const DEFAULT_EMPTY_INTERNSHIP = {
   companyName: "",
   location: "",
@@ -86,7 +87,7 @@ export default function InternshipDetails() {
         reset({ internships: [{ ...DEFAULT_EMPTY_INTERNSHIP }] });
       }
     } catch (error) {
-      console.error("Error fetching internship data:", error);
+      logger.error("Error fetching internship data:", error);
       enqueueSnackbar("Failed to fetch internship data", { variant: "error" });
       reset({ internships: [{ ...DEFAULT_EMPTY_INTERNSHIP }] });
     }
@@ -146,7 +147,7 @@ export default function InternshipDetails() {
         });
         await fetchInternships();
       } catch (error) {
-        console.error("Error saving internship data:", error);
+        logger.error("Error saving internship data:", error);
         enqueueSnackbar(
           error.message || "An error occurred while processing the request",
           {

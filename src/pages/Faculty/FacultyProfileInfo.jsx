@@ -14,6 +14,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { AuthContext } from "../../context/AuthContext";
+import logger from "../../utils/logger.js";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 const FacultyProfileInfo = () => {
@@ -26,7 +27,7 @@ const FacultyProfileInfo = () => {
 
   const fetchMentorId = useCallback(async () => {
     if (!user || !user._id) {
-      console.error("User ID not found");
+      logger.error("User ID not found");
       setLoading(false);
       return;
     }
@@ -40,11 +41,11 @@ const FacultyProfileInfo = () => {
       if (mentor?._id) {
         setMentorId(mentor._id);
       } else {
-        console.error("Mentor ID not found");
+        logger.error("Mentor ID not found");
         setLoading(false);
       }
     } catch (error) {
-      console.error("Error fetching mentor ID:", error);
+      logger.error("Error fetching mentor ID:", error);
       setLoading(false);
     }
   }, [user?._id]);
@@ -67,10 +68,10 @@ const FacultyProfileInfo = () => {
           cabin: faculty.cabin,
         });
       } else {
-        console.error("Faculty profile not found");
+        logger.error("Faculty profile not found");
       }
     } catch (error) {
-      console.error("Error fetching faculty profile:", error);
+      logger.error("Error fetching faculty profile:", error);
     } finally {
       setLoading(false);
     }

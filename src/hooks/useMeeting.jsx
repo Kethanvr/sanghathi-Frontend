@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../utils/axios";
 
+import logger from "../utils/logger.js";
 export const useMeeting = () => {
   const getAllMeetings = async () => {
     try {
@@ -13,16 +14,16 @@ export const useMeeting = () => {
         allDay: meeting.allDay,
       }));
     } catch (error) {
-      console.error(error);
+      logger.error(error);
     }
   };
 
   const deleteMeeting = async (meetId) => {
     try {
       const response = await api.delete(`/meetings/${meetId}`);
-      console.log(response);
+      logger.info(response);
     } catch (error) {
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -44,10 +45,10 @@ export const useMeeting = () => {
         "/notifications",
         notification
       );
-      console.log(notificationResponse.data);
+      logger.info(notificationResponse.data);
       return response;
     } catch (error) {
-      console.error(error);
+      logger.error(error);
     }
   };
 

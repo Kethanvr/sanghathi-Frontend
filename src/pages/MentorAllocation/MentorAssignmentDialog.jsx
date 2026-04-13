@@ -13,6 +13,7 @@ import {
 import api from "../../utils/axios";
 import MentorSuggestionMenu from "./MentorSuggestionMenu";
 
+import logger from "../../utils/logger.js";
 const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
   const [selectedMentor, setSelectedMentor] = useState({ name: "" }); // Initialize with empty name
   const [anchorEl, setAnchorEl] = useState(null);
@@ -26,7 +27,7 @@ const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
         const { data } = response.data;
         setMentors(data.users);
       } catch (error) {
-        console.error(error);
+        logger.error(error);
       }
     };
 
@@ -68,7 +69,7 @@ const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
 
       handleCancel();
     } catch (error) {
-      console.error("Error assigning mentor:", error);
+      logger.error("Error assigning mentor:", error);
       enqueueSnackbar("Failed to assign mentor", { variant: "error" });
     }
   };

@@ -28,6 +28,7 @@ import { useSnackbar } from 'notistack';
 import api from '../../utils/axios';
 import { useSearchParams } from 'react-router-dom';
 
+import logger from "../../utils/logger.js";
 const TYLScorecard = () => {
   const [tabValue, setTabValue] = useState(0);
   const theme = useTheme();
@@ -74,7 +75,7 @@ const TYLScorecard = () => {
         setError("No scores available. Please add scores.");
       }
     } catch (err) {
-      console.error("Error fetching TYL scores:", err);
+      logger.error("Error fetching TYL scores:", err);
       setError(`Failed to fetch TYL scores: ${err.message}`);
       setTYLScores([]);
     } finally {
@@ -153,7 +154,7 @@ const TYLScorecard = () => {
         };
       });
       
-      console.log("Saving TYL scores:", {
+      logger.info("Saving TYL scores:", {
         userId,
         semester: selectedSemester,
         scores: scoresObject
@@ -168,7 +169,7 @@ const TYLScorecard = () => {
       enqueueSnackbar("TYL scores saved successfully!", { variant: "success" });
       await fetchTYLScores(); // Refresh data after save
     } catch (error) {
-      console.error("Error saving TYL scores:", error);
+      logger.error("Error saving TYL scores:", error);
       enqueueSnackbar(`Error saving TYL scores: ${error.response?.data?.message || error.message}`, { variant: "error" });
     } finally {
       setLoading(false);

@@ -52,6 +52,7 @@ const baseURL = import.meta.env.VITE_PYTHON_API;
 
 import processTableData from "./ExportToExcel";
 
+import logger from "../../utils/logger.js";
 /* 
 TODO : The export to excel button should be on the right side
 
@@ -104,12 +105,12 @@ const Report = () => {
         const response = await api.get("threads");
         if (response.status === 200) {
           const { data } = response.data;
-          console.log("All threads:", data.threads);
-          console.log("Thread statuses:", data.threads.map(t => t.status));
+          logger.info("All threads:", data.threads);
+          logger.info("Thread statuses:", data.threads.map(t => t.status));
           setThreads(data.threads);
         }
       } catch (error) {
-        console.error(error);
+        logger.error(error);
       }
     };
 
@@ -234,7 +235,7 @@ const Report = () => {
         setChatMessages(data.thread.messages);
       }
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       enqueueSnackbar("Error loading chat messages", { variant: "error" });
     }
   };
@@ -335,7 +336,7 @@ const Report = () => {
         }
       });
     } catch (error) {
-      console.error("Error exporting to Excel:", error);
+      logger.error("Error exporting to Excel:", error);
       enqueueSnackbar("Error exporting report", { 
         variant: "error",
         anchorOrigin: {

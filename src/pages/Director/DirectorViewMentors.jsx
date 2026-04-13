@@ -34,6 +34,7 @@ import { AuthContext } from "../../context/AuthContext";
 import Page from "../../components/Page";
 import api from "../../utils/axios";
 
+import logger from "../../utils/logger.js";
 function DirectorViewMentors() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -70,7 +71,7 @@ function DirectorViewMentors() {
         // Filter all faculty members
         const facultyMembers = allUsers.filter(u => u.roleName === "faculty");
         
-        console.log("All Faculty Members:", facultyMembers);
+        logger.info("All Faculty Members:", facultyMembers);
         setMentors(facultyMembers);
 
         // Fetch mentee counts for each mentor
@@ -88,7 +89,7 @@ function DirectorViewMentors() {
         throw new Error("Error fetching users");
       }
     } catch (error) {
-      console.log(error);
+      logger.info(error);
       enqueueSnackbar("Error fetching mentors", { variant: "error" });
     }
   }, [enqueueSnackbar]);

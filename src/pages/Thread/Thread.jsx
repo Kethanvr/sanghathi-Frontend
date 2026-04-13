@@ -24,6 +24,7 @@ import api from "../../utils/axios";
 
 import { AuthContext } from "../../context/AuthContext";
 
+import logger from "../../utils/logger.js";
 /* FIXME
 The ThreadList component is being rendered many times.
 This can cause performance related isuue
@@ -83,7 +84,7 @@ const Thread = () => {
       }, 1000); // simulate delay of 1 second
     } catch (error) {
       setIsLoading(false);
-      console.error("Error fetching threads:", error);
+      logger.error("Error fetching threads:", error);
     }
   }, [user]);
 
@@ -96,7 +97,7 @@ const Thread = () => {
         setUsers(response.data.data.users);
       }
     } catch (error) {
-      console.error("Error fetching Users:", error);
+      logger.error("Error fetching Users:", error);
     }
   }, []);
 
@@ -135,12 +136,12 @@ const Thread = () => {
   // TODO : Add the Thread Edit functionality
 
   const handleThreadEdit = async (thread) => {
-    console.log("Editing Thread");
+    logger.info("Editing Thread");
   };
 
   const handleThreadDelete = async (thread) => {
     try {
-      console.log(`Delete thread ${thread._id}`);
+      logger.info(`Delete thread ${thread._id}`);
       const response = await api.delete(`/threads/${thread._id}`);
       if (response.status === 204) {
         setThreads(threads.filter((curr) => curr._id !== thread._id));
@@ -148,7 +149,7 @@ const Thread = () => {
       }
     } catch (error) {
       enqueueSnackbar("Something went wrong!", { variant: "error" });
-      console.error("ERROR OCCURED 💥 ", error);
+      logger.error("ERROR OCCURED 💥 ", error);
     }
   };
 

@@ -6,6 +6,7 @@ import { AuthContext } from "../../context/AuthContext";
 import api from "../../utils/axios";
 import { Box, Grid, Card, Stack, Typography, Divider, FormControl, FormLabel, FormGroup, FormControlLabel, Checkbox } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
+import logger from "../../utils/logger.js";
 import {
   FormProvider,
   RHFSelect,
@@ -64,12 +65,12 @@ export default function PrevAcademic() {
       try {
         const userId = menteeId || user?._id;
         if (!userId) {
-          console.error('No userId available for fetching data');
+          logger.error('No userId available for fetching data');
           return;
         }
         
         const response = await api.get(`/v1/academics/${userId}`);
-        console.log("Academic details response:", response.data);
+        logger.info("Academic details response:", response.data);
         
         const academicData = response.data.data?.academicDetails || response.data;
         
@@ -103,7 +104,7 @@ export default function PrevAcademic() {
           }
         }
       } catch (error) {
-        console.error("Error fetching academic details:", error);
+        logger.error("Error fetching academic details:", error);
         // if (error.response?.status !== 404) {
         //   enqueueSnackbar("Failed to load academic details", { variant: "error" });
         // }
@@ -141,14 +142,14 @@ export default function PrevAcademic() {
         userId
       };
       
-      console.log("Submitting academic data:", formData);
+      logger.info("Submitting academic data:", formData);
       
       const response = await api.post("/v1/academics", formData);
-      console.log("Academic data response:", response.data);
+      logger.info("Academic data response:", response.data);
       
       enqueueSnackbar("Academic details saved successfully!", { variant: "success" });
     } catch (error) {
-      console.error("Error saving academic details:", error);
+      logger.error("Error saving academic details:", error);
       const errorMessage = error.response?.data?.message || error.message || "An error occurred while saving academic details";
       enqueueSnackbar(errorMessage, { variant: "error" });
     }
