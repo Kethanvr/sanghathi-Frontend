@@ -53,3 +53,4 @@ Example:
 - [2026-04-18-026-password-reset-email-ui-and-deliverability-hardening](./2026-04-18-026-password-reset-email-ui-and-deliverability-hardening.md)
 - [2026-04-18-027-mentees-fetch-stability-and-skeleton-rollout-phase1](./2026-04-18-027-mentees-fetch-stability-and-skeleton-rollout-phase1.md)
 - [2026-04-18-028-global-fetch-minimization-and-db-query-guardrails](./2026-04-18-028-global-fetch-minimization-and-db-query-guardrails.md)
+- [2026-04-18-029-hod-director-route-navigation-normalization](./2026-04-18-029-hod-director-route-navigation-normalization.md)

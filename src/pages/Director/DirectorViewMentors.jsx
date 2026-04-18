@@ -29,15 +29,23 @@ import ClearIcon from "@mui/icons-material/Clear";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Page from "../../components/Page";
 import api from "../../utils/axios";
+import { AuthContext } from "../../context/AuthContext";
 
 import logger from "../../utils/logger.js";
 function DirectorViewMentors() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useContext(AuthContext);
+  const routePrefix =
+    user?.roleName === "hod" || location.pathname.startsWith("/hod")
+      ? "/hod"
+      : "/director";
   const [mentors, setMentors] = useState([]);
   const [page, setPage] = useState(0);
   const rowsPerPageOptions = [10, 20, 25];
@@ -84,7 +92,7 @@ function DirectorViewMentors() {
   }, [getAllMentors]);
 
   const handleViewMentees = (mentor) => {
-    navigate(`/director/mentor/${mentor._id}/mentees`);
+    navigate(`${routePrefix}/mentor/${mentor._id}/mentees`);
   };
 
   const clearFilters = () => {
