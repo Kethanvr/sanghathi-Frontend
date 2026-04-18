@@ -50,7 +50,12 @@ export default function ChatSidebar() {
   useEffect(() => {
     const getConversations = async () => {
       try {
-        const { data } = await api.get("/private-conversations/");
+        const { data } = await api.get("/private-conversations/", {
+          params: {
+            page: 1,
+            limit: 100,
+          },
+        });
         const { conversations } = data.data;
         logger.info(conversations);
         setConversations(conversations);

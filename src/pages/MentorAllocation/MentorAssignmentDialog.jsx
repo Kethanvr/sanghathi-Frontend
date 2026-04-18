@@ -10,11 +10,13 @@ import {
   Box,
   Paper,
 } from "@mui/material";
+import { useSnackbar } from "notistack";
 import api from "../../utils/axios";
 import MentorSuggestionMenu from "./MentorSuggestionMenu";
 
 import logger from "../../utils/logger.js";
 const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
+  const { enqueueSnackbar } = useSnackbar();
   const [selectedMentor, setSelectedMentor] = useState({ name: "" }); // Initialize with empty name
   const [anchorEl, setAnchorEl] = useState(null);
   const [mentors, setMentors] = useState([]);
@@ -23,7 +25,15 @@ const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
   useEffect(() => {
     const fetchMentors = async () => {
       try {
-        const response = await api.get("/users?role=faculty");
+        const response = await api.get("/users", {
+          params: {
+            role: "faculty",
+            page: 1,
+            limit: 500,
+            fields: "_id,name,email",
+            includeProfiles: false,
+          },
+        });
         const { data } = response.data;
         setMentors(data.users);
       } catch (error) {

@@ -60,7 +60,12 @@ function DirectorViewMentors() {
 
   const getAllMentors = useCallback(async () => {
     try {
-      const response = await api.get("/mentors/mentors-with-mentees");
+      const response = await api.get("/mentors/mentors-with-mentees", {
+        params: {
+          page: 1,
+          limit: 500,
+        },
+      });
 
       if (response.data?.mentors) {
         setMentors(response.data.mentors);

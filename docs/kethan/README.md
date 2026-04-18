@@ -52,3 +52,4 @@ Example:
 - [2026-04-18-025-resend-forgot-password-and-template-standardization](./2026-04-18-025-resend-forgot-password-and-template-standardization.md)
 - [2026-04-18-026-password-reset-email-ui-and-deliverability-hardening](./2026-04-18-026-password-reset-email-ui-and-deliverability-hardening.md)
 - [2026-04-18-027-mentees-fetch-stability-and-skeleton-rollout-phase1](./2026-04-18-027-mentees-fetch-stability-and-skeleton-rollout-phase1.md)
+- [2026-04-18-028-global-fetch-minimization-and-db-query-guardrails](./2026-04-18-028-global-fetch-minimization-and-db-query-guardrails.md)

@@ -3,18 +3,28 @@ import api from "../utils/axios";
 
 import logger from "../utils/logger.js";
 export const useMeeting = () => {
-  const getAllMeetings = async () => {
+  const getAllMeetings = async ({ recipient } = {}) => {
     try {
-      const response = await api.get("/meetings");
-      const events = response.data.map((meeting) => ({
+      const response = await api.get("/meetings", {
+        params: {
+          page: 1,
+          limit: 300,
+          recipient,
+          fields: "_id,title,start,end,type",
+        },
+      });
+      const meetings = response.data?.meetings || [];
+      const events = meetings.map((meeting) => ({
         id: meeting._id,
         title: meeting.title,
         start: meeting.start,
         end: meeting.end,
         allDay: meeting.allDay,
       }));
+      return events;
     } catch (error) {
       logger.error(error);
+      return [];
     }
   };
 
