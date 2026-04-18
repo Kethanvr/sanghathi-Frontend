@@ -42,3 +42,4 @@ Example:
 - [2026-04-18-015-root-level-script-migration](./2026-04-18-015-root-level-script-migration.md)
 - [2026-04-18-016-atlas-only-backup-and-tsconfig-fix](./2026-04-18-016-atlas-only-backup-and-tsconfig-fix.md)
 - [2026-04-18-017-backend-start-fix-bun-migration-and-account-dashboard-inventory](./2026-04-18-017-backend-start-fix-bun-migration-and-account-dashboard-inventory.md)
+- [2026-04-18-018-demo-account-links-and-readme-log-sync](./2026-04-18-018-demo-account-links-and-readme-log-sync.md)
