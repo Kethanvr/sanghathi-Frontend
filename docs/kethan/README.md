@@ -61,3 +61,4 @@ Example:
 - [2026-04-18-034-phase3-admin-data-and-profile-form-responsive-hardening](./2026-04-18-034-phase3-admin-data-and-profile-form-responsive-hardening.md)
 - [2026-04-18-035-phase3-student-profile-wrapper-and-companion-mobile-consistency](./2026-04-18-035-phase3-student-profile-wrapper-and-companion-mobile-consistency.md)
 - [2026-04-18-036-phase3-tyl-scorecard-mobile-shell-unification](./2026-04-18-036-phase3-tyl-scorecard-mobile-shell-unification.md)
+- [2026-04-19-040-admin-upload-history-restore-workflow](./2026-04-19-040-admin-upload-history-restore-workflow.md)
