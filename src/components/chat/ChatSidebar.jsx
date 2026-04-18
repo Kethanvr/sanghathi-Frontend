@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Box, Stack } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 import Scrollbar from "../Scrollbar";
 import ChatConversationList from "./ChatConversationList";
 import ChatContext from "../../context/ChatContext";
@@ -10,7 +9,7 @@ import { TextField, InputAdornment } from "@mui/material";
 import { Search } from "@mui/icons-material";
 
 import logger from "../../utils/logger.js";
-const ChatSearchBar = ({ onSearch }) => {
+const ChatSearchBar = ({ onSearch = () => {} }) => {
   const [searchValue, setSearchValue] = useState("");
 
   const handleSearch = (event) => {
@@ -40,7 +39,6 @@ const ChatSearchBar = ({ onSearch }) => {
 };
 
 export default function ChatSidebar() {
-  const theme = useTheme();
   const { conversations, currentChat, joinChat, leaveChat, setConversations } =
     useContext(ChatContext);
 
@@ -67,10 +65,6 @@ export default function ChatSidebar() {
     getConversations();
   }, []);
 
-  const handleSearchTermChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
   useEffect(() => {
     const filtered = conversations.filter((conversation) =>
       conversation.participants.some(
@@ -85,12 +79,18 @@ export default function ChatSidebar() {
   }, [conversations, searchTerm]);
 
   return (
-    <Box sx={{ py: 2, px: 3 }}>
-      <Stack direction="column">
-        <Box sx={{ width: "100%", mt: 2, mb: 2 }}>
-          <ChatSearchBar />
+    <Box
+      sx={{
+        py: { xs: 1.5, sm: 2 },
+        px: { xs: 1.5, sm: 3 },
+        height: "100%",
+      }}
+    >
+      <Stack direction="column" sx={{ height: "100%", minHeight: 0 }}>
+        <Box sx={{ width: "100%", mt: 1, mb: 1.5 }}>
+          <ChatSearchBar onSearch={setSearchTerm} />
         </Box>
-        <Scrollbar>
+        <Scrollbar sx={{ flexGrow: 1, minHeight: 0 }}>
           {searchTerm.length > 0 && filteredConversations.length > 0 && (
             <ChatConversationList
               conversations={filteredConversations}

@@ -70,16 +70,26 @@ const ThreadHeader = ({ thread, onCloseThread, currentUser }) => {
     <Box
       sx={{
         display: "flex",
+        flexDirection: { xs: "column", sm: "row" },
         justifyContent: "space-between",
-        alignItems: "center",
+        alignItems: { xs: "flex-start", sm: "center" },
+        gap: 1.5,
         mb: 2,
       }}
     >
       <Box>
-        <Typography variant="h4" sx={{ fontWeight: "bold", mb: 1 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: "bold",
+            mb: 1,
+            fontSize: { xs: "1.35rem", sm: "2rem" },
+            lineHeight: 1.2,
+          }}
+        >
           {thread.title}
         </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", mt: 1, flexWrap: "wrap", rowGap: 0.8 }}>
           <Typography
             variant="subtitle2"
             sx={{
@@ -116,7 +126,7 @@ const ThreadHeader = ({ thread, onCloseThread, currentUser }) => {
           </Typography>
         </Box>
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center" }}>
+      <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: 0.8 }}>
         {getDisplayParticipants().map((participant, idx) => {
           const participantAvatarSrc = getAvatarSrc(participant);
 
@@ -129,7 +139,7 @@ const ThreadHeader = ({ thread, onCloseThread, currentUser }) => {
             <Avatar
               src={participantAvatarSrc || undefined}
               sx={{
-                ml: idx === 0 ? 0 : -1,
+                ml: idx === 0 ? 0 : { xs: -0.75, sm: -1 },
                 zIndex: 100 - idx,
                 width: 36,
                 height: 36,
@@ -161,7 +171,7 @@ const ThreadHeader = ({ thread, onCloseThread, currentUser }) => {
         {/* "Mark as closed" option remains unchanged */}
         {thread.status === "open" &&
           thread.participants[0]._id === currentUser._id && (
-            <Box sx={{ ml: 2 }}>
+            <Box sx={{ ml: { xs: 0.75, sm: 2 } }}>
               <IconButton onClick={handleClick}>
                 <MoreVertIcon />
               </IconButton>
@@ -279,10 +289,20 @@ export default function ThreadWindow() {
 
   return (
     <Page title="Thread">
-      <Container maxWidth="xl" sx={{ overflowX: "hidden", overflowY: "auto" }}>
-        <Card sx={{ height: "90vh", display: "flex", flexShrink: 0 }}>
-          <Stack sx={{ flexGrow: 1, minWidth: "1px" }}>
-            <Box sx={{ p: 2 }}>
+      <Container
+        maxWidth="xl"
+        sx={{ px: { xs: 1.5, sm: 3 }, overflowX: "hidden", overflowY: "auto" }}
+      >
+        <Card
+          sx={{
+            height: { xs: "calc(100vh - 140px)", sm: "80vh" },
+            minHeight: { xs: 520, sm: 620 },
+            display: "flex",
+            overflow: "hidden",
+          }}
+        >
+          <Stack sx={{ flexGrow: 1, minWidth: "1px", minHeight: 0 }}>
+            <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
               {thread && (
                 <ThreadHeader
                   thread={thread}
@@ -298,6 +318,7 @@ export default function ThreadWindow() {
                 display: "flex",
                 overflow: "hidden",
                 minWidth: "0",
+                minHeight: 0,
               }}
             >
               {isLoading ? (
@@ -312,7 +333,7 @@ export default function ThreadWindow() {
                   <CircularProgress />
                 </Box>
               ) : (
-                <Stack sx={{ flexGrow: 1, flexShrink: 0 }}>
+                <Stack sx={{ flexGrow: 1, minHeight: 0 }}>
                   {thread && (
                     <>
                       <MessageList conversation={thread} messages={messages} />

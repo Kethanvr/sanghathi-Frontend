@@ -1,6 +1,20 @@
 import axios from "axios";
+import {
+  startGlobalLoading,
+  stopGlobalLoading,
+} from "./globalLoadingBus";
 
 import logger from "./logger.js";
+
+const GLOBAL_LOADER_FLAG = "__globalLoaderTracked";
+const shouldTrackGlobalLoader = (config) => !config?.skipGlobalLoader;
+
+const stopLoadingIfTracked = (config) => {
+  if (config?.[GLOBAL_LOADER_FLAG]) {
+    stopGlobalLoading();
+  }
+};
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
@@ -9,6 +23,11 @@ const api = axios.create({
 // Add a request interceptor
 api.interceptors.request.use(
   (config) => {
+    if (shouldTrackGlobalLoader(config)) {
+      config[GLOBAL_LOADER_FLAG] = true;
+      startGlobalLoading();
+    }
+
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -16,14 +35,20 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    stopLoadingIfTracked(error?.config);
     return Promise.reject(error);
   }
 );
 
 // Add a response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    stopLoadingIfTracked(response?.config);
+    return response;
+  },
   (error) => {
+    stopLoadingIfTracked(error?.config);
+
     const status = error.response?.status;
 
     if (status === 401 && typeof window !== "undefined") {

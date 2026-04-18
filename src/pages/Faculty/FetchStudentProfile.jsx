@@ -29,10 +29,12 @@ import {
   getAvatarSrc,
   getAvatarFallbackText,
 } from "../../utils/avatarResolver";
+import useResponsive from "../../hooks/useResponsive";
 
 const MenteesList = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === "light";
+  const isMobile = useResponsive("down", "sm");
   const { user } = useContext(AuthContext);
   const mentorId = user?._id;
   const { mentees, loading, error } = useMenteesData(mentorId, {
@@ -63,7 +65,7 @@ const MenteesList = () => {
           sx={{
             borderBottom: 1,
             borderColor: "divider",
-            px: 3,
+            px: { xs: 2, sm: 3 },
             py: 2,
           }}
         >
@@ -77,9 +79,9 @@ const MenteesList = () => {
           </Stack>
         </Box>
 
-        <CardContent>
-          <TableContainer component={Paper} elevation={0}>
-            <Table>
+        <CardContent sx={{ px: { xs: 1.5, sm: 3 } }}>
+          <TableContainer component={Paper} elevation={0} sx={{ overflowX: "auto" }}>
+            <Table sx={{ minWidth: { xs: 760, md: "100%" } }}>
               <TableHead
                 sx={{ backgroundColor: isLight ? theme.palette.grey[100] : "#2a2d32" }}
               >
@@ -87,8 +89,12 @@ const MenteesList = () => {
                   <TableCell>Avatar</TableCell>
                   <TableCell>Name</TableCell>
                   <TableCell>USN</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Phone</TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
+                    Email
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
+                    Phone
+                  </TableCell>
                   <TableCell>Department</TableCell>
                   <TableCell>Semester</TableCell>
                   <TableCell align="center">Actions</TableCell>
@@ -144,8 +150,12 @@ const MenteesList = () => {
                         <TableCell sx={{ color: theme.palette.text.primary }}>
                           {mentee.profile?.usn || "N/A"}
                         </TableCell>
-                        <TableCell sx={{ color: theme.palette.text.primary }}>{mentee.email}</TableCell>
-                        <TableCell sx={{ color: theme.palette.text.primary }}>{mentee.phone}</TableCell>
+                        <TableCell sx={{ color: theme.palette.text.primary, display: { xs: "none", sm: "table-cell" } }}>
+                          {mentee.email}
+                        </TableCell>
+                        <TableCell sx={{ color: theme.palette.text.primary, display: { xs: "none", md: "table-cell" } }}>
+                          {mentee.phone}
+                        </TableCell>
                         <TableCell sx={{ color: theme.palette.text.primary }}>
                           <Chip
                             label={mentee.profile?.department || "N/A"}
@@ -165,8 +175,9 @@ const MenteesList = () => {
                           <Button
                             variant="contained"
                             color={isLight ? "primary" : "info"}
-                            size="small"
+                            size={isMobile ? "small" : "medium"}
                             startIcon={<PersonIcon />}
+                            sx={{ whiteSpace: "nowrap", px: { xs: 1.25, sm: 1.75 } }}
                             onClick={() => navigate(`/faculty/mentee-profile/${mentee._id}`)}
                           >
                             View Dashboard
