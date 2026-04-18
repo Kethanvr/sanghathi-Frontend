@@ -29,6 +29,7 @@ import {
   CardContent,
   InputAdornment,
   alpha,
+  useMediaQuery,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -48,6 +49,7 @@ import logger from "../../utils/logger.js";
 function UserList({ onEdit }) {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const isSmDown = useMediaQuery(theme.breakpoints.down("sm"));
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -207,14 +209,6 @@ function UserList({ onEdit }) {
     setAnchorEl(null);
   };
 
-  const handleSelectAll = (event) => {
-    if (event.target.checked) {
-      setSelectedUsers(users.map(user => user._id));
-    } else {
-      setSelectedUsers([]);
-    }
-  };
-
   const handleSelectUser = (userId) => {
     setSelectedUsers(prev => {
       if (prev.includes(userId)) {
@@ -233,8 +227,10 @@ function UserList({ onEdit }) {
   };
 
   const filteredUsers = users.filter((user) => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const userName = user.name || "";
+    const userEmail = user.email || "";
+    const matchesSearch = userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         userEmail.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesRole = filterRole === "all" || user.roleName === filterRole;
     const matchesDepartment = filterDepartment === "all" || user.department === filterDepartment;
@@ -247,6 +243,26 @@ function UserList({ onEdit }) {
   const uniqueSemesters = ["all", ...new Set(users.map(user => user.sem).filter(Boolean))];
   const uniqueRoles = ["all", ...new Set(users.map(user => user.roleName).filter(Boolean))];
 
+  const selectedFilteredCount = filteredUsers.filter((filteredUser) =>
+    selectedUsers.includes(filteredUser._id)
+  ).length;
+
+  const allFilteredSelected =
+    filteredUsers.length > 0 && selectedFilteredCount === filteredUsers.length;
+  const someFilteredSelected =
+    selectedFilteredCount > 0 && selectedFilteredCount < filteredUsers.length;
+
+  const handleSelectAll = (event) => {
+    if (event.target.checked) {
+      const filteredIds = filteredUsers.map((filteredUser) => filteredUser._id);
+      setSelectedUsers((prev) => Array.from(new Set([...prev, ...filteredIds])));
+      return;
+    }
+
+    const filteredIdSet = new Set(filteredUsers.map((filteredUser) => filteredUser._id));
+    setSelectedUsers((prev) => prev.filter((id) => !filteredIdSet.has(id)));
+  };
+
   return (
     <Card>
       <Box 
@@ -255,15 +271,17 @@ function UserList({ onEdit }) {
           borderColor: 'divider',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          px: 3,
-          py: 2
+          alignItems: { xs: "flex-start", sm: "center" },
+          flexDirection: { xs: "column", sm: "row" },
+          gap: { xs: 1.5, sm: 0 },
+          px: { xs: 2, sm: 3 },
+          py: 2,
         }}
       >
         <Typography variant="h6" component="h1" sx={{ fontWeight: 500 }}>
           View Users
         </Typography>
-        <Stack direction="row" spacing={1}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
           <Button
             variant="contained"
             color="error"
@@ -271,6 +289,7 @@ function UserList({ onEdit }) {
             onClick={() => setOpenDialog(true)}
             startIcon={<DeleteIcon />}
             size="small"
+            fullWidth={isSmDown}
           >
             Delete Selected ({selectedUsers.length})
           </Button>
@@ -279,6 +298,7 @@ function UserList({ onEdit }) {
             onClick={() => setShowFilters(!showFilters)}
             startIcon={<FilterListIcon />}
             size="small"
+            fullWidth={isSmDown}
           >
             {showFilters ? "Hide Filters" : "Show Filters"}
           </Button>
@@ -286,7 +306,7 @@ function UserList({ onEdit }) {
       </Box>
       <CardContent>
         <Stack spacing={2}>
-          <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
             <TextField
               fullWidth
               placeholder="Search users..."
@@ -306,11 +326,12 @@ function UserList({ onEdit }) {
                 variant="text"
                 onClick={clearFilters}
                 startIcon={<ClearIcon />}
+                sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}
               >
                 Clear Filters
               </Button>
             )}
-          </Box>
+          </Stack>
 
           {showFilters && (
             <Box sx={{ 
@@ -318,11 +339,12 @@ function UserList({ onEdit }) {
               backgroundColor: isLight ? alpha(theme.palette.primary.main, 0.05) : alpha(theme.palette.info.main, 0.05),
               borderRadius: 1
             }}>
-              <Stack direction="row" spacing={2}>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
                 <Select
                   value={filterRole}
                   onChange={(e) => setFilterRole(e.target.value)}
-                  sx={{ minWidth: 150 }}
+                  size="small"
+                  sx={{ minWidth: { xs: "100%", sm: 150 } }}
                 >
                   {uniqueRoles.map((role) => (
                     <MenuItem key={role} value={role}>
@@ -333,7 +355,8 @@ function UserList({ onEdit }) {
                 <Select
                   value={filterDepartment}
                   onChange={(e) => setFilterDepartment(e.target.value)}
-                  sx={{ minWidth: 150 }}
+                  size="small"
+                  sx={{ minWidth: { xs: "100%", sm: 150 } }}
                 >
                   {uniqueDepartments.map((dept) => (
                     <MenuItem key={dept} value={dept}>
@@ -344,7 +367,8 @@ function UserList({ onEdit }) {
                 <Select
                   value={filterSemester}
                   onChange={(e) => setFilterSemester(e.target.value)}
-                  sx={{ minWidth: 150 }}
+                  size="small"
+                  sx={{ minWidth: { xs: "100%", sm: 150 } }}
                 >
                   {uniqueSemesters.map((sem) => (
                     <MenuItem key={sem} value={sem}>
@@ -356,23 +380,23 @@ function UserList({ onEdit }) {
             </Box>
           )}
 
-          <TableContainer component={Paper}>
-            <Table>
+          <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+            <Table sx={{ minWidth: { xs: 840, md: "100%" } }}>
               <TableHead sx={{ backgroundColor: alpha(tableHeaderColor, 0.1) }}>
                 <TableRow>
                   <TableCell padding="checkbox">
                     <Checkbox
-                      checked={selectedUsers.length === filteredUsers.length}
-                      indeterminate={selectedUsers.length > 0 && selectedUsers.length < filteredUsers.length}
+                      checked={allFilteredSelected}
+                      indeterminate={someFilteredSelected}
                       onChange={handleSelectAll}
                     />
                   </TableCell>
                   <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Phone</TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Email</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Phone</TableCell>
                   <TableCell>Role</TableCell>
-                  <TableCell>Department</TableCell>
-                  <TableCell>Semester</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Department</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Semester</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -442,8 +466,8 @@ function UserList({ onEdit }) {
                             </Box>
                           </Box>
                         </TableCell>
-                        <TableCell>{user.email || "N/A"}</TableCell>
-                        <TableCell>{user.phone || "N/A"}</TableCell>
+                        <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>{user.email || "N/A"}</TableCell>
+                        <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{user.phone || "N/A"}</TableCell>
                         <TableCell>
                           <Chip
                             label={user.roleName || "N/A"}
@@ -458,8 +482,8 @@ function UserList({ onEdit }) {
                             }}
                           />
                         </TableCell>
-                        <TableCell>{user.department || "N/A"}</TableCell>
-                        <TableCell>{user.sem || "N/A"}</TableCell>
+                        <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{user.department || "N/A"}</TableCell>
+                        <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{user.sem || "N/A"}</TableCell>
                         <TableCell>
                           <IconButton onClick={(event) => handleClick(event, user)}>
                             <MoreVertIcon />
@@ -498,7 +522,7 @@ function UserList({ onEdit }) {
             <Box
               sx={{
                 display: "flex",
-                justifyContent: "flex-end",
+                justifyContent: { xs: "center", sm: "flex-end" },
                 alignItems: "center",
                 padding: "8px",
               }}
@@ -511,6 +535,7 @@ function UserList({ onEdit }) {
                 page={page}
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
+                labelRowsPerPage={isSmDown ? "Rows" : "Rows per page:"}
               />
             </Box>
           </TableContainer>

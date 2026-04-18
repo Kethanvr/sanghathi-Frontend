@@ -1,24 +1,33 @@
 import { useState, useEffect, useContext, useCallback } from "react";
 import { useSearchParams } from 'react-router-dom';
 import {
+  Alert,
   Box,
+  Container,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Select,
-  MenuItem,
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 import useStudentSemester from "../../hooks/useStudentSemester";
+import api from "../../utils/axios";
 
 import logger from "../../utils/logger.js";
-const BASE_URL = import.meta.env.VITE_API_URL;
 const Attendance = () => {
   const { user } = useContext(AuthContext);
+  const theme = useTheme();
+  const isSmDown = useMediaQuery(theme.breakpoints.down("sm"));
   const [searchParams] = useSearchParams();
   const { semester: studentSemester, loading: semesterLoading } = useStudentSemester();
   const [attendanceData, setAttendanceData] = useState([]);
@@ -36,15 +45,19 @@ const Attendance = () => {
 
     try {
       // Get menteeId from URL params if viewing as faculty
-      const menteeId = searchParams.get('menteeId') || user._id;
+      const menteeId = searchParams.get('menteeId') || user?._id;
+
+      if (!menteeId) {
+        setError("User not authenticated or mentee ID not provided.");
+        setLoading(false);
+        return;
+      }
       
       logger.info("Fetching attendance for ID:", menteeId); // Debug log
       
       // Fetch student info (optional - don't fail if this errors)
       try {
-        const userResponse = await axios.get(
-          `${BASE_URL}/users/${menteeId}`
-        );
+        const userResponse = await api.get(`/users/${menteeId}`);
         
         if (userResponse.data?.data?.user) {
           setStudentInfo({
@@ -63,9 +76,7 @@ const Attendance = () => {
         }
       }
       
-      const response = await axios.get(
-        `${BASE_URL}/students/attendance/${menteeId}`
-      );
+      const response = await api.get(`/students/attendance/${menteeId}`);
       
       logger.info("Attendance API response:", response.data); // Debug log
       
@@ -89,7 +100,7 @@ const Attendance = () => {
       setError("Failed to fetch attendance data");
       setLoading(false);
     }
-  }, [semesterLoading, searchParams, user._id, studentSemester]);
+  }, [semesterLoading, searchParams, user, studentSemester]);
 
   useEffect(() => {
     fetchAttendance();
@@ -202,30 +213,43 @@ const Attendance = () => {
     };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <h1 sx={{ textAlign: "center", mb: 2 }}>Attendance Report</h1>
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+      <Typography
+        variant={isSmDown ? "h5" : "h4"}
+        component="h1"
+        gutterBottom
+        align="center"
+      >
+        Attendance Report
+      </Typography>
       {studentInfo.usn && (
-        <Box sx={{ mb: 2, display: 'flex', gap: 2, justifyContent: 'center' }}>
-          <strong>USN:</strong> {studentInfo.usn}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={{ xs: 0.5, sm: 2 }}
+          sx={{ mb: 2, alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "center" }}
+        >
+          <Typography variant="body2"><strong>USN:</strong> {studentInfo.usn}</Typography>
           {studentInfo.name && (
-            <>
-              <strong>Name:</strong> {studentInfo.name}
-            </>
+            <Typography variant="body2"><strong>Name:</strong> {studentInfo.name}</Typography>
           )}
           {selectedSemester && (
-            <>
-              <strong>Semester:</strong> {selectedSemester}
-            </>
+            <Typography variant="body2"><strong>Semester:</strong> {selectedSemester}</Typography>
           )}
-        </Box>
+        </Stack>
       )}
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-        <label>
-          Select Semester:
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={1.5}
+        sx={{ mb: 2, alignItems: { xs: "stretch", sm: "center" }, justifyContent: "center" }}
+      >
+        <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 220 } }}>
+          <InputLabel id="attendance-semester-select-label">Semester</InputLabel>
           <Select
-            value={selectedSemester}
+            labelId="attendance-semester-select-label"
+            value={selectedSemester ?? ""}
             onChange={handleSemesterChange}
-            sx={{ ml: 1 }}
+            label="Semester"
+            displayEmpty
           >
             {attendanceData.map((sem) => (
               <MenuItem key={sem.semester} value={sem.semester}>
@@ -233,14 +257,14 @@ const Attendance = () => {
               </MenuItem>
             ))}
           </Select>
-        </label>
-        <Box sx={{ ml: 2 }}>
-          <label>
-            Select Month:
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 220 } }}>
+          <InputLabel id="attendance-month-select-label">Month</InputLabel>
             <Select
+              labelId="attendance-month-select-label"
               value={selectedMonth}
               onChange={handleMonthChange}
-              sx={{ ml: 1 }}
+              label="Month"
             >
               {getAvailableMonths().map((month) => (
                 <MenuItem key={month} value={month}>
@@ -248,11 +272,24 @@ const Attendance = () => {
                 </MenuItem>
               ))}
             </Select>
-          </label>
-        </Box>
-      </Box>
-      <TableContainer sx={{ border: "1px solid gray" }}>
-        <Table>
+        </FormControl>
+      </Stack>
+
+      {loading && (
+        <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>
+          Loading attendance data...
+        </Typography>
+      )}
+
+      {!loading && error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {!loading && !error && (
+        <TableContainer sx={{ border: "1px solid gray", overflowX: "auto" }}>
+          <Table sx={{ minWidth: { xs: 720, md: "100%" } }}>
           <TableHead>
             <TableRow>
               <TableCell sx={{ border: "1px solid gray" }}>
@@ -270,7 +307,14 @@ const Attendance = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {getSubjectsForSemester().map((subject, index) => (
+            {getSubjectsForSemester().length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} align="center" sx={{ border: "1px solid gray", py: 3 }}>
+                  No attendance data available for the selected filters.
+                </TableCell>
+              </TableRow>
+            ) : (
+              getSubjectsForSemester().map((subject, index) => (
                 <TableRow key={`${subject.subjectName}-${index}`}>
                   <TableCell sx={{ border: "1px solid gray" }}>
                     {subject.subjectCode}
@@ -285,7 +329,8 @@ const Attendance = () => {
                     {getCumulativeAttendance(subject.subjectName, selectedSemester)}
                   </TableCell>
                 </TableRow>
-              ))}
+              ))
+            )}
             <TableRow sx={{ fontWeight: "bold" }}>
               <TableCell colSpan={2}>Overall Attendance</TableCell>
               <TableCell>
@@ -297,9 +342,10 @@ const Attendance = () => {
               <TableCell></TableCell>
             </TableRow>
           </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
+          </Table>
+        </TableContainer>
+      )}
+    </Container>
   );
 };
 
