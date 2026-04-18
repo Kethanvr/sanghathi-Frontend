@@ -5,6 +5,7 @@ import logger from "../utils/logger.js";
 const DEFAULT_SCOPE_ID = "default";
 const DEFAULT_DEBOUNCE_MS = 2500;
 const LOCAL_PREFIX = "sanghathi:draft";
+const SENSITIVE_FIELD_PATTERN = /(password|passcode|secret|token|otp|pin)/i;
 
 const buildLocalKey = ({ formType, scopeId }) =>
   `${LOCAL_PREFIX}:${formType}:${scopeId || DEFAULT_SCOPE_ID}`;
@@ -15,6 +16,43 @@ const safeParse = (value) => {
   } catch {
     return null;
   }
+};
+
+const isBrowserFile = (value) =>
+  typeof File !== "undefined" && value instanceof File;
+
+const isBrowserBlob = (value) =>
+  typeof Blob !== "undefined" && value instanceof Blob;
+
+const sanitizeDraftData = (value) => {
+  if (value === null || value === undefined) return value;
+
+  if (isBrowserFile(value) || isBrowserBlob(value)) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(sanitizeDraftData);
+  }
+
+  if (typeof value === "object") {
+    const sanitized = {};
+
+    Object.entries(value).forEach(([key, nestedValue]) => {
+      if (SENSITIVE_FIELD_PATTERN.test(key)) {
+        return;
+      }
+      sanitized[key] = sanitizeDraftData(nestedValue);
+    });
+
+    return sanitized;
+  }
+
+  return value;
 };
 
 const simpleChecksum = (raw) => {
@@ -33,6 +71,7 @@ export default function useDraftPersistence({
   reset,
   debounceMs = DEFAULT_DEBOUNCE_MS,
   enableServerSync = true,
+  enablePersistence = true,
 }) {
   const [syncState, setSyncState] = useState("idle");
   const [lastSavedAt, setLastSavedAt] = useState(null);
@@ -91,12 +130,19 @@ export default function useDraftPersistence({
 
   useEffect(() => {
     const localRaw = localStorage.getItem(localKey);
-    const localDraft = safeParse(localRaw);
+    const parsedLocalDraft = safeParse(localRaw);
+    const localDraft = parsedLocalDraft?.draftData
+      ? {
+          ...parsedLocalDraft,
+          draftData: sanitizeDraftData(parsedLocalDraft.draftData),
+        }
+      : parsedLocalDraft;
 
     if (localDraft?.draftData && typeof reset === "function") {
       reset(localDraft.draftData);
       setHasLocalDraft(true);
       setLastSavedAt(localDraft.updatedAt || null);
+      latestPayloadRef.current = localDraft;
     }
 
     const hydrateFromServer = async () => {
@@ -120,15 +166,18 @@ export default function useDraftPersistence({
         const localTime = new Date(localDraft?.updatedAt || 0).getTime();
 
         if (!localDraft || serverTime > localTime) {
-          reset(serverDraft.draftData);
+          const sanitizedServerDraftData = sanitizeDraftData(serverDraft.draftData);
+          reset(sanitizedServerDraftData);
           const syncedLocal = {
-            draftData: serverDraft.draftData,
+            draftData: sanitizedServerDraftData,
             version: serverDraft.version || 1,
             checksum: serverDraft.checksum || "",
             updatedAt: serverDraft.updatedAt || new Date().toISOString(),
           };
           saveLocal(syncedLocal);
           latestPayloadRef.current = syncedLocal;
+        } else {
+          latestPayloadRef.current = localDraft;
         }
       } catch (error) {
         logger.error("Draft server hydrate failed", error);
@@ -141,7 +190,9 @@ export default function useDraftPersistence({
   }, [enableServerSync, formType, localKey, reset, saveLocal, scopeId]);
 
   useEffect(() => {
-    if (!isHydrated || !formType || values === undefined) return;
+    if (!enablePersistence || !isHydrated || !formType || values === undefined) {
+      return;
+    }
 
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -149,12 +200,21 @@ export default function useDraftPersistence({
 
     timerRef.current = setTimeout(async () => {
       try {
+        const sanitizedValues = sanitizeDraftData(values);
+        const serialized = JSON.stringify(sanitizedValues);
+        const checksum = simpleChecksum(serialized);
+
+        if (latestPayloadRef.current?.checksum === checksum) {
+          setSyncState("synced");
+          return;
+        }
+
         setSyncState("saving-local");
-        const serialized = JSON.stringify(values);
+        const nextVersion = (latestPayloadRef.current?.version || 0) + 1;
         const payload = {
-          draftData: values,
-          version: 1,
-          checksum: simpleChecksum(serialized),
+          draftData: sanitizedValues,
+          version: nextVersion,
+          checksum,
           updatedAt: new Date().toISOString(),
         };
 
@@ -172,7 +232,15 @@ export default function useDraftPersistence({
         clearTimeout(timerRef.current);
       }
     };
-  }, [debounceMs, formType, isHydrated, saveLocal, syncToServer, values]);
+  }, [
+    debounceMs,
+    enablePersistence,
+    formType,
+    isHydrated,
+    saveLocal,
+    syncToServer,
+    values,
+  ]);
 
   return {
     syncState,

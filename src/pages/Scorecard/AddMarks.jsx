@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useMemo, useCallback } from "react";
 import {
   Box,
   Button,
@@ -18,6 +18,8 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { alpha, useTheme } from "@mui/material/styles";
+import useDraftPersistence from "../../hooks/useDraftPersistence";
+import { resolveDraftScopeId } from "../../utils/draftScope";
 import logger from "../../utils/logger.js";
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -30,6 +32,26 @@ const AddMarks = () => {
   const [success, setSuccess] = useState("");
   const [file, setFile] = useState(null);
   const token = localStorage.getItem("token");
+
+  const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
+
+  const restoreDraftState = useCallback((draftData = {}) => {
+    setError(typeof draftData.error === "string" ? draftData.error : "");
+    setSuccess(typeof draftData.success === "string" ? draftData.success : "");
+  }, []);
+
+  useDraftPersistence({
+    formType: "external-marks-upload",
+    scopeId: draftScopeId,
+    values: {
+      error,
+      success,
+      hasSelectedFile: Boolean(file),
+      isLoading: loading,
+    },
+    reset: restoreDraftState,
+    enableServerSync: false,
+  });
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];

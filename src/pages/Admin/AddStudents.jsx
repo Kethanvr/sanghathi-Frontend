@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useSnackbar } from "notistack";
 import Papa from 'papaparse';
 import { 
@@ -31,6 +31,8 @@ import {
 import api from "../../utils/axios";
 import { getUserSchema } from "../Users/UserForm";
 import { alpha, useTheme } from "@mui/material/styles";
+import useDraftPersistence from "../../hooks/useDraftPersistence";
+import { resolveDraftScopeId } from "../../utils/draftScope";
 
 import logger from "../../utils/logger.js";
 // Define role options with their related info
@@ -108,6 +110,36 @@ const AddStudents = () => {
   const [errorCount, setErrorCount] = useState(0);
   const [errors, setErrors] = useState([]);
   const [file, setFile] = useState(null);
+
+  const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
+
+  const restoreDraftState = useCallback((draftData = {}) => {
+    const nextRole = ROLES.some((role) => role.value === draftData.selectedRole)
+      ? draftData.selectedRole
+      : "student";
+
+    setSelectedRole(nextRole);
+    setSuccessCount(Number(draftData.successCount) || 0);
+    setErrorCount(Number(draftData.errorCount) || 0);
+    setErrors(Array.isArray(draftData.errors) ? draftData.errors : []);
+  }, []);
+
+  const persistedErrors = useMemo(() => errors.slice(0, 200), [errors]);
+
+  useDraftPersistence({
+    formType: "admin-user-bulk-upload",
+    scopeId: draftScopeId,
+    values: {
+      selectedRole,
+      successCount,
+      errorCount,
+      errors: persistedErrors,
+      hasSelectedFile: Boolean(file),
+      isProcessing: processing,
+    },
+    reset: restoreDraftState,
+    enableServerSync: false,
+  });
 
   // Get the color based on the current theme mode
   const activeColor = isLight ? theme.palette.primary.main : theme.palette.info.main;
