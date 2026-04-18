@@ -8,7 +8,6 @@ usage() {
 Usage: ./sanghathi-Frontend/scripts/backup-db-atlas.sh [options]
 
 Exports data from Atlas/source MongoDB into local backup files only.
-This script does NOT start or use a local MongoDB container.
 
 Examples:
   ./sanghathi-Frontend/scripts/backup-db-atlas.sh
@@ -16,7 +15,7 @@ Examples:
   ./sanghathi-Frontend/scripts/backup-db-atlas.sh --source-db cmrit --sample-size 200
 
 Options are forwarded to:
-  sanghathi-Backend/scripts/local-db-backup.mjs
+  sanghathi-Backend/scripts/atlas-db-backup.mjs
 USAGE
 }
 
@@ -24,9 +23,9 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   usage
   echo
   cd "$ROOT_DIR/sanghathi-Backend"
-  node scripts/local-db-backup.mjs --help
+  node scripts/atlas-db-backup.mjs --help
   exit 0
 fi
 
 cd "$ROOT_DIR/sanghathi-Backend"
-node scripts/local-db-backup.mjs --no-local-sync "$@"
+node scripts/atlas-db-backup.mjs "$@"

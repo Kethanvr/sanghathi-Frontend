@@ -39,3 +39,5 @@ Example:
 - [2026-04-13-012-website-improvement-priority-list](./2026-04-13-012-website-improvement-priority-list.md)
 - [2026-04-14-013-doc-sync-and-error-verification](./2026-04-14-013-doc-sync-and-error-verification.md)
 - [2026-04-18-014-cloudflare-atlas-backup-runbook](./2026-04-18-014-cloudflare-atlas-backup-runbook.md)
+- [2026-04-18-015-root-level-script-migration](./2026-04-18-015-root-level-script-migration.md)
+- [2026-04-18-016-atlas-only-backup-and-tsconfig-fix](./2026-04-18-016-atlas-only-backup-and-tsconfig-fix.md)
