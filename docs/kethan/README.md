@@ -49,3 +49,4 @@ Example:
 - [2026-04-18-022-global-progress-restore-expansion](./2026-04-18-022-global-progress-restore-expansion.md)
 - [2026-04-18-023-backend-p0-message-migration-execution](./2026-04-18-023-backend-p0-message-migration-execution.md)
 - [2026-04-18-024-message-cutover-and-one-to-one-unique-enforcement](./2026-04-18-024-message-cutover-and-one-to-one-unique-enforcement.md)
+- [2026-04-18-025-resend-forgot-password-and-template-standardization](./2026-04-18-025-resend-forgot-password-and-template-standardization.md)
