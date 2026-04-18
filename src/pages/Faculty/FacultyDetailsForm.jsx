@@ -254,45 +254,6 @@ export default function FacultyDetailsForm() {
     }
   };
 
-  const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.7) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          
-          // Calculate new dimensions
-          if (width > height) {
-            if (width > maxWidth) {
-              height = Math.round((height * maxWidth) / width);
-              width = maxWidth;
-            }
-          } else {
-            if (height > maxHeight) {
-              width = Math.round((width * maxHeight) / height);
-              height = maxHeight;
-            }
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          // Get the compressed base64 string
-          const dataUrl = canvas.toDataURL('image/jpeg', quality);
-          resolve(dataUrl);
-        };
-      };
-    });
-  };
-
   const handleDropAvatar = useCallback(
     async (acceptedFiles) => {
       const file = acceptedFiles[0];
@@ -313,9 +274,16 @@ export default function FacultyDetailsForm() {
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-      <Grid container spacing={2}>
+      <Grid container spacing={{ xs: 2, md: 3 }}>
         <Grid item xs={12} md={4}>
-          <Card sx={{ height: "100%", py: 10, px: 3, textAlign: "center" }}>
+          <Card
+            sx={{
+              height: "100%",
+              py: { xs: 4, sm: 7, md: 10 },
+              px: { xs: 2, sm: 3 },
+              textAlign: "center",
+            }}
+          >
             <RHFUploadAvatar
               name="facultyProfile.photo"
               accept="image/*"
@@ -330,8 +298,8 @@ export default function FacultyDetailsForm() {
           </Card>
         </Grid>
         <Grid item xs={12} md={8}>
-          <Card sx={{ p: 3 }}>
-            <Stack spacing={3} sx={{ mt: 3 }}>
+          <Card sx={{ p: { xs: 2, sm: 3 } }}>
+            <Stack spacing={{ xs: 2, sm: 3 }} sx={{ mt: { xs: 1, sm: 3 } }}>
               <RHFTextField
                 name="facultyProfile.fullName.firstName"
                 label="First Name"
@@ -383,9 +351,9 @@ export default function FacultyDetailsForm() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={12}>
-          <Card sx={{ p: 3 }}>
-            <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <Card sx={{ p: { xs: 2, sm: 3 } }}>
+            <Grid container spacing={{ xs: 2, md: 3 }}>
               <Grid item xs={12} md={6}>
                 <RHFTextField
                   name="facultyProfile.email"
@@ -513,12 +481,20 @@ export default function FacultyDetailsForm() {
                 </RHFSelect>
               </Grid>
             </Grid>
-            <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
-              <Box display="flex" gap={1}>
+            <Stack spacing={2} alignItems={{ xs: "stretch", sm: "flex-end" }} sx={{ mt: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  width: { xs: "100%", sm: "auto" },
+                  flexDirection: { xs: "column-reverse", sm: "row" },
+                }}
+              >
                 {import.meta.env.MODE === "development" && (
                   <LoadingButton
                     variant="outlined"
                     onClick={handleReset}
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
                   >
                     Reset
                   </LoadingButton>
@@ -527,6 +503,7 @@ export default function FacultyDetailsForm() {
                   type="submit"
                   variant="contained"
                   loading={isSubmitting}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Save
                 </LoadingButton>
