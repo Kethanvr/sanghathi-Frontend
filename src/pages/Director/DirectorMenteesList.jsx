@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
   Breadcrumbs,
   Link as MuiLink,
 } from "@mui/material";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useLocation, useNavigate, useParams, Link } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import PersonIcon from "@mui/icons-material/Person";
 import SchoolIcon from "@mui/icons-material/School";
@@ -28,6 +28,7 @@ import Page from "../../components/Page";
 import api from "../../utils/axios";
 import TableRowsSkeleton from "../../components/skeletons/TableRowsSkeleton";
 import useMenteesData from "../../hooks/useMenteesData";
+import { AuthContext } from "../../context/AuthContext";
 
 import logger from "../../utils/logger.js";
 
@@ -35,6 +36,12 @@ const DirectorMenteesList = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const { mentorId } = useParams();
+  const location = useLocation();
+  const { user } = useContext(AuthContext);
+  const routePrefix =
+    user?.roleName === "hod" || location.pathname.startsWith("/hod")
+      ? "/hod"
+      : "/director";
   const { mentees, loading, error } = useMenteesData(mentorId, {
     enabled: Boolean(mentorId),
   });
@@ -81,7 +88,7 @@ const DirectorMenteesList = () => {
             <Breadcrumbs>
               <MuiLink
                 component={Link}
-                to="/director/dashboard"
+                to={`${routePrefix}/dashboard`}
                 underline="hover"
                 color="inherit"
               >
@@ -89,7 +96,7 @@ const DirectorMenteesList = () => {
               </MuiLink>
               <MuiLink
                 component={Link}
-                to="/director/mentors"
+                to={`${routePrefix}/mentors`}
                 underline="hover"
                 color="inherit"
               >
@@ -110,7 +117,7 @@ const DirectorMenteesList = () => {
               <Button
                 variant="outlined"
                 startIcon={<ArrowBackIcon />}
-                onClick={() => navigate('/director/mentors')}
+                onClick={() => navigate(`${routePrefix}/mentors`)}
               >
                 Back to Mentors
               </Button>
@@ -200,7 +207,7 @@ const DirectorMenteesList = () => {
                           variant="contained"
                           color={isLight ? "primary" : "info"}
                           size="small"
-                          onClick={() => navigate(`/director/mentee-profile/${mentee._id}`)}
+                          onClick={() => navigate(`${routePrefix}/mentee-profile/${mentee._id}`)}
                           startIcon={<PersonIcon />}
                         >
                           View Dashboard
