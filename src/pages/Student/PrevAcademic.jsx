@@ -322,15 +322,14 @@ export default function PrevAcademic() {
   };
 
   return (
-    <div>
       <FormProvider
         methods={methods}
         onSubmit={handleSubmit(onSubmit)}
         disableAutoDraft
       >
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, md: 3 }}>
           <Grid item xs={12} md={12}>
-            <Card sx={{ p: 3 }}>
+            <Card sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h5" gutterBottom>Academic Background</Typography>
               <Divider sx={{ mb: 3 }} />
 
@@ -364,12 +363,13 @@ export default function PrevAcademic() {
                   )}
                 </Stack>
 
-                <Stack direction="row" spacing={1}>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
                   <LoadingButton
                     size="small"
                     variant="outlined"
                     onClick={forceSync}
                     loading={syncState === "syncing"}
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
                   >
                     Sync Now
                   </LoadingButton>
@@ -378,6 +378,7 @@ export default function PrevAcademic() {
                     variant="outlined"
                     onClick={handleCreateVersion}
                     loading={isSavingVersion}
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
                   >
                     Save Version
                   </LoadingButton>
@@ -391,6 +392,7 @@ export default function PrevAcademic() {
                         await fetchVersions();
                       }
                     }}
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
                   >
                     {isHistoryOpen ? "Hide History" : "View History"}
                   </Button>
@@ -492,7 +494,7 @@ export default function PrevAcademic() {
 
                 <FormControl component="fieldset" sx={{ gridColumn: "span 2" }}>
                   <FormLabel component="legend">Subjects</FormLabel>
-                  <FormGroup aria-label="position" row>
+                  <FormGroup aria-label="position" row sx={{ rowGap: 0.5, columnGap: 1 }}>
                     {PUC_SUBJECTS.map(subject => (
                       <FormControlLabel
                         key={subject}
@@ -541,11 +543,12 @@ export default function PrevAcademic() {
                 <RHFTextField name="diploma.collegeAddress" label="College Address" />
               </Box>
 
-              <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
+              <Stack spacing={2} alignItems={{ xs: "stretch", sm: "flex-end" }} sx={{ mt: 3 }}>
                 <LoadingButton
                   type="submit"
                   variant="contained"
                   loading={isSubmitting}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Save Changes
                 </LoadingButton>
@@ -554,6 +557,5 @@ export default function PrevAcademic() {
           </Grid>
         </Grid>
       </FormProvider>
-    </div>
   );
 }
