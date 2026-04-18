@@ -193,3 +193,34 @@ Implemented additional UX polish requested on thread and mentor-management flows
 - Frontend diagnostics on edited files: clean.
 - Frontend production build: passed (`bun run build`).
 - Backend tests: passed (`25/25`).
+
+# 10. Mentor Conversation + Campus Buddy UI Delta (2026-04-18)
+
+Implemented a targeted UI refresh for the faculty mentor-mentee conversation screen and Campus Buddy, plus dropdown UX consistency improvements.
+
+1. Mentor-mentee conversation page refresh (`/faculty/mentor-mentee-conversation/...`)
+- Reworked card surfaces and borders for better dark-theme compatibility (reduced odd bright/white visual contrast).
+- Improved visual hierarchy of the form and guidance panel.
+- Updated success/info/pro-tip callouts to theme-aware colors.
+
+2. Mentee dropdown with profile image
+- Enhanced `Select Mentee` field to display avatar + name + supporting details.
+- Selected value now also renders with avatar and contextual secondary text (USN/Semester where available).
+
+3. Thread creation dropdown consistency
+- Upgraded user selection UX in new thread dialog to avatar-rich autocomplete dropdown.
+- Options now show profile image + name (+ email when available).
+- Keeps selection flow cleaner and consistent with mentee dropdown presentation.
+
+4. Campus Buddy page message for active development
+- Added a visible “under active development” banner and info note at top of `/campus-buddy`.
+- Added styled feature preview chips and minor option button polish in chatbot CSS.
+
+5. Files updated in this delta
+- `sanghathi-Frontend/src/pages/MentorMentee/MentorMenteeConversation.jsx`
+- `sanghathi-Frontend/src/pages/Thread/NewThreadDialog.jsx`
+- `sanghathi-Frontend/src/mychatbot.jsx`
+
+6. Validation results
+- Edited-file diagnostics: clean.
+- Frontend production build: passed (`bun run build`).

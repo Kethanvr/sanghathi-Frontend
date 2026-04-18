@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSnackbar } from "notistack";
 import {
+  Autocomplete,
   Box,
   Button,
   Dialog,
@@ -12,14 +13,12 @@ import {
   InputLabel,
   List,
   ListItem,
-  ListItemAvatar,
   ListItemText,
   Select,
   TextField,
   Typography,
   MenuItem,
   Avatar,
-  useTheme,
 } from "@mui/material";
 import { Close, Search } from "@mui/icons-material";
 import {
@@ -37,10 +36,8 @@ const NewThreadDialog = ({
   onSave,
   colorMode = "primary",
 }) => {
-  const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredUsers, setFilteredUsers] = useState([]);
 
   const [newThreadData, setNewThreadData] = useState({
     title: "",
@@ -51,23 +48,20 @@ const NewThreadDialog = ({
 
   const TOPICS = ["general", "attendance", "performance", "well-being"];
 
+  const selectableUsers = users.filter(
+    (user) =>
+      user._id !== currentUser._id &&
+      !newThreadData.participants.some(
+        (participant) => participant._id === user._id
+      )
+  );
+
   const membersForDisplay =
     currentUser?.roleName === "faculty"
       ? newThreadData.participants.filter(
           (participant) => participant._id !== currentUser._id
         )
       : newThreadData.participants;
-
-  useEffect(() => {
-    if (searchTerm.trim()) {
-      const filtered = users.filter((user) =>
-        user.name.toLowerCase().includes(searchTerm.trim().toLowerCase())
-      );
-      setFilteredUsers(filtered);
-    } else {
-      setFilteredUsers([]);
-    }
-  }, [searchTerm, users]);
 
   const handleCloseDialog = () => {
     onClose();
@@ -78,15 +72,10 @@ const NewThreadDialog = ({
       participants: [{ _id: currentUser._id, name: currentUser.name }],
     });
     setSearchTerm("");
-    setFilteredUsers([]);
   };
 
   const handleNewThreadChange = (e) => {
     setNewThreadData({ ...newThreadData, [e.target.name]: e.target.value });
-  };
-
-  const handleSearchTermChange = (event) => {
-    setSearchTerm(event.target.value);
   };
 
   const handleAddMember = (member) => {
@@ -98,7 +87,6 @@ const NewThreadDialog = ({
     }
 
     setSearchTerm("");
-    setFilteredUsers([]);
   };
 
   const handleDeselectMember = (memberId) => {
@@ -177,47 +165,84 @@ const NewThreadDialog = ({
             </Select>
           </Box>
           <Box sx={{ py: 1 }}>
-            <TextField
-              label="Search user"
-              value={searchTerm}
-              onChange={handleSearchTermChange}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton color={colorMode}>
-                      <Search />
-                    </IconButton>
-                  </InputAdornment>
-                ),
+            <Autocomplete
+              value={null}
+              options={selectableUsers}
+              getOptionLabel={(option) => option?.name || ""}
+              inputValue={searchTerm}
+              onInputChange={(_event, newInputValue) => {
+                setSearchTerm(newInputValue);
               }}
-              fullWidth
-              color={colorMode}
+              onChange={(_event, selectedUser) => {
+                if (selectedUser) {
+                  handleAddMember(selectedUser);
+                }
+              }}
+              filterOptions={(options, state) => {
+                const normalized = state.inputValue.trim().toLowerCase();
+                if (!normalized) {
+                  return options;
+                }
+
+                return options.filter((user) =>
+                  `${user.name || ""} ${user.email || ""}`
+                    .toLowerCase()
+                    .includes(normalized)
+                );
+              }}
+              noOptionsText={
+                searchTerm.trim()
+                  ? "No matching users found"
+                  : "Start typing to search users"
+              }
+              renderOption={(props, option) => {
+                const optionAvatarSrc = getAvatarSrc(option);
+
+                return (
+                  <Box component="li" {...props} key={option._id}>
+                    <Avatar
+                      src={optionAvatarSrc || undefined}
+                      alt={option.name}
+                      sx={{ width: 30, height: 30, mr: 1.2 }}
+                    >
+                      {!optionAvatarSrc
+                        ? getAvatarFallbackText(option.name)
+                        : null}
+                    </Avatar>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {option.name}
+                      </Typography>
+                      {option.email ? (
+                        <Typography variant="caption" color="text.secondary">
+                          {option.email}
+                        </Typography>
+                      ) : null}
+                    </Box>
+                  </Box>
+                );
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Search user"
+                  color={colorMode}
+                  helperText="Select users from the dropdown"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton color={colorMode} edge="end" tabIndex={-1}>
+                          <Search />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              )}
             />
           </Box>
         </Box>
-
-        <List>
-          {filteredUsers.map((user) => {
-            const userAvatarSrc = getAvatarSrc(user);
-
-            return (
-              <ListItem
-                key={user._id}
-                onClick={() => handleAddMember(user)}
-                sx={{
-                  "&:hover": { backgroundColor: theme.palette.action.hover },
-                }}
-              >
-                <ListItemAvatar>
-                  <Avatar alt={user.name} src={userAvatarSrc || undefined}>
-                    {!userAvatarSrc ? getAvatarFallbackText(user.name) : null}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText primary={user.name} />
-              </ListItem>
-            );
-          })}
-        </List>
 
         <Typography variant="subtitle1" mt={2}>
           Members:

@@ -17,7 +17,9 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Avatar,
 } from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
 import {
   CheckCircleOutline,
   InfoOutlined,
@@ -26,10 +28,19 @@ import { useSnackbar } from "notistack";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../utils/axios";
 import useMenteesData from "../../hooks/useMenteesData";
+import {
+  getAvatarSrc,
+  getAvatarFallbackText,
+} from "../../utils/avatarResolver";
 
 import logger from "../../utils/logger.js";
 
 const MentorMenteeConversation = () => {
+  const theme = useTheme();
+  const isLight = theme.palette.mode === "light";
+  const accentColor = isLight
+    ? theme.palette.primary.main
+    : theme.palette.info.main;
   const { user } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
   const [selectedStudent, setSelectedStudent] = useState("");
@@ -217,12 +228,29 @@ const MentorMenteeConversation = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 6 }}>
+    <Container maxWidth="lg" sx={{ mt: { xs: 2, md: 4 }, pb: 3 }}>
       <Grid container spacing={3}>
         {/* Left Side - Form */}
         <Grid item xs={12} md={7}>
-          <Paper sx={{ p: 4, borderRadius: 3 }}>
-            <Typography variant="h5" gutterBottom align="center">
+          <Paper
+            sx={{
+              p: { xs: 2.5, md: 3.5 },
+              borderRadius: 3,
+              border: `1px solid ${alpha(accentColor, 0.24)}`,
+              bgcolor: isLight
+                ? alpha(theme.palette.background.paper, 0.96)
+                : alpha(theme.palette.background.paper, 0.86),
+              boxShadow: isLight
+                ? "0 10px 28px rgba(15, 23, 42, 0.08)"
+                : "0 12px 30px rgba(2, 6, 23, 0.5)",
+            }}
+          >
+            <Typography
+              variant="h5"
+              gutterBottom
+              align="center"
+              sx={{ fontWeight: 700, color: "text.primary" }}
+            >
               Mentor-Mentee Conversation (Offline)
             </Typography>
 
@@ -238,12 +266,85 @@ const MentorMenteeConversation = () => {
                 sx={{ mb: 3 }}
                 disabled={mentees.length === 0}
                 helperText={mentees.length === 0 ? "No mentees assigned to you" : ""}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (selectedValue) => {
+                    if (!selectedValue) {
+                      return "Select Mentee";
+                    }
+
+                    const selectedMentee = mentees.find(
+                      (mentee) => mentee._id === selectedValue
+                    );
+
+                    if (!selectedMentee) {
+                      return "Select Mentee";
+                    }
+
+                    const selectedAvatarSrc = getAvatarSrc(selectedMentee);
+                    return (
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+                        <Avatar
+                          src={selectedAvatarSrc || undefined}
+                          alt={selectedMentee.name}
+                          sx={{ width: 28, height: 28 }}
+                        >
+                          {!selectedAvatarSrc
+                            ? getAvatarFallbackText(selectedMentee.name)
+                            : null}
+                        </Avatar>
+                        <Box sx={{ lineHeight: 1.15 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {selectedMentee.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {selectedMentee?.profile?.usn
+                              ? `USN: ${selectedMentee.profile.usn}`
+                              : selectedMentee?.profile?.sem
+                                ? `Semester ${selectedMentee.profile.sem}`
+                                : "Mentee"}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    );
+                  },
+                }}
               >
-                {mentees.map((mentee) => (
-                  <MenuItem key={mentee._id} value={mentee._id}>
-                    {mentee.name}
-                  </MenuItem>
-                ))}
+                {mentees.map((mentee) => {
+                  const menteeAvatarSrc = getAvatarSrc(mentee);
+                  return (
+                    <MenuItem key={mentee._id} value={mentee._id}>
+                      <Box
+                        sx={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.2,
+                        }}
+                      >
+                        <Avatar
+                          src={menteeAvatarSrc || undefined}
+                          alt={mentee.name}
+                          sx={{ width: 30, height: 30 }}
+                        >
+                          {!menteeAvatarSrc
+                            ? getAvatarFallbackText(mentee.name)
+                            : null}
+                        </Avatar>
+                        <Box sx={{ lineHeight: 1.2 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {mentee.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {mentee?.profile?.usn
+                              ? `${mentee.profile.usn} • Sem ${mentee?.profile?.sem || "-"}`
+                              : `Semester ${mentee?.profile?.sem || "-"}`}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </MenuItem>
+                  );
+                })}
               </TextField>
 
             {/* Existing Conversation Alert */}
@@ -261,8 +362,11 @@ const MentorMenteeConversation = () => {
                 severity="success" 
                 sx={{ 
                   mb: 3,
-                  bgcolor: "#e8f5e9",
-                  border: "2px solid #4caf50"
+                  bgcolor: alpha(theme.palette.success.main, isLight ? 0.16 : 0.22),
+                  border: `1px solid ${alpha(theme.palette.success.main, 0.48)}`,
+                  "& .MuiAlert-icon": {
+                    color: "success.main",
+                  },
                 }}
                 action={
                   <Button 
@@ -275,10 +379,10 @@ const MentorMenteeConversation = () => {
                   </Button>
                 }
               >
-                <Typography variant="body2" sx={{ fontWeight: 600, color: "#2e7d32", mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "success.main", mb: 1 }}>
                   Mentoring Already Done for This Person
                 </Typography>
-                <Typography variant="caption" sx={{ color: "#1b5e20", display: "block", mb: 1 }}>
+                <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
                   <strong>Date:</strong> {new Date(existingConversation.date).toLocaleDateString("en-US", { 
                     year: "numeric", 
                     month: "long", 
@@ -286,7 +390,7 @@ const MentorMenteeConversation = () => {
                   })}
                 </Typography>
                 {existingConversation.title && (
-                  <Typography variant="caption" sx={{ color: "#1b5e20", display: "block", mb: 1 }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
                     <strong>Title:</strong> {existingConversation.title}
                   </Typography>
                 )}
@@ -368,24 +472,35 @@ const MentorMenteeConversation = () => {
             sx={{ 
               p: 3, 
               borderRadius: 3, 
-              bgcolor: "#f0f7ff",
-              border: "2px solid",
-              borderColor: "primary.main",
+              bgcolor: isLight
+                ? alpha(theme.palette.background.paper, 0.97)
+                : alpha(theme.palette.background.paper, 0.9),
+              border: `1px solid ${alpha(accentColor, 0.4)}`,
               position: "sticky",
-              top: 100
+              top: 100,
+              boxShadow: isLight
+                ? "0 10px 28px rgba(15, 23, 42, 0.08)"
+                : "0 12px 30px rgba(2, 6, 23, 0.5)",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <InfoOutlined color="primary" sx={{ mr: 1, fontSize: 28 }} />
-              <Typography variant="h6" color="primary.main" sx={{ fontWeight: "bold" }}>
+              <InfoOutlined sx={{ mr: 1, fontSize: 28, color: accentColor }} />
+              <Typography variant="h6" sx={{ fontWeight: "bold", color: accentColor }}>
                 Tips for Better AI Summary
               </Typography>
             </Box>
 
             <Divider sx={{ mb: 2 }} />
 
-            <Alert severity="info" sx={{ mb: 2, bgcolor: "#e3f2fd" }}>
-              <Typography variant="body2" sx={{ color: "#01579b", fontWeight: 500 }}>
+            <Alert
+              severity="info"
+              sx={{
+                mb: 2,
+                bgcolor: alpha(accentColor, isLight ? 0.12 : 0.2),
+                border: `1px solid ${alpha(accentColor, 0.35)}`,
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
                 To get a comprehensive AI-generated summary, include these details in your conversation text:
               </Typography>
             </Alert>
@@ -396,8 +511,8 @@ const MentorMenteeConversation = () => {
                   <CheckCircleOutline color="success" sx={{ fontSize: 20 }} />
                 </ListItemIcon>
                 <ListItemText 
-                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "#1a237e" }}>Student's Concerns/Problems</Typography>}
-                  secondary={<Typography variant="caption" sx={{ color: "#37474f" }}>What challenges or issues did the student raise?</Typography>}
+                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>Student's Concerns/Problems</Typography>}
+                  secondary={<Typography variant="caption" sx={{ color: "text.secondary" }}>What challenges or issues did the student raise?</Typography>}
                   sx={{ my: 0 }}
                 />
               </ListItem>
@@ -407,8 +522,8 @@ const MentorMenteeConversation = () => {
                   <CheckCircleOutline color="success" sx={{ fontSize: 20 }} />
                 </ListItemIcon>
                 <ListItemText 
-                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "#1a237e" }}>Counseling Approach Used</Typography>}
-                  secondary={<Typography variant="caption" sx={{ color: "#37474f" }}>What techniques or methods did you use? (e.g., active listening, goal-setting, problem-solving)</Typography>}
+                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>Counseling Approach Used</Typography>}
+                  secondary={<Typography variant="caption" sx={{ color: "text.secondary" }}>What techniques or methods did you use? (e.g., active listening, goal-setting, problem-solving)</Typography>}
                   sx={{ my: 0 }}
                 />
               </ListItem>
@@ -418,8 +533,8 @@ const MentorMenteeConversation = () => {
                   <CheckCircleOutline color="success" sx={{ fontSize: 20 }} />
                 </ListItemIcon>
                 <ListItemText 
-                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "#1a237e" }}>Guidance & Recommendations</Typography>}
-                  secondary={<Typography variant="caption" sx={{ color: "#37474f" }}>What advice, resources, or action steps did you provide?</Typography>}
+                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>Guidance & Recommendations</Typography>}
+                  secondary={<Typography variant="caption" sx={{ color: "text.secondary" }}>What advice, resources, or action steps did you provide?</Typography>}
                   sx={{ my: 0 }}
                 />
               </ListItem>
@@ -429,8 +544,8 @@ const MentorMenteeConversation = () => {
                   <CheckCircleOutline color="success" sx={{ fontSize: 20 }} />
                 </ListItemIcon>
                 <ListItemText 
-                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "#1a237e" }}>Student's Response</Typography>}
-                  secondary={<Typography variant="caption" sx={{ color: "#37474f" }}>How did the student react? Were they receptive?</Typography>}
+                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>Student's Response</Typography>}
+                  secondary={<Typography variant="caption" sx={{ color: "text.secondary" }}>How did the student react? Were they receptive?</Typography>}
                   sx={{ my: 0 }}
                 />
               </ListItem>
@@ -440,8 +555,8 @@ const MentorMenteeConversation = () => {
                   <CheckCircleOutline color="success" sx={{ fontSize: 20 }} />
                 </ListItemIcon>
                 <ListItemText 
-                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "#1a237e" }}>Achievements Discussed</Typography>}
-                  secondary={<Typography variant="caption" sx={{ color: "#37474f" }}>Academic performance, MOOC completions, projects, extracurriculars</Typography>}
+                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>Achievements Discussed</Typography>}
+                  secondary={<Typography variant="caption" sx={{ color: "text.secondary" }}>Academic performance, MOOC completions, projects, extracurriculars</Typography>}
                   sx={{ my: 0 }}
                 />
               </ListItem>
@@ -451,8 +566,8 @@ const MentorMenteeConversation = () => {
                   <CheckCircleOutline color="success" sx={{ fontSize: 20 }} />
                 </ListItemIcon>
                 <ListItemText 
-                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "#1a237e" }}>Resolution Status</Typography>}
-                  secondary={<Typography variant="caption" sx={{ color: "#37474f" }}>Was the problem resolved? Are follow-ups needed?</Typography>}
+                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>Resolution Status</Typography>}
+                  secondary={<Typography variant="caption" sx={{ color: "text.secondary" }}>Was the problem resolved? Are follow-ups needed?</Typography>}
                   sx={{ my: 0 }}
                 />
               </ListItem>
@@ -462,8 +577,8 @@ const MentorMenteeConversation = () => {
                   <CheckCircleOutline color="success" sx={{ fontSize: 20 }} />
                 </ListItemIcon>
                 <ListItemText 
-                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "#1a237e" }}>Career/Academic Goals</Typography>}
-                  secondary={<Typography variant="caption" sx={{ color: "#37474f" }}>Future plans, internships, placements, higher studies</Typography>}
+                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>Career/Academic Goals</Typography>}
+                  secondary={<Typography variant="caption" sx={{ color: "text.secondary" }}>Future plans, internships, placements, higher studies</Typography>}
                   sx={{ my: 0 }}
                 />
               </ListItem>
@@ -471,9 +586,16 @@ const MentorMenteeConversation = () => {
 
             <Divider sx={{ my: 2 }} />
 
-            <Box sx={{ bgcolor: "#fff3e0", p: 2, borderRadius: 2, border: "1px solid #ffb74d" }}>
-              <Typography variant="body2" sx={{ color: "#e65100", fontWeight: 500 }}>
-                💡 <strong>Pro Tip:</strong> Write the conversation in a dialogue format or structured narrative to help the AI better understand the context and generate an accurate summary.
+            <Box
+              sx={{
+                bgcolor: alpha(theme.palette.warning.main, isLight ? 0.12 : 0.2),
+                p: 2,
+                borderRadius: 2,
+                border: `1px solid ${alpha(theme.palette.warning.main, 0.45)}`,
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
+                <strong>Pro Tip:</strong> Write the conversation in a dialogue format or structured narrative to help the AI better understand the context and generate an accurate summary.
               </Typography>
             </Box>
           </Paper>
