@@ -184,6 +184,29 @@ const Login = () => {
                   >
                     Sign in to Sanghathi
                   </Typography>
+                  <Box
+                    sx={{
+                      display: { xs: "block", md: "none" },
+                      width: "100%",
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      mt: -0.5,
+                      mb: 0.5,
+                    }}
+                  >
+                    <Image
+                      src={Illustration}
+                      alt="Login illustration"
+                      fit="cover"
+                      duration={0}
+                      shift="none"
+                      style={{
+                        width: "100%",
+                        height: "clamp(130px, 24vh, 180px)",
+                        borderRadius: "12px",
+                      }}
+                    />
+                  </Box>
                   <TextField
                     label="Email"
                     variant="outlined"
