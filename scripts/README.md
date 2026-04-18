@@ -37,6 +37,17 @@ Use this script from the workspace root:
 - Export backup files and schema summary only (skip local sync):
   - `./sanghathi-Frontend/scripts/backup-db-local.sh --no-local-sync`
 
+## MongoDB Atlas Backup (No Local Container)
+
+- Export Atlas/source MongoDB backup files only:
+  - `./sanghathi-Frontend/scripts/backup-db-atlas.sh`
+
+- Pass explicit Atlas URI when needed:
+  - `./sanghathi-Frontend/scripts/backup-db-atlas.sh --source-uri "mongodb+srv://..."`
+
+- View options:
+  - `./sanghathi-Frontend/scripts/backup-db-atlas.sh --help`
+
 Backup output is written to:
 - `database-backups/<db-name>-<timestamp>/`
 - Includes per-collection `.jsonl` exports and `schema-summary.json` for structure review.
