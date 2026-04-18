@@ -79,8 +79,8 @@ const Thread = () => {
           page: 1,
           limit: 500,
           role: shouldScopeToStudents ? "student" : undefined,
-          fields: "_id,name,roleName",
-          includeProfiles: false,
+          fields: "_id,name,roleName,avatar,photo",
+          includeProfiles: true,
         },
       });
 
@@ -192,6 +192,7 @@ const Thread = () => {
           ) : (
             <ThreadList
               threads={threads}
+              currentUser={user}
               onThreadClick={handleThreadClick}
               onThreadEdit={handleThreadEdit}
               onThreadDelete={handleThreadDelete}

@@ -44,6 +44,28 @@ const ThreadHeader = ({ thread, onCloseThread, currentUser }) => {
     setAnchorEl(null);
   };
 
+  const getDisplayParticipants = () => {
+    const participants = Array.isArray(thread?.participants)
+      ? thread.participants
+      : [];
+
+    if (currentUser?.roleName !== "faculty") {
+      return participants;
+    }
+
+    const studentParticipants = participants.filter(
+      (participant) => participant?.roleName === "student"
+    );
+
+    if (studentParticipants.length > 0) {
+      return studentParticipants;
+    }
+
+    return participants.filter(
+      (participant) => participant?._id !== currentUser?._id
+    );
+  };
+
   return (
     <Box
       sx={{
@@ -95,7 +117,7 @@ const ThreadHeader = ({ thread, onCloseThread, currentUser }) => {
         </Box>
       </Box>
       <Box sx={{ display: "flex", alignItems: "center" }}>
-        {thread.participants.map((participant, idx) => {
+        {getDisplayParticipants().map((participant, idx) => {
           const participantAvatarSrc = getAvatarSrc(participant);
 
           return (
