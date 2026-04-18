@@ -48,3 +48,4 @@ Example:
 - [2026-04-18-021-phase2-draft-integration-and-db-blueprint](./2026-04-18-021-phase2-draft-integration-and-db-blueprint.md)
 - [2026-04-18-022-global-progress-restore-expansion](./2026-04-18-022-global-progress-restore-expansion.md)
 - [2026-04-18-023-backend-p0-message-migration-execution](./2026-04-18-023-backend-p0-message-migration-execution.md)
+- [2026-04-18-024-message-cutover-and-one-to-one-unique-enforcement](./2026-04-18-024-message-cutover-and-one-to-one-unique-enforcement.md)
