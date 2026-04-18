@@ -57,3 +57,4 @@ Example:
 - [2026-04-18-030-mentor-mentee-avatar-profile-photo-rollout](./2026-04-18-030-mentor-mentee-avatar-profile-photo-rollout.md)
 - [2026-04-18-031-faculty-mentees-ui-parity-and-thread-student-avatar-focus](./2026-04-18-031-faculty-mentees-ui-parity-and-thread-student-avatar-focus.md)
 - [2026-04-18-032-responsive-academics-and-user-list-loader-coverage-phase3](./2026-04-18-032-responsive-academics-and-user-list-loader-coverage-phase3.md)
+- [2026-04-18-033-phase3-admin-upload-shared-client-and-responsive-polish](./2026-04-18-033-phase3-admin-upload-shared-client-and-responsive-polish.md)

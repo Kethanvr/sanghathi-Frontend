@@ -17,11 +17,9 @@ import {
   CloudUpload as CloudUploadIcon
 } from "@mui/icons-material";
 import Papa from "papaparse";
-import axios from "axios";
+import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
-
-const BASE_URL = import.meta.env.VITE_API_URL;
 
 const AddMoocDetails = () => {
   const [processing, setProcessing] = useState(false);
@@ -128,7 +126,7 @@ const AddMoocDetails = () => {
         if (!row.USN) throw new Error("USN missing");
         if (!row.CourseName) throw new Error("Course Name missing");
 
-        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`, {
+        const response = await api.get(`/users/usn/${row.USN}`, {
           params: { _ts: Date.now() },
           headers: {
             "Cache-Control": "no-cache",
@@ -139,7 +137,7 @@ const AddMoocDetails = () => {
 
         if (!userId) throw new Error("User not found");
 
-        await axios.post(`${BASE_URL}/mooc-data/mooc`, {
+        await api.post(`/mooc-data/mooc`, {
           userId,
           mooc: [
             {
@@ -167,8 +165,8 @@ const AddMoocDetails = () => {
 
   // ================= UI =================
   return (
-    <Container maxWidth="md">
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 2, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+      <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2, mb: 4 }}>
         <Box sx={{ textAlign: "center", mb: 3 }}>
           <Typography variant="h4" sx={{ fontWeight: "bold", mb: 1 }}>
             Upload MOOC Course Details
@@ -211,11 +209,12 @@ const AddMoocDetails = () => {
           <Typography variant="body2">• Certificate Link must be valid URL</Typography>
         </Box>
 
-        <Stack direction="row" spacing={2} justifyContent="center">
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center">
           <Button
             variant="outlined"
             startIcon={<FileDownloadIcon />}
             onClick={downloadTemplate}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             Download Template
           </Button>
@@ -225,6 +224,7 @@ const AddMoocDetails = () => {
             component="label"
             startIcon={<CloudUploadIcon />}
             disabled={processing}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             {processing ? "Processing..." : "Upload File"}
             <input

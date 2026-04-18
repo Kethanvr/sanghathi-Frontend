@@ -20,11 +20,9 @@ import {
 } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
 import Papa from "papaparse";
-import axios from "axios";
+import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
-
-const BASE_URL = import.meta.env.VITE_API_URL;
 
 const AddMiniProjectDetails = () => {
   const theme = useTheme();
@@ -133,7 +131,7 @@ const AddMiniProjectDetails = () => {
         if (!row.USN) throw new Error("USN missing");
         if (!row.Title) throw new Error("Project Title missing");
 
-        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`, {
+        const response = await api.get(`/users/usn/${row.USN}`, {
           params: { _ts: Date.now() },
           headers: {
             "Cache-Control": "no-cache",
@@ -144,7 +142,7 @@ const AddMiniProjectDetails = () => {
 
         if (!userId) throw new Error("User not found");
 
-        await axios.post(`${BASE_URL}/project/miniproject`, {
+        await api.post(`/project/miniproject`, {
           userId,
           miniproject: [
             {
@@ -171,11 +169,11 @@ const AddMiniProjectDetails = () => {
 
   // ================= UI =================
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          p: { xs: 2, sm: 4 },
           borderRadius: 2,
           backgroundColor: isLight
             ? "rgba(255, 255, 255, 0.9)"
@@ -205,11 +203,12 @@ const AddMiniProjectDetails = () => {
           <Typography variant="body2">• Do not leave blank rows</Typography>
         </Box>
 
-        <Stack direction="row" spacing={2} justifyContent="center">
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center">
           <Button
             variant="outlined"
             startIcon={<FileDownloadIcon />}
             onClick={downloadTemplate}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             Download Template
           </Button>
@@ -219,6 +218,7 @@ const AddMiniProjectDetails = () => {
             component="label"
             startIcon={<CloudUploadIcon />}
             disabled={processing}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             {processing ? (
               <>
