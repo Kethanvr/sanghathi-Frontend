@@ -47,3 +47,4 @@ Example:
 - [2026-04-18-020-preserve-login-redirect-destination](./2026-04-18-020-preserve-login-redirect-destination.md)
 - [2026-04-18-021-phase2-draft-integration-and-db-blueprint](./2026-04-18-021-phase2-draft-integration-and-db-blueprint.md)
 - [2026-04-18-022-global-progress-restore-expansion](./2026-04-18-022-global-progress-restore-expansion.md)
+- [2026-04-18-023-backend-p0-message-migration-execution](./2026-04-18-023-backend-p0-message-migration-execution.md)
