@@ -29,6 +29,7 @@ import api from "../../utils/axios";
 import { alpha, useTheme } from "@mui/material/styles";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
+import { recordAdminUploadSession } from "../../utils/uploadHistory";
 
 import logger from "../../utils/logger.js";
 // Define role options with their related info
@@ -214,6 +215,8 @@ const AddStudents = () => {
     let success = 0;
     let errors = 0;
     const newErrors = [];
+    const affectedUserIds = new Set();
+    const createdUserIds = new Set();
 
     for (const [index, row] of rows.entries()) {
       try {
@@ -289,6 +292,18 @@ const AddStudents = () => {
           const response = await api.post(endpoint, data);
           if (response.data) {
             success++;
+
+            const createdUserId =
+              response.data?.data?.user?._id ||
+              response.data?.data?.user?.id ||
+              response.data?._id ||
+              response.data?.user?._id ||
+              null;
+
+            if (createdUserId) {
+              createdUserIds.add(String(createdUserId));
+              affectedUserIds.add(String(createdUserId));
+            }
           }
         } catch (error) {
           errors++;
@@ -301,6 +316,20 @@ const AddStudents = () => {
         newErrors.push(`Row ${index + 1}: ${error.response?.data?.message || error.message}`);
       }
     }
+
+    await recordAdminUploadSession({
+      tabType: "add-users",
+      fileName: file?.name || "",
+      totalRows: rows.length,
+      successCount: success,
+      errorCount: errors,
+      errors: newErrors,
+      affectedUserIds: Array.from(affectedUserIds),
+      createdUserIds: Array.from(createdUserIds),
+      metadata: {
+        role: selectedRole,
+      },
+    });
 
     setSuccessCount(success);
     setErrorCount(errors);

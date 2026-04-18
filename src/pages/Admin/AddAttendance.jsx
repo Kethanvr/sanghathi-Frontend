@@ -23,6 +23,7 @@ import Papa from "papaparse";
 import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
+import { recordAdminUploadSession } from "../../utils/uploadHistory";
 
 import logger from "../../utils/logger.js";
 
@@ -157,6 +158,7 @@ const AddAttendance = () => {
     let success = 0;
     let errors = 0;
     const newErrors = [];
+    const affectedUserIds = new Set();
 
     for (const [index, row] of rows.entries()) {
       // Find headers case-insensitively (declare outside try block for catch access)
@@ -277,6 +279,7 @@ const AddAttendance = () => {
         try {
           await api.post(`/students/attendance/${userId}`, attendanceData);
           success++;
+          affectedUserIds.add(String(userId));
         } catch (postError) {
           logger.error("Post error details:", postError.response?.data);
           const errorMessage = postError.response?.data?.message || 
@@ -291,6 +294,16 @@ const AddAttendance = () => {
         logger.error(`Error processing row ${index + 1}:`, error);
       }
     }
+
+    await recordAdminUploadSession({
+      tabType: "add-attendance",
+      fileName: file?.name || "",
+      totalRows: rows.length,
+      successCount: success,
+      errorCount: errors,
+      errors: newErrors,
+      affectedUserIds: Array.from(affectedUserIds),
+    });
 
     setSuccessCount(success);
     setErrorCount(errors);

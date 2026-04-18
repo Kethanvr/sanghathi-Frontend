@@ -23,6 +23,7 @@ import Papa from "papaparse";
 import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
+import { recordAdminUploadSession } from "../../utils/uploadHistory";
 
 const AddTylMarks = () => {
   const theme = useTheme();
@@ -158,6 +159,7 @@ const AddTylMarks = () => {
     let success = 0;
     let errCount = 0;
     const newErrors = [];
+    const affectedUserIds = new Set();
 
     for (const row of rows) {
 
@@ -275,11 +277,22 @@ const AddTylMarks = () => {
         });
 
         success++;
+        affectedUserIds.add(String(userId));
       } catch (error) {
         errCount++;
         newErrors.push(`Error for ${row.USN}: ${error.message}`);
       }
     }
+
+    await recordAdminUploadSession({
+      tabType: "add-tyl-marks",
+      fileName: file?.name || "",
+      totalRows: rows.length,
+      successCount: success,
+      errorCount: errCount,
+      errors: newErrors,
+      affectedUserIds: Array.from(affectedUserIds),
+    });
 
     setSuccessCount(success);
     setErrorCount(errCount);

@@ -34,6 +34,7 @@ const DirectorMenteesList = lazy(() => import("./pages/Director/DirectorMenteesL
 const HodDashboard = lazy(() => import("./pages/Hod/HodDashboard"));
 const ViewUsers = lazy(() => import("./pages/Admin/ViewUsers"));
 const Data = lazy(() => import("./pages/Admin/Data"));
+const UploadHistory = lazy(() => import("./pages/Admin/UploadHistory"));
 const FacultyDashboard = lazy(() => import("./pages/Faculty/FacultyDashboard"));
 const CareerReview = lazy(() => import("./pages/CareerReview/CareerReview"));
 const ScoreCard = lazy(() => import("./pages/Scorecard/ScoreCard"));
@@ -230,6 +231,14 @@ function App() {
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={Data} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/admin/upload-history"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["admin"]}>
+                        <LazyLoadWrapper component={UploadHistory} />
                       </ProtectedRouteWrapper>
                     }
                   />
