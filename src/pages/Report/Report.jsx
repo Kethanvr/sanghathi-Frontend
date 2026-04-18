@@ -11,6 +11,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Paper,
   Container,
   Tooltip,
@@ -67,8 +68,11 @@ const Report = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("Closed");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedSemester, setSelectedSemester] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const { enqueueSnackbar } = useSnackbar();
 
   // Get the color based on the current theme mode
@@ -97,18 +101,12 @@ const Report = () => {
     fetchThreads();
   }, []);
 
-  useEffect(() => {
-    setThreads([...threads]);
-  }, [fromDate, toDate]);
-
   const handleFromDateChange = (event) => {
     setFromDate(event.target.value);
-    setThreads([...threads]);
   };
 
   const handleToDateChange = (event) => {
     setToDate(event.target.value);
-    setThreads([...threads]);
   };
 
   const handleCategoryChange = (event) => {
@@ -118,6 +116,40 @@ const Report = () => {
   const handleStatusChange = (event) => {
     setSelectedStatus(event.target.value);
   };
+
+  const handleSemesterChange = (event) => {
+    setSelectedSemester(event.target.value);
+  };
+
+  const getThreadSemesters = (thread) => {
+    const participants = Array.isArray(thread?.participants)
+      ? thread.participants
+      : [];
+
+    return participants
+      .map(
+        (participant) =>
+          participant?.profile?.sem ||
+          participant?.sem ||
+          participant?.semester ||
+          participant?.studentProfile?.sem
+      )
+      .filter(Boolean)
+      .map((semValue) => String(semValue).trim());
+  };
+
+  const semesterOptions = Array.from(
+    new Set(
+      threads.flatMap((thread) => getThreadSemesters(thread))
+    )
+  ).sort((a, b) => {
+    const semA = Number(a);
+    const semB = Number(b);
+    if (Number.isNaN(semA) || Number.isNaN(semB)) {
+      return String(a).localeCompare(String(b));
+    }
+    return semA - semB;
+  });
 
   const toggleFilters = () => {
     setShowFilters(!showFilters);
@@ -163,6 +195,10 @@ const Report = () => {
 
     const categoryMatches =
       !selectedCategory || thread.topic === selectedCategory;
+
+    const threadSemesters = getThreadSemesters(thread);
+    const semesterMatches =
+      !selectedSemester || threadSemesters.includes(String(selectedSemester));
     
     // Normalize the selected status for comparison
     const normalizedSelectedStatus = selectedStatus ? selectedStatus.toLowerCase().trim() : '';
@@ -171,6 +207,8 @@ const Report = () => {
     if (normalizedSelectedStatus === 'open') {
       // If "Open" is selected, show both "open" and "in progress" threads
       statusMatches = normalizedStatus === 'open' || normalizedStatus === 'in progress';
+    } else if (normalizedSelectedStatus === 'in progress') {
+      statusMatches = normalizedStatus === 'in progress';
     } else if (normalizedSelectedStatus === 'closed') {
       statusMatches = normalizedStatus === 'closed';
     }
@@ -182,7 +220,7 @@ const Report = () => {
 
     // If search term is empty, show all matching threads
     if (!searchTerm) {
-      return dateMatches && categoryMatches && statusMatches;
+      return dateMatches && categoryMatches && semesterMatches && statusMatches;
     }
 
     // If search term exists, check for matches
@@ -190,9 +228,28 @@ const Report = () => {
       (hasMatchingParticipant || hasMatchingTitle) &&
       dateMatches &&
       categoryMatches &&
+      semesterMatches &&
       statusMatches
     );
   });
+
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm, fromDate, toDate, selectedCategory, selectedStatus, selectedSemester]);
+
+  const paginatedThreads = filteredThreads.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
+  const handleChangePage = (_event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -337,7 +394,8 @@ const Report = () => {
     setFromDate("");
     setToDate("");
     setSelectedCategory("");
-    setSelectedStatus("Closed");
+    setSelectedStatus("");
+    setSelectedSemester("");
   };
 
   return (
@@ -491,7 +549,7 @@ const Report = () => {
                 <Typography variant="subtitle1" fontWeight="medium">
                   Filter Options
                 </Typography>
-                {(selectedCategory || selectedStatus || fromDate || toDate) && (
+                {(selectedCategory || selectedStatus || selectedSemester || fromDate || toDate) && (
                   <Button 
                     variant="text" 
                     color="error" 
@@ -530,6 +588,7 @@ const Report = () => {
                   >
                     <MenuItem value="">All</MenuItem>
                     <MenuItem value="Open">Open</MenuItem>
+                    <MenuItem value="In Progress">In Progress</MenuItem>
                     <MenuItem value="Closed">Closed</MenuItem>
                   </TextField>
                 </Grid>
@@ -558,13 +617,31 @@ const Report = () => {
                     }}
                   >
                     <MenuItem value="">All Categories</MenuItem>
-                    {[...new Set(threads.map((thread) => thread.topic))].map(
+                    {[...new Set(threads.map((thread) => thread.topic).filter(Boolean))].map(
                       (topic, index) => (
                         <MenuItem key={index} value={topic}>
                           {topic || "Uncategorized"}
                         </MenuItem>
                       )
                     )}
+                  </TextField>
+                </Grid>
+
+                <Grid item xs={12} md={3}>
+                  <TextField
+                    select
+                    fullWidth
+                    size="small"
+                    label="Semester"
+                    value={selectedSemester}
+                    onChange={handleSemesterChange}
+                  >
+                    <MenuItem value="">All Semesters</MenuItem>
+                    {semesterOptions.map((semester) => (
+                      <MenuItem key={semester} value={semester}>
+                        Sem {semester}
+                      </MenuItem>
+                    ))}
                   </TextField>
                 </Grid>
 
@@ -625,19 +702,20 @@ const Report = () => {
 
           <Box sx={{ position: 'relative' }}>
             {filteredThreads.length > 0 ? (
-              <TableContainer 
-                component={Paper} 
-                sx={{ 
-                  borderRadius: 2,
-                  boxShadow: 'none',
-                  border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-                  overflowX: 'auto',
-                  overflowY: 'hidden',
-                  maxWidth: '100%',
-                  backgroundColor: 'transparent'
-                }}
-              >
-                <Table sx={{ minWidth: { xs: 980, md: 740 } }}>
+              <>
+                <TableContainer 
+                  component={Paper} 
+                  sx={{ 
+                    borderRadius: 2,
+                    boxShadow: 'none',
+                    border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+                    overflowX: 'auto',
+                    overflowY: 'hidden',
+                    maxWidth: '100%',
+                    backgroundColor: 'transparent'
+                  }}
+                >
+                  <Table sx={{ minWidth: { xs: 980, md: 740 } }}>
                   <TableHead sx={{ 
                     backgroundColor: isLight 
                       ? alpha(theme.palette.primary.main, 0.08) 
@@ -659,7 +737,7 @@ const Report = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filteredThreads.map((thread) => {
+                    {paginatedThreads.map((thread) => {
                       const authorAvatarSrc = getAvatarSrc(thread?.author);
 
                       return (
@@ -882,8 +960,18 @@ const Report = () => {
                       );
                     })}
                   </TableBody>
-                </Table>
-              </TableContainer>
+                  </Table>
+                </TableContainer>
+                <TablePagination
+                  component="div"
+                  count={filteredThreads.length}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                  rowsPerPageOptions={isMobile ? [10, 25] : [10, 25, 50]}
+                />
+              </>
             ) : (
               <Box 
                 sx={{ 
@@ -900,7 +988,7 @@ const Report = () => {
                 <Typography variant="body2" color="text.secondary">
                   Try adjusting your filters or search terms
                 </Typography>
-                {(selectedCategory || selectedStatus || fromDate || toDate || searchTerm) && (
+                {(selectedCategory || selectedStatus || selectedSemester || fromDate || toDate || searchTerm) && (
                   <Button 
                     variant="outlined" 
                     color={isLight ? "primary" : "info"}
