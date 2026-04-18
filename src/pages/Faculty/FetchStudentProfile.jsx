@@ -86,7 +86,6 @@ const MenteesList = () => {
                 sx={{ backgroundColor: isLight ? theme.palette.grey[100] : "#2a2d32" }}
               >
                 <TableRow>
-                  <TableCell>Avatar</TableCell>
                   <TableCell>Name</TableCell>
                   <TableCell>USN</TableCell>
                   <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
@@ -102,11 +101,11 @@ const MenteesList = () => {
               </TableHead>
               <TableBody>
                 {loading ? (
-                  <TableRowsSkeleton columns={8} rows={8} avatarColumns={[0]} />
+                  <TableRowsSkeleton columns={7} rows={8} />
                 ) : mentees.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={7}
                       align="center"
                       sx={{ color: theme.palette.text.primary }}
                     >
@@ -129,23 +128,25 @@ const MenteesList = () => {
                           },
                         }}
                       >
-                        <TableCell>
-                          <Avatar
-                            alt={mentee.name}
-                            src={avatarSrc || undefined}
-                            sx={{
-                              backgroundColor: isLight
-                                ? theme.palette.primary.main
-                                : theme.palette.info.main,
-                            }}
-                          >
-                            {!avatarSrc ? getAvatarFallbackText(mentee.name) : null}
-                          </Avatar>
-                        </TableCell>
                         <TableCell sx={{ color: theme.palette.text.primary }}>
-                          <Typography variant="body2" fontWeight={500}>
-                            {mentee.name}
-                          </Typography>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+                            <Avatar
+                              alt={mentee.name}
+                              src={avatarSrc || undefined}
+                              sx={{
+                                width: 34,
+                                height: 34,
+                                backgroundColor: isLight
+                                  ? theme.palette.primary.main
+                                  : theme.palette.info.main,
+                              }}
+                            >
+                              {!avatarSrc ? getAvatarFallbackText(mentee.name) : null}
+                            </Avatar>
+                            <Typography variant="body2" fontWeight={500}>
+                              {mentee.name}
+                            </Typography>
+                          </Box>
                         </TableCell>
                         <TableCell sx={{ color: theme.palette.text.primary }}>
                           {mentee.profile?.usn || "N/A"}

@@ -9,6 +9,10 @@ import {
   CircularProgress,
   Container,
   useTheme,
+  TextField,
+  MenuItem,
+  Stack,
+  InputAdornment,
 } from "@mui/material";
 
 import { useSnackbar } from "notistack";
@@ -18,6 +22,7 @@ import ThreadList from "./ThreadList";
 import Page from "../../components/Page";
 
 import { Add } from "@mui/icons-material";
+import SearchIcon from "@mui/icons-material/Search";
 import api from "../../utils/axios";
 
 import { AuthContext } from "../../context/AuthContext";
@@ -44,10 +49,40 @@ const Thread = () => {
   const [users, setUsers] = useState([]);
   const { user } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const navigate = useNavigate();
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const colorMode = isLight ? 'primary' : 'info';
+
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+
+  const categoryOptions = Array.from(
+    new Set(threads.map((thread) => thread?.topic).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b));
+
+  const filteredThreads = threads.filter((thread) => {
+    const normalizedStatus = (thread?.status || "").toLowerCase().trim();
+    const normalizedTopic = (thread?.topic || "").toLowerCase();
+    const normalizedTitle = (thread?.title || "").toLowerCase();
+    const participantMatches = (thread?.participants || []).some((participant) =>
+      (participant?.name || "").toLowerCase().includes(normalizedSearchTerm)
+    );
+    const searchMatches =
+      !normalizedSearchTerm ||
+      normalizedTitle.includes(normalizedSearchTerm) ||
+      normalizedTopic.includes(normalizedSearchTerm) ||
+      participantMatches;
+
+    const statusMatches =
+      !statusFilter || normalizedStatus === statusFilter.toLowerCase();
+    const categoryMatches =
+      !categoryFilter || (thread?.topic || "") === categoryFilter;
+
+    return searchMatches && statusMatches && categoryMatches;
+  });
 
   const fetchThreads = useCallback(async () => {
     setIsLoading(true);
@@ -185,15 +220,89 @@ const Thread = () => {
             </Button>
           </Box>
           <Divider />
+          <Box
+            sx={{
+              p: 2,
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              gap: 1.25,
+              alignItems: { xs: "stretch", md: "center" },
+            }}
+          >
+            <TextField
+              size="small"
+              fullWidth
+              placeholder="Search by title, topic, or participant"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1}
+              sx={{ width: { xs: "100%", md: "auto" } }}
+            >
+              <TextField
+                select
+                size="small"
+                label="Status"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                sx={{ minWidth: { sm: 150 } }}
+              >
+                <MenuItem value="">All statuses</MenuItem>
+                <MenuItem value="open">Open</MenuItem>
+                <MenuItem value="in progress">In Progress</MenuItem>
+                <MenuItem value="closed">Closed</MenuItem>
+              </TextField>
+              <TextField
+                select
+                size="small"
+                label="Category"
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+                sx={{ minWidth: { sm: 170 } }}
+              >
+                <MenuItem value="">All categories</MenuItem>
+                {categoryOptions.map((category) => (
+                  <MenuItem key={category} value={category}>
+                    {category}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Button
+                variant="outlined"
+                color={colorMode}
+                onClick={() => {
+                  setSearchTerm("");
+                  setStatusFilter("");
+                  setCategoryFilter("");
+                }}
+              >
+                Clear
+              </Button>
+            </Stack>
+          </Box>
+          <Divider />
           {isLoading ? (
             <LoadingSpinner />
           ) : threads.length === 0 ? (
             <Typography variant="h6" textAlign="center" mt={2}>
               No threads found. Create a new thread to get started!
             </Typography>
+          ) : filteredThreads.length === 0 ? (
+            <Typography variant="h6" textAlign="center" mt={2}>
+              No threads match the selected search or filters.
+            </Typography>
           ) : (
             <ThreadList
-              threads={threads}
+              threads={filteredThreads}
               currentUser={user}
               onThreadClick={handleThreadClick}
               onThreadEdit={handleThreadEdit}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -31,9 +31,16 @@ const ThreadList = ({
   colorMode = "primary",
 }) => {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const theme = useTheme();
   const isMobile = useResponsive("down", "sm");
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(threads.length / rowsPerPage) - 1);
+    if (page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [page, rowsPerPage, threads.length]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -44,12 +51,20 @@ const ThreadList = ({
     setPage(0);
   };
 
-  const rowsPerPageOptions = [5, 10, 25];
+  const rowsPerPageOptions = [10, 25, 50];
 
-  const statusColors = {
-    open: "#4caf50",
-    "In Progress": "#ff9800",
-    closed: "#f44336",
+  const getStatusColor = (status) => {
+    const normalizedStatus = (status || "").toLowerCase().trim();
+    if (normalizedStatus === "open") {
+      return "#4caf50";
+    }
+    if (normalizedStatus === "in progress") {
+      return "#ff9800";
+    }
+    if (normalizedStatus === "closed") {
+      return "#f44336";
+    }
+    return theme.palette.grey[500];
   };
 
   const getDisplayParticipants = (thread) => {
@@ -111,7 +126,7 @@ const ThreadList = ({
                       sx={{
                         display: "inline-flex",
                         alignItems: "center",
-                        backgroundColor: statusColors[thread.status],
+                        backgroundColor: getStatusColor(thread.status),
                         borderRadius: "12px",
                         px: 1.5,
                         py: 0.5,
@@ -226,7 +241,7 @@ const ThreadList = ({
           }}
         >
           <TablePagination
-            rowsPerPageOptions={isMobile ? [5, 10] : rowsPerPageOptions}
+            rowsPerPageOptions={isMobile ? [10, 25] : rowsPerPageOptions}
             component="div"
             count={threads.length}
             rowsPerPage={rowsPerPage}

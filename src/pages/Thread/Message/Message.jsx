@@ -14,11 +14,13 @@ import {
 } from "../../../utils/avatarResolver";
 
 const ContentStyle = styled("div")(({ theme }) => ({
-  maxWidth: 380,
+  display: "inline-block",
+  maxWidth: "min(75vw, 420px)",
   padding: theme.spacing(1.5),
-  borderRadius: theme.shape.borderRadius,
+  borderRadius: 14,
   backgroundColor: theme.palette.grey[500_12],
   color: theme.palette.text.primary,
+  border: `1px solid ${theme.palette.divider}`,
 }));
 
 const MessageItem = ({ message, conversation }) => {
@@ -28,11 +30,27 @@ const MessageItem = ({ message, conversation }) => {
     marginBottom: theme.spacing(3),
   }));
 
-  const sender = conversation.participants.find(
-    (participant) => participant._id === message.senderId
-  );
+  const participants = Array.isArray(conversation?.participants)
+    ? conversation.participants
+    : [];
 
-  const isMe = message.senderId === user._id;
+  const messageSenderId =
+    message?.senderId?._id ||
+    message?.sender?._id ||
+    message?.senderId ||
+    message?.sender;
+
+  const normalizedSenderId = String(messageSenderId || "");
+  const normalizedCurrentUserId = String(user?._id || "");
+
+  const sender =
+    participants.find(
+      (participant) => String(participant?._id || "") === normalizedSenderId
+    ) ||
+    message?.sender ||
+    null;
+
+  const isMe = normalizedSenderId === normalizedCurrentUserId;
   const justifyContent = isMe ? "flex-end" : "flex-start";
 
   const firstName = sender?.name && sender.name.split(" ")[0];
@@ -44,13 +62,15 @@ const MessageItem = ({ message, conversation }) => {
         sx={{
           display: "flex",
           justifyContent,
+          alignItems: "flex-end",
+          gap: 1,
         }}
       >
         {!isMe && (
           <Avatar
             alt={sender?.name}
             src={senderAvatarSrc || undefined}
-            sx={{ width: 32, height: 32, mr: 2 }}
+            sx={{ width: 32, height: 32 }}
           >
             {!senderAvatarSrc ? getAvatarFallbackText(sender?.name) : null}
           </Avatar>
@@ -59,7 +79,16 @@ const MessageItem = ({ message, conversation }) => {
         <div>
           <ContentStyle
             sx={{
-              ...(isMe && { color: "grey.800", bgcolor: "primary.lighter" }),
+              ...(isMe
+                ? {
+                    color: "primary.contrastText",
+                    bgcolor: "primary.main",
+                    borderColor: "primary.main",
+                    borderTopRightRadius: 6,
+                  }
+                : {
+                    borderTopLeftRadius: 6,
+                  }),
             }}
           >
             <Typography variant="body2">{message.body}</Typography>
@@ -72,7 +101,7 @@ const MessageItem = ({ message, conversation }) => {
             }}
           >
             {!isMe && `${firstName}, `}
-            {formatDistanceToNowStrict(new Date(message.createdAt), {
+            {formatDistanceToNowStrict(new Date(message.createdAt || Date.now()), {
               addSuffix: true,
             })}
           </Typography>
@@ -89,7 +118,7 @@ export function MessageList({ conversation, messages }) {
     if (scrollRef.current) {
       scrollRef.current.scrollToBottom();
     }
-  }, [conversation.messages]);
+  }, [messages]);
 
   return (
     <>

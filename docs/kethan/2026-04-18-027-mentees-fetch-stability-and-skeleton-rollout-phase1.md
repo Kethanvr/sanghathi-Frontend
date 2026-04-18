@@ -116,3 +116,47 @@ Verification scope:
 3. Consider adding request cancelation/abort handling in `useMenteesData` to prevent stale updates on rapid route changes.
 4. Add backend pagination support on mentees endpoint if mentor loads grow significantly.
 5. Monitor auth redirect flow in browser tests to confirm smooth 401->login->return behavior in all role paths.
+
+# 8. Phase 3 UI + Threads/Report Delta (2026-04-18)
+
+Implemented a frontend UX sweep for `/threads`, `/report`, chat message rendering, and mentees list presentation.
+
+1. Threads page (`/threads`)
+- Added in-page search for title/topic/participant name.
+- Added status and category filters with one-click clear.
+- Kept existing thread actions (`View`, `Delete` for closed threads) intact.
+- Switched default table page size from 5 to 10 rows.
+
+2. Report page (`/report`)
+- Added true table pagination with default 10 rows per page.
+- Retained existing search/filter system and expanded filters with Semester.
+- Added support for explicit `In Progress` status filtering in addition to Open/Closed.
+- Preserved export-to-Excel and chat dialog behavior.
+
+3. Chat interface consistency
+- Updated thread message rendering to reliably align:
+  - sent messages on the right,
+  - received messages on the left.
+- Normalized sender identity matching to handle both string/Object sender shapes.
+- Applied the same sender-side logic fix to the generic chat component path.
+- Improved chat bubble visual styling for readability and consistent spacing.
+
+4. Mentees table UX (HOD/Director/Faculty variants)
+- Moved avatar rendering into the Name column so profile picture appears directly before mentee name.
+- Kept fallback avatar initials when image is unavailable.
+
+5. Files updated in this delta
+- `sanghathi-Frontend/src/pages/Thread/Thread.jsx`
+- `sanghathi-Frontend/src/pages/Thread/ThreadList.jsx`
+- `sanghathi-Frontend/src/pages/Report/Report.jsx`
+- `sanghathi-Frontend/src/pages/Thread/Message/Message.jsx`
+- `sanghathi-Frontend/src/components/chat/ChatMessageItem.jsx`
+- `sanghathi-Frontend/src/components/chat/ChatMessageList.jsx`
+- `sanghathi-Frontend/src/pages/Director/DirectorMenteesList.jsx`
+- `sanghathi-Frontend/src/pages/Hod/HodMenteesList.jsx`
+- `sanghathi-Frontend/src/pages/Faculty/FetchStudentProfile.jsx`
+
+6. Validation results
+- Edited-file diagnostics: no language-service errors.
+- Frontend production build: passed (`bun run build`).
+- Non-blocking large chunk warnings remain and are pre-existing optimization follow-ups.
