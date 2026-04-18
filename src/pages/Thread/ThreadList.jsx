@@ -17,6 +17,10 @@ import {
   useTheme,
 } from "@mui/material";
 import { Delete } from "@mui/icons-material";
+import {
+  getAvatarSrc,
+  getAvatarFallbackText,
+} from "../../utils/avatarResolver";
 
 const ThreadList = ({
   threads,
@@ -89,13 +93,17 @@ const ThreadList = ({
 
                   <TableCell>
                     <Box sx={{ display: "flex", cursor: "pointer", ml: -1 }}>
-                      {thread.participants.map((participant, idx) => (
+                      {thread.participants.map((participant, idx) => {
+                        const participantAvatarSrc = getAvatarSrc(participant);
+
+                        return (
                         <Tooltip
                           key={participant._id}
                           title={participant.name}
                           placement="top"
                         >
                           <Avatar
+                            src={participantAvatarSrc || undefined}
                             sx={{
                               ml: idx === 0 ? 0 : -1.5,
                               zIndex: 100 - idx,
@@ -105,10 +113,13 @@ const ThreadList = ({
                             }}
                             alt={participant.name}
                           >
-                            {participant.name[0]}
+                            {!participantAvatarSrc
+                              ? getAvatarFallbackText(participant.name)
+                              : null}
                           </Avatar>
                         </Tooltip>
-                      ))}
+                        );
+                      })}
                     </Box>
                   </TableCell>
 

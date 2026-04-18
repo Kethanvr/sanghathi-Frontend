@@ -42,6 +42,7 @@ import ConfirmationDialog from "./ConfirmationDialog";
 import { useEffect } from "react";
 
 import api from "../../utils/axios";
+import { getAvatarSrc, getAvatarFallbackText } from "../../utils/avatarResolver";
 
 import logger from "../../utils/logger.js";
 function UserList({ onEdit }) {
@@ -86,7 +87,7 @@ function UserList({ onEdit }) {
             page: pageNumber,
             limit: pageSize,
             fields:
-              "_id,name,email,phone,avatar,role,roleName,profile,status,lastActivity,department,sem,usn,cabin",
+              "_id,name,email,phone,avatar,photo,role,roleName,profile,status,lastActivity,department,sem,usn,cabin",
             includeProfiles: true,
           },
         });
@@ -395,7 +396,10 @@ function UserList({ onEdit }) {
                 ) : (
                   filteredUsers
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((user) => (
+                    .map((user) => {
+                      const avatarSrc = getAvatarSrc(user);
+
+                      return (
                       <TableRow 
                         key={user._id}
                         hover
@@ -423,8 +427,11 @@ function UserList({ onEdit }) {
                           >
                             <Avatar
                               alt={user.name}
+                              src={avatarSrc || undefined}
                               sx={{ width: 40, height: 40 }}
-                            />
+                            >
+                              {!avatarSrc ? getAvatarFallbackText(user.name) : null}
+                            </Avatar>
                             <Box>
                               <Typography variant="subtitle2">
                                 {user.name || "N/A"}
@@ -482,7 +489,8 @@ function UserList({ onEdit }) {
                           </Menu>
                         </TableCell>
                       </TableRow>
-                    ))
+                      );
+                    })
                 )}
               </TableBody>
             </Table>

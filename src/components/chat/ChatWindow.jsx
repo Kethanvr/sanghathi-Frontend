@@ -16,6 +16,10 @@ import ChatContext from "../../context/ChatContext";
 import PhoneIcon from "@mui/icons-material/Phone";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import {
+  getAvatarSrc,
+  getAvatarFallbackText,
+} from "../../utils/avatarResolver";
 
 export default function ChatWindow() {
   const { currentChat, messages, sendMessage } = useContext(ChatContext);
@@ -24,6 +28,7 @@ export default function ChatWindow() {
   const sender = currentChat?.participants.find(
     (participant) => participant._id !== "6440827f7b7d9337a2202d16"
   );
+  const senderAvatarSrc = getAvatarSrc(sender);
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -57,6 +62,7 @@ export default function ChatWindow() {
         <Box sx={{ ml: 2, display: "flex", flexDirection: "row" }}>
           <Avatar
             alt={sender?.name}
+            src={senderAvatarSrc || undefined}
             sx={{
               bgcolor: "primary.main",
               mr: 2,
@@ -73,7 +79,9 @@ export default function ChatWindow() {
                 },
               }),
             }}
-          />
+          >
+            {!senderAvatarSrc ? getAvatarFallbackText(sender?.name) : null}
+          </Avatar>
           <Box>
             <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
               {sender?.name}

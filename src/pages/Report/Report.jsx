@@ -47,6 +47,10 @@ import api from "../../utils/axios"; // replace with your actual API path
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import { MessageList } from "../Thread/Message/Message";
+import {
+  getAvatarSrc,
+  getAvatarFallbackText,
+} from "../../utils/avatarResolver";
 
 const baseURL = import.meta.env.VITE_PYTHON_API;
 
@@ -648,7 +652,10 @@ const Report = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filteredThreads.map((thread) => (
+                    {filteredThreads.map((thread) => {
+                      const authorAvatarSrc = getAvatarSrc(thread?.author);
+
+                      return (
                       <TableRow 
                         key={thread._id}
                         hover
@@ -785,6 +792,7 @@ const Report = () => {
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <Avatar 
+                              src={authorAvatarSrc || undefined}
                               sx={{ 
                                 width: 28, 
                                 height: 28,
@@ -795,7 +803,9 @@ const Report = () => {
                                 mr: 1
                               }}
                             >
-                              {thread?.author?.name?.[0] || "?"}
+                              {!authorAvatarSrc
+                                ? getAvatarFallbackText(thread?.author?.name)
+                                : null}
                             </Avatar>
                             <Typography variant="body2" noWrap sx={{ maxWidth: 100 }}>
                               {thread?.author?.name || "Unknown"}
@@ -816,17 +826,26 @@ const Report = () => {
                               },
                             }}
                           >
-                            {thread.participants.map((participant, idx) => (
+                            {thread.participants.map((participant, idx) => {
+                              const participantAvatarSrc = getAvatarSrc(participant);
+
+                              return (
                               <Tooltip
                                 key={idx}
                                 title={participant.name}
                                 placement="top"
                               >
-                                <Avatar alt={participant.name}>
-                                  {participant.name[0]}
+                                <Avatar
+                                  alt={participant.name}
+                                  src={participantAvatarSrc || undefined}
+                                >
+                                  {!participantAvatarSrc
+                                    ? getAvatarFallbackText(participant.name)
+                                    : null}
                                 </Avatar>
                               </Tooltip>
-                            ))}
+                              );
+                            })}
                           </AvatarGroup>
                         </TableCell>
                         <TableCell>
@@ -851,7 +870,8 @@ const Report = () => {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </TableContainer>

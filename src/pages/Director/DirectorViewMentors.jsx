@@ -34,6 +34,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Page from "../../components/Page";
 import api from "../../utils/axios";
 import { AuthContext } from "../../context/AuthContext";
+import { getAvatarSrc, getAvatarFallbackText } from "../../utils/avatarResolver";
 
 import logger from "../../utils/logger.js";
 function DirectorViewMentors() {
@@ -224,7 +225,10 @@ function DirectorViewMentors() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    paginatedMentors.map((mentor) => (
+                    paginatedMentors.map((mentor) => {
+                      const avatarSrc = getAvatarSrc(mentor);
+
+                      return (
                       <TableRow 
                         key={mentor._id}
                         hover
@@ -238,13 +242,15 @@ function DirectorViewMentors() {
                       >
                         <TableCell>
                           <Avatar 
+                            alt={mentor.name}
+                            src={avatarSrc || undefined}
                             sx={{ 
                               backgroundColor: isLight 
                                 ? theme.palette.primary.main 
                                 : theme.palette.info.main 
                             }}
                           >
-                            {mentor.name?.charAt(0).toUpperCase()}
+                            {!avatarSrc ? getAvatarFallbackText(mentor.name) : null}
                           </Avatar>
                         </TableCell>
                         <TableCell>
@@ -285,7 +291,8 @@ function DirectorViewMentors() {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>
