@@ -31,11 +31,13 @@ import Page from "../../components/Page";
 import api from "../../utils/axios";
 import StudentTable from "./StudentTable";
 import MentorAssignmentDialog from "./MentorAssignmentDialog";
+import useResponsive from "../../hooks/useResponsive";
 
 import logger from "../../utils/logger.js";
 const MentorAllocation = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const isMobile = useResponsive("down", "sm");
   const [students, setStudents] = useState([]);
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -233,16 +235,18 @@ const MentorAllocation = () => {
 
   return (
     <Page title="Mentor Allocation">
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 } }}>
         <Card sx={{ boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
           <Box 
             sx={{ 
               borderBottom: 1, 
               borderColor: 'divider',
               display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
               justifyContent: 'space-between',
-              alignItems: 'center',
-              px: 3,
+              alignItems: { xs: 'stretch', sm: 'center' },
+              gap: { xs: 1, sm: 0 },
+              px: { xs: 2, sm: 3 },
               py: 2
             }}
           >
@@ -251,14 +255,14 @@ const MentorAllocation = () => {
                 Assign Mentors
               </Typography>
             </Box>
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: { xs: 'flex-end', sm: 'flex-start' }, flexWrap: 'wrap', rowGap: 1 }}>
               <Button
                 variant="contained"
                 color="secondary"
                 disabled={selectedStudents.length === 0}
                 onClick={handleAssignClick}
                 endIcon={<SchoolIcon />}
-                size="small"
+                size={isMobile ? "small" : "medium"}
               >
                 Assign Mentor {selectedStudents.length > 0 && `(${selectedStudents.length})`}
               </Button>
@@ -267,15 +271,22 @@ const MentorAllocation = () => {
                 color="inherit"
                 onClick={() => setShowFilters(!showFilters)}
                 endIcon={<FilterListIcon />}
-                size="small"
+                size={isMobile ? "small" : "medium"}
               >
                 {showFilters ? "Hide Filters" : "Show Filters"}
               </Button>
             </Stack>
           </Box>
-          <CardContent>
+          <CardContent sx={{ px: { xs: 1.5, sm: 3 } }}>
             <Stack spacing={2}>
-              <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  alignItems: "center",
+                  flexDirection: { xs: "column", sm: "row" },
+                }}
+              >
                 <TextField
                   fullWidth
                   placeholder="Search by name or USN..."
@@ -296,6 +307,7 @@ const MentorAllocation = () => {
                     color="inherit"
                     onClick={clearFilters}
                     startIcon={<ClearIcon />}
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
                   >
                     Clear Filters
                   </Button>
@@ -352,7 +364,8 @@ const MentorAllocation = () => {
                 sx={{ 
                   boxShadow: 1,
                   borderRadius: 1,
-                  overflow: 'hidden',
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
                   "& .MuiTableHead-root": {
                     backgroundColor: alpha(theme.palette.text.primary, 0.04),
                   },
@@ -374,7 +387,9 @@ const MentorAllocation = () => {
                   sx={{
                     display: "flex",
                     justifyContent: "space-between",
-                    alignItems: "center",
+                    alignItems: { xs: "flex-start", sm: "center" },
+                    flexDirection: { xs: "column", sm: "row" },
+                    gap: { xs: 1, sm: 0 },
                     px: 2,
                     py: 1,
                   }}
@@ -386,7 +401,12 @@ const MentorAllocation = () => {
                       </Typography>
                     )}
                   </Box>
-                  <Stack direction="row" spacing={2} alignItems="center">
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    alignItems="center"
+                    sx={{ width: { xs: "100%", sm: "auto" }, justifyContent: { xs: "space-between", sm: "flex-start" } }}
+                  >
                     <Typography variant="body2" color="text.secondary">
                       Rows per page:
                     </Typography>

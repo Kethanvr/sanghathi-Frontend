@@ -32,11 +32,13 @@ import { AuthContext } from "../../context/AuthContext";
 import Page from "../../components/Page";
 import api from "../../utils/axios";
 import { getAvatarSrc, getAvatarFallbackText } from "../../utils/avatarResolver";
+import useResponsive from "../../hooks/useResponsive";
 
 import logger from "../../utils/logger.js";
 function HodViewMentors() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const isMobile = useResponsive("down", "sm");
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const [mentors, setMentors] = useState([]);
@@ -124,9 +126,11 @@ function HodViewMentors() {
             borderBottom: 1, 
             borderColor: 'divider',
             display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between',
-            alignItems: 'center',
-            px: 3,
+            alignItems: { xs: 'stretch', sm: 'center' },
+            gap: { xs: 1, sm: 0 },
+            px: { xs: 2, sm: 3 },
             py: 2
           }}
         >
@@ -140,9 +144,16 @@ function HodViewMentors() {
             variant="outlined"
           />
         </Box>
-        <CardContent>
+        <CardContent sx={{ px: { xs: 1.5, sm: 3 } }}>
           <Stack spacing={2}>
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
+                alignItems: "center",
+                flexDirection: { xs: "column", sm: "row" },
+              }}
+            >
               <TextField
                 fullWidth
                 placeholder="Search assigned mentors..."
@@ -161,14 +172,14 @@ function HodViewMentors() {
               />
             </Box>
 
-            <TableContainer component={Paper}>
-              <Table>
+            <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+              <Table sx={{ minWidth: { xs: 780, md: "100%" } }}>
                 <TableHead sx={{ backgroundColor: alpha(tableHeaderColor, 0.1) }}>
                   <TableRow>
                     <TableCell>Avatar</TableCell>
                     <TableCell>Mentor Name</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Phone</TableCell>
+                    <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Email</TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Phone</TableCell>
                     <TableCell>Department</TableCell>
                     <TableCell align="center">Assigned Mentees</TableCell>
                     <TableCell align="center">Actions</TableCell>
@@ -225,8 +236,8 @@ function HodViewMentors() {
                             {mentor.name}
                           </Typography>
                         </TableCell>
-                        <TableCell>{mentor.email}</TableCell>
-                        <TableCell>{mentor.phone || 'N/A'}</TableCell>
+                        <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>{mentor.email}</TableCell>
+                        <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{mentor.phone || 'N/A'}</TableCell>
                         <TableCell>
                           <Chip 
                             label={mentor.department} 
@@ -249,10 +260,11 @@ function HodViewMentors() {
                         <TableCell align="center">
                           <Button
                             variant="contained"
-                            size="small"
+                            size={isMobile ? "small" : "medium"}
                             color={isLight ? "primary" : "info"}
                             onClick={() => handleViewMentorDashboard(mentor)}
-                            startIcon={<DashboardIcon />}
+                            startIcon={!isMobile ? <DashboardIcon /> : null}
+                            sx={{ whiteSpace: "nowrap" }}
                           >
                             View Dashboard
                           </Button>
@@ -266,7 +278,7 @@ function HodViewMentors() {
             </TableContainer>
 
             <TablePagination
-              rowsPerPageOptions={rowsPerPageOptions}
+              rowsPerPageOptions={isMobile ? [10, 20] : rowsPerPageOptions}
               component="div"
               count={filteredMentors.length}
               rowsPerPage={rowsPerPage}
