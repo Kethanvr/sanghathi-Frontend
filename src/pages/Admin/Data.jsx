@@ -7,9 +7,11 @@ import {
   Box,
   Tabs,
   Paper,
-  Typography
+  Typography,
+  Button,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
+import { Link as RouterLink } from "react-router-dom";
 
 // routes
 
@@ -137,6 +139,16 @@ export default function Data() {
             >
               Upload and manage data for students, attendance, and academic records
             </Typography>
+
+            <Button
+              component={RouterLink}
+              to="/admin/upload-history"
+              variant="outlined"
+              size="small"
+              sx={{ mt: 2 }}
+            >
+              View Upload History & Restore
+            </Button>
           </Box>
 
           <Tabs

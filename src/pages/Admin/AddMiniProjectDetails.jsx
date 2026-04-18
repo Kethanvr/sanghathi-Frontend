@@ -23,6 +23,7 @@ import Papa from "papaparse";
 import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
+import { recordAdminUploadSession } from "../../utils/uploadHistory";
 
 const AddMiniProjectDetails = () => {
   const theme = useTheme();
@@ -125,6 +126,7 @@ const AddMiniProjectDetails = () => {
     let success = 0;
     let errCount = 0;
     const newErrors = [];
+    const affectedUserIds = new Set();
 
     for (const row of rows) {
       try {
@@ -155,11 +157,22 @@ const AddMiniProjectDetails = () => {
         });
 
         success++;
+        affectedUserIds.add(String(userId));
       } catch (error) {
         errCount++;
         newErrors.push(`Error for ${row.USN}: ${error.message}`);
       }
     }
+
+    await recordAdminUploadSession({
+      tabType: "add-mini-project-details",
+      fileName: file?.name || "",
+      totalRows: rows.length,
+      successCount: success,
+      errorCount: errCount,
+      errors: newErrors,
+      affectedUserIds: Array.from(affectedUserIds),
+    });
 
     setSuccessCount(success);
     setErrorCount(errCount);

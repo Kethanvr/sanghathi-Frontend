@@ -11,6 +11,7 @@ import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import SummarizeOutlinedIcon from '@mui/icons-material/SummarizeOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 
 // Campus buddy icon needs special treatment as it represents a feature
 // NavItemButton already handles the correct color for all icons based on theme mode
@@ -46,6 +47,11 @@ const adminNavConfig = [
     text: "Mentor Assignment",
     icon: <PersonOutlinedIcon />,
     link: "/admin/mentor-assignment",
+  },
+  {
+    text: "Upload History",
+    icon: <HistoryOutlinedIcon />,
+    link: "/admin/upload-history",
   },
   { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },

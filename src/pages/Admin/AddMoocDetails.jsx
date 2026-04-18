@@ -20,12 +20,14 @@ import Papa from "papaparse";
 import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
+import { recordAdminUploadSession } from "../../utils/uploadHistory";
 
 const AddMoocDetails = () => {
   const [processing, setProcessing] = useState(false);
   const [successCount, setSuccessCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
   const [errors, setErrors] = useState([]);
+  const [fileName, setFileName] = useState("");
 
   const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
 
@@ -95,6 +97,7 @@ const AddMoocDetails = () => {
     const uploadedFile = event.target.files[0];
     if (!uploadedFile) return;
 
+    setFileName(uploadedFile.name || "");
     setProcessing(true);
     setErrors([]);
     setSuccessCount(0);
@@ -120,6 +123,7 @@ const AddMoocDetails = () => {
     let success = 0;
     let errCount = 0;
     const newErrors = [];
+    const affectedUserIds = new Set();
 
     for (const row of rows) {
       try {
@@ -151,11 +155,22 @@ const AddMoocDetails = () => {
         });
 
         success++;
+        affectedUserIds.add(String(userId));
       } catch (error) {
         errCount++;
         newErrors.push(`Error for ${row.USN}: ${error.message}`);
       }
     }
+
+    await recordAdminUploadSession({
+      tabType: "add-mooc-details",
+      fileName,
+      totalRows: rows.length,
+      successCount: success,
+      errorCount: errCount,
+      errors: newErrors,
+      affectedUserIds: Array.from(affectedUserIds),
+    });
 
     setSuccessCount(success);
     setErrorCount(errCount);

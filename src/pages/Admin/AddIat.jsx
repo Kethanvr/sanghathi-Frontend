@@ -23,6 +23,7 @@ import Papa from "papaparse";
 import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
+import { recordAdminUploadSession } from "../../utils/uploadHistory";
 
 const AddIat = () => {
   const theme = useTheme();
@@ -120,6 +121,7 @@ const AddIat = () => {
     let success = 0;
     let errors = 0;
     const newErrors = [];
+    const affectedUserIds = new Set();
 
     // Group rows by USN and Semester
     const groupedData = {};
@@ -167,11 +169,22 @@ const AddIat = () => {
         // Submit IAT data
         await api.post(`/students/iat/${userId}`, iatData);
         success++;
+        affectedUserIds.add(String(userId));
       } catch (error) {
         errors++;
         newErrors.push(`Error for USN ${data.usn}, Semester ${data.semester}: ${error.message}`);
       }
     }
+
+    await recordAdminUploadSession({
+      tabType: "add-iat-marks",
+      fileName: file?.name || "",
+      totalRows: rows.length,
+      successCount: success,
+      errorCount: errors,
+      errors: newErrors,
+      affectedUserIds: Array.from(affectedUserIds),
+    });
 
     setSuccessCount(success);
     setErrorCount(errors);

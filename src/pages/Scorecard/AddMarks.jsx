@@ -20,6 +20,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { alpha, useTheme } from "@mui/material/styles";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
+import { recordAdminUploadSession } from "../../utils/uploadHistory";
 import logger from "../../utils/logger.js";
 
 const AddMarks = () => {
@@ -191,6 +192,7 @@ const AddMarks = () => {
 
           // Create an array to track results for each student
           const results = [];
+          const affectedUserIds = new Set();
 
           // Process each student
           for (const [usn, semesterGroups] of studentGroups) {
@@ -212,6 +214,8 @@ const AddMarks = () => {
                 logger.warn(`Could not find userId for USN ${usn}, falling back to admin ID: ${user?._id}`);
                 throw new Error(`Student not found for USN: ${usn}`);
               }
+
+              affectedUserIds.add(String(studentId));
 
               // Submit data for each semester
               for (const [semester, subjects] of semesterGroups) {
@@ -262,6 +266,18 @@ const AddMarks = () => {
             setSuccess(`Processed ${successCount} out of ${totalCount} students successfully.`);
             setError(`Failed to process ${totalCount - successCount} students. See console for details.`);
           }
+
+          await recordAdminUploadSession({
+            tabType: "add-external-marks",
+            fileName: file?.name || "",
+            totalRows: totalCount,
+            successCount,
+            errorCount: totalCount - successCount,
+            errors: results
+              .filter((entry) => entry.status === "error")
+              .map((entry) => `${entry.usn}: ${entry.message || "Unknown error"}`),
+            affectedUserIds: Array.from(affectedUserIds),
+          });
 
           setFile(null);
           // Reset file input
