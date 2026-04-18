@@ -1,26 +1,33 @@
 import { useState, useEffect, useContext, useCallback } from "react";
 import {
+  Alert,
   Box,
+  Container,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Select,
-  MenuItem,
-  TextField,
-  Typography, // For headings
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useSearchParams } from "react-router-dom";
 import useStudentSemester from "../../hooks/useStudentSemester";
+import api from "../../utils/axios";
 import logger from "../../utils/logger.js";
-const BASE_URL = import.meta.env.VITE_API_URL;
 
 const Iat = () => {
   const { user } = useContext(AuthContext);
+  const theme = useTheme();
+  const isSmDown = useMediaQuery(theme.breakpoints.down("sm"));
   const [searchParams] = useSearchParams();
   const menteeId = searchParams.get('menteeId');
   const { semester: studentSemester, loading: semesterLoading } = useStudentSemester();
@@ -49,14 +56,7 @@ const Iat = () => {
       logger.info(`Fetching IAT marks for user ID: ${userId} (${menteeId ? 'menteeId from URL' : 'logged-in user'})`);
       
       //  Adapt the endpoint to your IAT data endpoint
-      const response = await axios.get(
-        `${BASE_URL}/students/iat/${userId}`, //  Replace with your actual endpoint
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-          }
-        }
-      );
+      const response = await api.get(`/students/iat/${userId}`);
       const data = response.data.data.iat; // Adjust based on your API response structure
 
       if (data && data.semesters) {
@@ -121,18 +121,20 @@ const Iat = () => {
 
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h4" component="h1" gutterBottom align="center">
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+      <Typography variant={isSmDown ? "h5" : "h4"} component="h1" gutterBottom align="center">
         IAT Marks Report
       </Typography>
 
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-        <label>
-          Select Semester:
+      <Stack direction={{ xs: "column", sm: "row" }} sx={{ mb: 2, justifyContent: "center" }}>
+        <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 220 } }}>
+          <InputLabel id="iat-semester-select-label">Semester</InputLabel>
           <Select
-            value={selectedSemester}
+            labelId="iat-semester-select-label"
+            value={selectedSemester ?? ""}
             onChange={handleSemesterChange}
-            sx={{ ml: 1 }}
+            label="Semester"
+            displayEmpty
           >
             {iatData.map((sem) => (
               <MenuItem key={sem.semester} value={sem.semester}>
@@ -140,14 +142,27 @@ const Iat = () => {
               </MenuItem>
             ))}
           </Select>
-        </label>
-      </Box>
+        </FormControl>
+      </Stack>
 
-      <TableContainer sx={{ border: "1px solid gray" }}>
-        <Table>
+      {loading && (
+        <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>
+          Loading IAT marks...
+        </Typography>
+      )}
+
+      {!loading && error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {!loading && !error && (
+      <TableContainer sx={{ border: "1px solid gray", overflowX: "auto" }}>
+        <Table sx={{ minWidth: { xs: 640, md: "100%" } }}>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ border: "1px solid gray" }}>
+              <TableCell sx={{ border: "1px solid gray", display: { xs: "none", sm: "table-cell" } }}>
                 Subject Code
               </TableCell>
               <TableCell sx={{ border: "1px solid gray" }}>
@@ -159,9 +174,16 @@ const Iat = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {getSubjectsForSemester().map((subject) => (
+            {getSubjectsForSemester().length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center" sx={{ border: "1px solid gray", py: 3 }}>
+                  No IAT data available for the selected semester.
+                </TableCell>
+              </TableRow>
+            ) : (
+            getSubjectsForSemester().map((subject) => (
               <TableRow key={subject.subjectCode}>
-                <TableCell sx={{ border: "1px solid gray" }}>
+                <TableCell sx={{ border: "1px solid gray", display: { xs: "none", sm: "table-cell" } }}>
                   {subject.subjectCode}
                 </TableCell>
                 <TableCell sx={{ border: "1px solid gray" }}>
@@ -177,11 +199,13 @@ const Iat = () => {
                     {getIatMarks(subject.subjectCode, 3)}
                 </TableCell>
               </TableRow>
-            ))}
+            ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>
-    </Box>
+      )}
+    </Container>
   );
 };
 

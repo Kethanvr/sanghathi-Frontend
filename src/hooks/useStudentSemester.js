@@ -1,10 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import api from '../utils/axios';
 
 import logger from "../utils/logger.js";
-const BASE_URL = import.meta.env.VITE_API_URL;
 
 /**
  * Custom hook to fetch student's current semester from admission details
@@ -30,14 +29,7 @@ export const useStudentSemester = () => {
         logger.info('[useStudentSemester] Fetching semester for userId:', userId);
 
         // Fetch admission details to get current semester
-        const response = await axios.get(
-          `${BASE_URL}/v1/admissions/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`
-            }
-          }
-        );
+        const response = await api.get(`/v1/admissions/${userId}`);
 
         logger.info('[useStudentSemester] Admission response:', response.data);
 

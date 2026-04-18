@@ -56,3 +56,4 @@ Example:
 - [2026-04-18-029-hod-director-route-navigation-normalization](./2026-04-18-029-hod-director-route-navigation-normalization.md)
 - [2026-04-18-030-mentor-mentee-avatar-profile-photo-rollout](./2026-04-18-030-mentor-mentee-avatar-profile-photo-rollout.md)
 - [2026-04-18-031-faculty-mentees-ui-parity-and-thread-student-avatar-focus](./2026-04-18-031-faculty-mentees-ui-parity-and-thread-student-avatar-focus.md)
+- [2026-04-18-032-responsive-academics-and-user-list-loader-coverage-phase3](./2026-04-18-032-responsive-academics-and-user-list-loader-coverage-phase3.md)
