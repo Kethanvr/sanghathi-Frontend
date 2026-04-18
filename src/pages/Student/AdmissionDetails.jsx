@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
+import React, { useEffect, useContext, useCallback } from "react";
 import { useSnackbar } from "notistack";
 import { useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
@@ -45,7 +45,6 @@ export default function AdmissionDetails() {
   const { user } = useContext(AuthContext);
   const [searchParams] = useSearchParams();
   const menteeId = searchParams.get("menteeId");
-  const [isDataFetched, setIsDataFetched] = useState(false);
 
   const methods = useForm({
     defaultValues: DEFAULT_VALUES,
@@ -92,7 +91,7 @@ export default function AdmissionDetails() {
       //   // });
       // }
     } finally {
-      setIsDataFetched(true);
+      // no-op
     }
   }, [menteeId, user?._id, setValue, enqueueSnackbar]);
 
@@ -147,11 +146,10 @@ export default function AdmissionDetails() {
   ];
 
   return (
-    <div>
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-        <Grid container spacing={2}>
+        <Grid container spacing={{ xs: 2, md: 3 }}>
           <Grid item xs={12}>
-            <Card sx={{ p: 3 }}>
+            <Card sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h5" gutterBottom>
                 Admission Details
               </Typography>
@@ -183,7 +181,7 @@ export default function AdmissionDetails() {
               </Box>
 
               <Typography variant="h6" sx={{ mt: 3 }}>
-                change of Branch (if applicable)
+                Change of Branch (if applicable)
               </Typography>
               <Divider sx={{ mb: 3 }} />
 
@@ -236,11 +234,12 @@ export default function AdmissionDetails() {
                 </FormGroup>
               </FormControl>
 
-              <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
+              <Stack spacing={2} alignItems={{ xs: "stretch", sm: "flex-end" }} sx={{ mt: 3 }}>
                 <LoadingButton
                   type="submit"
                   variant="contained"
                   loading={isSubmitting}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Save Changes
                 </LoadingButton>
@@ -249,6 +248,5 @@ export default function AdmissionDetails() {
           </Grid>
         </Grid>
       </FormProvider>
-    </div>
   );
 }

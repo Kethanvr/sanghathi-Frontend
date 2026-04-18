@@ -89,7 +89,7 @@ export default function LocalGuardianForm() {
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-      <Card sx={{ p: 3 }}>
+      <Card sx={{ p: { xs: 2, sm: 3 } }}>
         <Typography variant="h5" gutterBottom>Local Guardian Details</Typography>
         <Divider sx={{ mb: 3 }} />
         
@@ -99,7 +99,7 @@ export default function LocalGuardianForm() {
           </Box>
         ) : (
           <>
-            <Grid container spacing={2}>
+            <Grid container spacing={{ xs: 2, md: 3 }}>
               {Object.keys(DEFAULT_VALUES).map((field) => (
                 <Grid item xs={12} md={field === "residenceAddress" ? 12 : 4} key={field}>
                   <RHFTextField 
@@ -113,12 +113,20 @@ export default function LocalGuardianForm() {
               ))}
             </Grid>
 
-            <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
-              <Box display="flex" gap={1}>
+            <Stack spacing={2} alignItems={{ xs: "stretch", sm: "flex-end" }} sx={{ mt: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  width: { xs: "100%", sm: "auto" },
+                  flexDirection: { xs: "column-reverse", sm: "row" },
+                }}
+              >
                 <LoadingButton 
                   variant="outlined" 
                   onClick={() => reset(DEFAULT_VALUES)} 
                   disabled={isSubmitting}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Reset
                 </LoadingButton>
@@ -126,6 +134,7 @@ export default function LocalGuardianForm() {
                   type="submit" 
                   variant="contained" 
                   loading={isSubmitting}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Save
                 </LoadingButton>

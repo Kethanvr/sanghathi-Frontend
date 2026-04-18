@@ -59,3 +59,4 @@ Example:
 - [2026-04-18-032-responsive-academics-and-user-list-loader-coverage-phase3](./2026-04-18-032-responsive-academics-and-user-list-loader-coverage-phase3.md)
 - [2026-04-18-033-phase3-admin-upload-shared-client-and-responsive-polish](./2026-04-18-033-phase3-admin-upload-shared-client-and-responsive-polish.md)
 - [2026-04-18-034-phase3-admin-data-and-profile-form-responsive-hardening](./2026-04-18-034-phase3-admin-data-and-profile-form-responsive-hardening.md)
+- [2026-04-18-035-phase3-student-profile-wrapper-and-companion-mobile-consistency](./2026-04-18-035-phase3-student-profile-wrapper-and-companion-mobile-consistency.md)

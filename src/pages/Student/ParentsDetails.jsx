@@ -124,11 +124,10 @@ export default function ParentsDetails() {
   };
 
   return (
-    <div>
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-        <Grid container spacing={2}>
+        <Grid container spacing={{ xs: 2, md: 3 }}>
           <Grid item xs={12} md={12}>
-            <Card sx={{ p: 3 }}>
+            <Card sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h5" gutterBottom>Parents Details</Typography>
               <Divider sx={{ mb: 3 }} />
               
@@ -192,8 +191,8 @@ export default function ParentsDetails() {
           {isDataFetched && (
             <>
               <Grid item xs={12} md={6}>
-                <Card sx={{ p: 3 }}>
-                  <Stack spacing={3} sx={{ mt: 1}}>
+                <Card sx={{ p: { xs: 2, sm: 3 } }}>
+                  <Stack spacing={{ xs: 2, sm: 3 }} sx={{ mt: 1}}>
                     <Typography variant="h6">Father's Details</Typography>
                     <RHFTextField
                       name="fatherOccupation"
@@ -236,8 +235,8 @@ export default function ParentsDetails() {
                 </Card>
               </Grid>
               <Grid item xs={12} md={6}>
-                <Card sx={{ p: 3 }}>
-                  <Stack spacing={3} sx={{ mt: 1}}>
+                <Card sx={{ p: { xs: 2, sm: 3 } }}>
+                  <Stack spacing={{ xs: 2, sm: 3 }} sx={{ mt: 1}}>
                     <Typography variant="h6">Mother's Details</Typography>
                     <RHFTextField
                       name="motherOccupation"
@@ -280,13 +279,14 @@ export default function ParentsDetails() {
                 </Card>
               </Grid>
               <Grid item xs={12} md={12}>
-                <Card sx={{p:3}}>
-                  <Stack spacing={3} alignItems="flex-end" >
-                    <Box display="flex" gap={1}>
+                <Card sx={{ p: { xs: 2, sm: 3 } }}>
+                  <Stack spacing={2} alignItems={{ xs: "stretch", sm: "flex-end" }}>
+                    <Box sx={{ display: "flex", gap: 1, width: { xs: "100%", sm: "auto" } }}>
                       <LoadingButton
                         type="submit"
                         variant="contained"
                         loading={isSubmitting}
+                        sx={{ width: { xs: "100%", sm: "auto" } }}
                       >
                         Save
                       </LoadingButton>
@@ -298,6 +298,5 @@ export default function ParentsDetails() {
           )}
         </Grid>
       </FormProvider>
-    </div>
   );
 }
