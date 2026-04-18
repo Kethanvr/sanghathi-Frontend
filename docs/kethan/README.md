@@ -43,3 +43,4 @@ Example:
 - [2026-04-18-016-atlas-only-backup-and-tsconfig-fix](./2026-04-18-016-atlas-only-backup-and-tsconfig-fix.md)
 - [2026-04-18-017-backend-start-fix-bun-migration-and-account-dashboard-inventory](./2026-04-18-017-backend-start-fix-bun-migration-and-account-dashboard-inventory.md)
 - [2026-04-18-018-demo-account-links-and-readme-log-sync](./2026-04-18-018-demo-account-links-and-readme-log-sync.md)
+- [2026-04-18-019-netlify-keep-cloudflare-cache-rules-and-deploy-visibility](./2026-04-18-019-netlify-keep-cloudflare-cache-rules-and-deploy-visibility.md)
