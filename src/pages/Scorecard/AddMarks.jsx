@@ -10,7 +10,7 @@ import {
   Stack,
   Divider,
 } from "@mui/material";
-import axios from "axios";
+import api from "../../utils/axios";
 import { AuthContext } from "../../context/AuthContext";
 import Papa from "papaparse";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -21,7 +21,6 @@ import { alpha, useTheme } from "@mui/material/styles";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
 import logger from "../../utils/logger.js";
-const BASE_URL = import.meta.env.VITE_API_URL;
 
 const AddMarks = () => {
   const theme = useTheme();
@@ -31,7 +30,6 @@ const AddMarks = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [file, setFile] = useState(null);
-  const token = localStorage.getItem("token");
 
   const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
 
@@ -157,11 +155,7 @@ const AddMarks = () => {
   const fetchUserIdByUSN = async (usn) => {
     try {
       // Call the API to get user ID from USN
-      const response = await axios.get(`${BASE_URL}/users/usn/${usn}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await api.get(`/users/usn/${usn}`);
 
       if (response.data && response.data.userId) {
         return response.data.userId;
@@ -215,7 +209,7 @@ const AddMarks = () => {
 
               // If lookup failed, fall back to admin ID
               if (!studentId) {
-                logger.warn(`Could not find userId for USN ${usn}, falling back to admin ID: ${user._id}`);
+                logger.warn(`Could not find userId for USN ${usn}, falling back to admin ID: ${user?._id}`);
                 throw new Error(`Student not found for USN: ${usn}`);
               }
 
@@ -234,18 +228,13 @@ const AddMarks = () => {
                   result: subject.result || "FAIL"
                 }));
 
-                await axios.post(
-                  `${BASE_URL}/students/external/${studentId}`,
+                await api.post(
+                  `/students/external/${studentId}`,
                   {
                     semester,
                     subjects: formattedSubjects,
                     passingDate: subjects[0]?.passingDate || null,
                     sgpa: subjects[0]?.cgpa || null
-                  },
-                  {
-                    headers: {
-                      Authorization: `Bearer ${token}`
-                    }
                   }
                 );
               }
@@ -298,11 +287,11 @@ const AddMarks = () => {
   };
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          p: { xs: 2, sm: 4 },
           borderRadius: 2,
           backgroundColor: isLight
             ? 'rgba(255, 255, 255, 0.8)'

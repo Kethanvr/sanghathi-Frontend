@@ -20,11 +20,9 @@ import {
 } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
 import Papa from "papaparse";
-import axios from "axios";
+import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
-
-const BASE_URL = import.meta.env.VITE_API_URL;
 
 const AddTylMarks = () => {
   const theme = useTheme();
@@ -260,25 +258,20 @@ const AddTylMarks = () => {
           .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
           .toUpperCase();
 
-        const response = await axios.get(`${BASE_URL}/users/usn/${encodeURIComponent(normalizedUsn)}`, {
+        const response = await api.get(`/users/usn/${encodeURIComponent(normalizedUsn)}`, {
           params: { _ts: Date.now() },
           headers: {
             "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-            Authorization: `Bearer ${localStorage.getItem("token")}`
+            Pragma: "no-cache"
           }
         });
         const userId = response.data?.userId || response.data?._id;
         if (!userId) throw new Error("User not found");
 
-        await axios.post(`${BASE_URL}/tyl-scores`, {
+        await api.post(`/tyl-scores`, {
           userId,
           semester: 1,
           scores
-        }, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-          }
         });
 
         success++;
@@ -296,17 +289,18 @@ const AddTylMarks = () => {
 
   // ================= UI =================
   return (
-    <Container maxWidth="md">
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 2, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+      <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2, mb: 4 }}>
         <Typography variant="h4" align="center" sx={{ mb: 2 }}>
           Upload TYL Marks
         </Typography>
 
-        <Stack direction="row" spacing={2} justifyContent="center">
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center" alignItems="stretch">
           <Button
             variant="outlined"
             startIcon={<FileDownloadIcon />}
             onClick={downloadTemplate}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             Download Template
           </Button>
@@ -316,6 +310,7 @@ const AddTylMarks = () => {
             component="label"
             startIcon={<CloudUploadIcon />}
             disabled={processing}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             {processing ? "Processing..." : "Upload File"}
             <input

@@ -20,12 +20,11 @@ import {
 } from '@mui/icons-material';
 import { alpha, useTheme } from "@mui/material/styles";
 import Papa from "papaparse";
-import axios from "axios";
+import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
 
 import logger from "../../utils/logger.js";
-const BASE_URL = import.meta.env.VITE_API_URL;
 
 const AddAttendance = () => {
   const theme = useTheme();
@@ -260,7 +259,7 @@ const AddAttendance = () => {
           });
         }
 
-        const response = await axios.get(`${BASE_URL}/users/usn/${usn}`);
+        const response = await api.get(`/users/usn/${usn}`);
         logger.info("User lookup response: ", response);
         if (!response.data?.userId) {
           throw new Error(`User not found`);
@@ -276,7 +275,7 @@ const AddAttendance = () => {
         logger.info("Attendance Data to send: ", attendanceData);
 
         try {
-          await axios.post(`${BASE_URL}/students/attendance/${userId}`, attendanceData);
+          await api.post(`/students/attendance/${userId}`, attendanceData);
           success++;
         } catch (postError) {
           logger.error("Post error details:", postError.response?.data);
@@ -300,11 +299,11 @@ const AddAttendance = () => {
   };
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          p: { xs: 2, sm: 4 },
           borderRadius: 2,
           backgroundColor: isLight 
             ? 'rgba(255, 255, 255, 0.8)'

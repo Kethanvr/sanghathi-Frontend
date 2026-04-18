@@ -20,11 +20,9 @@ import {
 } from '@mui/icons-material';
 import { alpha, useTheme } from "@mui/material/styles";
 import Papa from "papaparse";
-import axios from "axios";
+import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
-
-const BASE_URL = import.meta.env.VITE_API_URL;
 
 const AddIat = () => {
   const theme = useTheme();
@@ -154,9 +152,7 @@ const AddIat = () => {
       const data = groupedData[key];
       try {
         // Get userId by USN (as before)
-        const response = await axios.get(
-          `${BASE_URL}/users/usn/${data.usn}`
-        );
+        const response = await api.get(`/users/usn/${data.usn}`);
         if (!response.data?.userId) {
           throw new Error(`User with USN ${data.usn} not found`);
         }
@@ -169,10 +165,7 @@ const AddIat = () => {
         };
 
         // Submit IAT data
-        await axios.post(
-          `${BASE_URL}/students/iat/${userId}`,
-          iatData
-        );
+        await api.post(`/students/iat/${userId}`, iatData);
         success++;
       } catch (error) {
         errors++;
@@ -187,11 +180,11 @@ const AddIat = () => {
   };
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          p: { xs: 2, sm: 4 },
           borderRadius: 2,
           backgroundColor: isLight 
             ? 'rgba(255, 255, 255, 0.8)'
