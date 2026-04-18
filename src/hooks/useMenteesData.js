@@ -20,10 +20,15 @@ const buildErrorMessage = (error) => {
   return error?.response?.data?.message || "Unable to load mentees right now.";
 };
 
-const normalizeMentee = (mentee) => ({
-  ...mentee,
-  profile: mentee?.profile || null,
-});
+const normalizeMentee = (mentee) => {
+  const profile = mentee?.profile || null;
+
+  return {
+    ...mentee,
+    profile,
+    avatar: profile?.photo || mentee?.avatar || null,
+  };
+};
 
 const useMenteesData = (mentorId, options = {}) => {
   const { enabled = true } = options;

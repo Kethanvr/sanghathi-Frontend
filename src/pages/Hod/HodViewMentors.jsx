@@ -31,6 +31,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import Page from "../../components/Page";
 import api from "../../utils/axios";
+import { getAvatarSrc, getAvatarFallbackText } from "../../utils/avatarResolver";
 
 import logger from "../../utils/logger.js";
 function HodViewMentors() {
@@ -191,7 +192,10 @@ function HodViewMentors() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    paginatedMentors.map((mentor) => (
+                    paginatedMentors.map((mentor) => {
+                      const avatarSrc = getAvatarSrc(mentor);
+
+                      return (
                       <TableRow 
                         key={mentor._id}
                         hover
@@ -205,13 +209,15 @@ function HodViewMentors() {
                       >
                         <TableCell>
                           <Avatar 
+                            alt={mentor.name}
+                            src={avatarSrc || undefined}
                             sx={{ 
                               backgroundColor: isLight 
                                 ? theme.palette.primary.main 
                                 : theme.palette.info.main 
                             }}
                           >
-                            {mentor.name?.charAt(0).toUpperCase()}
+                            {!avatarSrc ? getAvatarFallbackText(mentor.name) : null}
                           </Avatar>
                         </TableCell>
                         <TableCell>
@@ -252,7 +258,8 @@ function HodViewMentors() {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>

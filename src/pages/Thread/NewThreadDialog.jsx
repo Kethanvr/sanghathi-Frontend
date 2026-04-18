@@ -23,6 +23,10 @@ import {
   useTheme,
 } from "@mui/material";
 import { Close, Search } from "@mui/icons-material";
+import {
+  getAvatarSrc,
+  getAvatarFallbackText,
+} from "../../utils/avatarResolver";
 
 import logger from "../../utils/logger.js";
 const NewThreadDialog = ({ open, onClose, users, currentUser, onSave, colorMode = 'primary' }) => {
@@ -188,7 +192,11 @@ const NewThreadDialog = ({ open, onClose, users, currentUser, onSave, colorMode 
               }}
             >
               <ListItemAvatar>
-                <Avatar>{user.name[0]}</Avatar>
+                <Avatar src={getAvatarSrc(user) || undefined}>
+                  {!getAvatarSrc(user)
+                    ? getAvatarFallbackText(user.name)
+                    : null}
+                </Avatar>
               </ListItemAvatar>
               <ListItemText primary={user.name} />
             </ListItem>
@@ -208,7 +216,11 @@ const NewThreadDialog = ({ open, onClose, users, currentUser, onSave, colorMode 
               }}
             >
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Avatar>{participant.name[0]}</Avatar>
+                <Avatar src={getAvatarSrc(participant) || undefined}>
+                  {!getAvatarSrc(participant)
+                    ? getAvatarFallbackText(participant.name)
+                    : null}
+                </Avatar>
                 <ListItemText sx={{ ml: 2 }} primary={participant.name} />
               </Box>
               {participant._id !== currentUser._id && (

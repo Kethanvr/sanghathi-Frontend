@@ -29,6 +29,7 @@ import api from "../../utils/axios";
 import TableRowsSkeleton from "../../components/skeletons/TableRowsSkeleton";
 import useMenteesData from "../../hooks/useMenteesData";
 import { AuthContext } from "../../context/AuthContext";
+import { getAvatarSrc, getAvatarFallbackText } from "../../utils/avatarResolver";
 
 import logger from "../../utils/logger.js";
 
@@ -150,7 +151,10 @@ const DirectorMenteesList = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  mentees.map((mentee) => (
+                  mentees.map((mentee) => {
+                    const avatarSrc = getAvatarSrc(mentee);
+
+                    return (
                     <TableRow 
                       key={mentee._id} 
                       hover
@@ -164,13 +168,15 @@ const DirectorMenteesList = () => {
                     >
                       <TableCell>
                         <Avatar 
+                          alt={mentee.name}
+                          src={avatarSrc || undefined}
                           sx={{ 
                             backgroundColor: isLight 
                               ? theme.palette.primary.main 
                               : theme.palette.info.main 
                           }}
                         >
-                          {mentee.name?.charAt(0).toUpperCase()}
+                          {!avatarSrc ? getAvatarFallbackText(mentee.name) : null}
                         </Avatar>
                       </TableCell>
                       <TableCell sx={{ color: theme.palette.text.primary }}>
@@ -214,7 +220,8 @@ const DirectorMenteesList = () => {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

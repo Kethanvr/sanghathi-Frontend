@@ -35,6 +35,7 @@ import Page from "../../components/Page";
 import api from "../../utils/axios";
 import TableRowsSkeleton from "../../components/skeletons/TableRowsSkeleton";
 import useMenteesData from "../../hooks/useMenteesData";
+import { getAvatarSrc, getAvatarFallbackText } from "../../utils/avatarResolver";
 
 import logger from "../../utils/logger.js";
 
@@ -375,7 +376,10 @@ const HodMentorDashboard = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    mentees.map((mentee) => (
+                    mentees.map((mentee) => {
+                      const avatarSrc = getAvatarSrc(mentee);
+
+                      return (
                       <TableRow
                         key={mentee._id}
                         hover
@@ -389,13 +393,15 @@ const HodMentorDashboard = () => {
                       >
                         <TableCell>
                           <Avatar
+                            alt={mentee.name}
+                            src={avatarSrc || undefined}
                             sx={{
                               backgroundColor: isLight
                                 ? theme.palette.primary.main
                                 : theme.palette.info.main,
                             }}
                           >
-                            {mentee.name?.charAt(0).toUpperCase()}
+                            {!avatarSrc ? getAvatarFallbackText(mentee.name) : null}
                           </Avatar>
                         </TableCell>
                         <TableCell
@@ -451,7 +457,8 @@ const HodMentorDashboard = () => {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>

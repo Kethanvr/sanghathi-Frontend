@@ -73,6 +73,10 @@ import React from "react";
 import { Box, Avatar, Typography } from "@mui/material";
 import { styled } from "@mui/system";
 import { formatDistanceToNowStrict } from "date-fns";
+import {
+  getAvatarSrc,
+  getAvatarFallbackText,
+} from "../../utils/avatarResolver";
 
 const RootStyle = styled("div")(({ theme }) => ({
   marginBottom: theme.spacing(3),
@@ -97,6 +101,7 @@ export default function ChatMessageItem({ message, conversation }) {
   const isMe = message.senderId === currentUserId;
   const justifyContent = isMe ? "flex-end" : "flex-start";
   const firstName = sender?.name?.split(" ")[0] || "Anonymous";
+  const senderAvatarSrc = getAvatarSrc(sender);
 
   return (
     <RootStyle>
@@ -104,9 +109,11 @@ export default function ChatMessageItem({ message, conversation }) {
         {!isMe && sender && (
           <Avatar
             alt={sender.name || "Unknown"}
-            src={sender.avatar || "default-avatar.jpg"}
+            src={senderAvatarSrc || undefined}
             sx={{ width: 32, height: 32, mr: 2 }}
-          />
+          >
+            {!senderAvatarSrc ? getAvatarFallbackText(sender.name) : null}
+          </Avatar>
         )}
 
         <div>

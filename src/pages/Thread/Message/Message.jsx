@@ -8,6 +8,10 @@ import Iconify from "../../../components/Iconify";
 import Scrollbar from "../../../components/Scrollbar";
 
 import { AuthContext } from "../../../context/AuthContext";
+import {
+  getAvatarSrc,
+  getAvatarFallbackText,
+} from "../../../utils/avatarResolver";
 
 const ContentStyle = styled("div")(({ theme }) => ({
   maxWidth: 380,
@@ -32,6 +36,7 @@ const MessageItem = ({ message, conversation }) => {
   const justifyContent = isMe ? "flex-end" : "flex-start";
 
   const firstName = sender?.name && sender.name.split(" ")[0];
+  const senderAvatarSrc = getAvatarSrc(sender);
 
   return (
     <RootStyle>
@@ -44,9 +49,11 @@ const MessageItem = ({ message, conversation }) => {
         {!isMe && (
           <Avatar
             alt={sender?.name}
-            src={sender?.avatar}
+            src={senderAvatarSrc || undefined}
             sx={{ width: 32, height: 32, mr: 2 }}
-          />
+          >
+            {!senderAvatarSrc ? getAvatarFallbackText(sender?.name) : null}
+          </Avatar>
         )}
 
         <div>

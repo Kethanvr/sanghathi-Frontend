@@ -21,6 +21,10 @@ import Page from "../../components/Page";
 import api from "../../utils/axios";
 import { MessageList, MessageInput } from "./Message/Message";
 import useSocket from "../../hooks/useSocket";
+import {
+  getAvatarSrc,
+  getAvatarFallbackText,
+} from "../../utils/avatarResolver";
 
 import logger from "../../utils/logger.js";
 const ThreadHeader = ({ thread, onCloseThread, currentUser }) => {
@@ -91,13 +95,17 @@ const ThreadHeader = ({ thread, onCloseThread, currentUser }) => {
         </Box>
       </Box>
       <Box sx={{ display: "flex", alignItems: "center" }}>
-        {thread.participants.map((participant, idx) => (
+        {thread.participants.map((participant, idx) => {
+          const participantAvatarSrc = getAvatarSrc(participant);
+
+          return (
           <Tooltip
             key={participant._id}
             title={participant.name}
             placement="top"
           >
             <Avatar
+              src={participantAvatarSrc || undefined}
               sx={{
                 ml: idx === 0 ? 0 : -1,
                 zIndex: 100 - idx,
@@ -120,10 +128,13 @@ const ThreadHeader = ({ thread, onCloseThread, currentUser }) => {
                   backgroundColor: "success.main",
                 }}
               />
-              {participant.name[0]}
+              {!participantAvatarSrc
+                ? getAvatarFallbackText(participant.name)
+                : null}
             </Avatar>
           </Tooltip>
-        ))}
+          );
+        })}
 
         {/* "Mark as closed" option remains unchanged */}
         {thread.status === "open" &&
