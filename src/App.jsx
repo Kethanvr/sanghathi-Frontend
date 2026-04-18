@@ -13,6 +13,8 @@ const Signup = lazy(() => import("./pages/Users/Signup"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const MeetingCalendar = lazy(() => import("./pages/Meeting/MeetingCalendar"));
 const Login = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const User = lazy(() => import("./pages/Users/User"));
 const StudentProfile = lazy(() => import("./pages/Student/StudentProfile"));
 const MentorAllocation = lazy(() => import("./pages/MentorAllocation/MentorAllocation"));
@@ -72,6 +74,9 @@ function App() {
                     user ? <Navigate replace to="/" /> : <LazyLoadWrapper component={Login} />
                   }
                 />
+                <Route path="/forgot-password" element={<LazyLoadWrapper component={ForgotPassword} />} />
+                <Route path="/reset-password/:token" element={<LazyLoadWrapper component={ResetPassword} />} />
+                <Route path="/resetPassword/:token" element={<LazyLoadWrapper component={ResetPassword} />} />
                 <Route path="/signup" element={<LazyLoadWrapper component={Signup} />} />
 
                 <Route element={<DashboardLayout />}>
