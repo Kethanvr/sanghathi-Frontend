@@ -30,12 +30,14 @@ import TableRowsSkeleton from "../../components/skeletons/TableRowsSkeleton";
 import useMenteesData from "../../hooks/useMenteesData";
 import { AuthContext } from "../../context/AuthContext";
 import { getAvatarSrc, getAvatarFallbackText } from "../../utils/avatarResolver";
+import useResponsive from "../../hooks/useResponsive";
 
 import logger from "../../utils/logger.js";
 
 const DirectorMenteesList = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const isMobile = useResponsive("down", "sm");
   const { mentorId } = useParams();
   const location = useLocation();
   const { user } = useContext(AuthContext);
@@ -81,7 +83,7 @@ const DirectorMenteesList = () => {
           sx={{ 
             borderBottom: 1, 
             borderColor: 'divider',
-            px: 3,
+            px: { xs: 2, sm: 3 },
             py: 2
           }}
         >
@@ -106,7 +108,15 @@ const DirectorMenteesList = () => {
               <Typography color="text.primary">Mentees</Typography>
             </Breadcrumbs>
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: { xs: 'stretch', sm: 'center' },
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: { xs: 1, sm: 0 },
+              }}
+            >
               <Box>
                 <Typography variant="h6" component="h1" sx={{ fontWeight: 500 }}>
                   {mentorInfo?.name}'s Mentees
@@ -119,6 +129,8 @@ const DirectorMenteesList = () => {
                 variant="outlined"
                 startIcon={<ArrowBackIcon />}
                 onClick={() => navigate(`${routePrefix}/mentors`)}
+                size={isMobile ? "small" : "medium"}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Back to Mentors
               </Button>
@@ -126,16 +138,16 @@ const DirectorMenteesList = () => {
           </Stack>
         </Box>
 
-        <CardContent>
-          <TableContainer component={Paper} elevation={0}>
-            <Table>
+        <CardContent sx={{ px: { xs: 1.5, sm: 3 } }}>
+          <TableContainer component={Paper} elevation={0} sx={{ overflowX: "auto" }}>
+            <Table sx={{ minWidth: { xs: 760, md: "100%" } }}>
               <TableHead sx={{ backgroundColor: isLight ? theme.palette.grey[100] : "#2a2d32" }}>
                 <TableRow>
                   <TableCell>Avatar</TableCell>
                   <TableCell>Name</TableCell>
                   <TableCell>USN</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Phone</TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Email</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Phone</TableCell>
                   <TableCell>Department</TableCell>
                   <TableCell>Semester</TableCell>
                   <TableCell align="center">Actions</TableCell>
@@ -187,10 +199,10 @@ const DirectorMenteesList = () => {
                       <TableCell sx={{ color: theme.palette.text.primary }}>
                         {mentee.profile?.usn || "N/A"}
                       </TableCell>
-                      <TableCell sx={{ color: theme.palette.text.primary }}>
+                      <TableCell sx={{ color: theme.palette.text.primary, display: { xs: "none", sm: "table-cell" } }}>
                         {mentee.email}
                       </TableCell>
-                      <TableCell sx={{ color: theme.palette.text.primary }}>
+                      <TableCell sx={{ color: theme.palette.text.primary, display: { xs: "none", md: "table-cell" } }}>
                         {mentee.phone}
                       </TableCell>
                       <TableCell sx={{ color: theme.palette.text.primary }}>
@@ -212,9 +224,10 @@ const DirectorMenteesList = () => {
                         <Button
                           variant="contained"
                           color={isLight ? "primary" : "info"}
-                          size="small"
+                          size={isMobile ? "small" : "medium"}
                           onClick={() => navigate(`${routePrefix}/mentee-profile/${mentee._id}`)}
                           startIcon={<PersonIcon />}
+                          sx={{ whiteSpace: "nowrap" }}
                         >
                           View Dashboard
                         </Button>

@@ -72,7 +72,7 @@ const StudentTile = ({ title, icon, link }) => {
             justifyContent: "flex-start",
             flexDirection: "row",
             minHeight: "auto",
-            p: 3,
+            p: { xs: 2, sm: 3 },
             "&:hover": {
               backgroundColor: isLight 
                 ? alpha(theme.palette.primary.main, 0.1)
@@ -85,10 +85,10 @@ const StudentTile = ({ title, icon, link }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 64,
-              height: 64,
+              width: { xs: 52, sm: 64 },
+              height: { xs: 52, sm: 64 },
               borderRadius: '12px',
-              mr: 3,
+              mr: { xs: 2, sm: 3 },
               backgroundColor: isLight
                 ? alpha(theme.palette.primary.main, 0.1)
                 : alpha(theme.palette.info.main, 0.15),
@@ -154,12 +154,12 @@ const FacultyDashboard = () => {
           minHeight: '100vh',
         }}
       >
-        <Container maxWidth="xl" sx={{ p: isLight ? 0 : 0 }}>
+        <Container maxWidth="xl" sx={{ px: { xs: 1.5, sm: 0 } }}>
           {isLight && (
             <Paper
               elevation={0}
               sx={{
-                p: 4,
+                p: { xs: 2, sm: 4 },
                 mb: 4,
                 mt: 1,
                 borderRadius: 3,
@@ -182,6 +182,7 @@ const FacultyDashboard = () => {
                   color="primary" 
                   gutterBottom
                   sx={{ 
+                    fontSize: { xs: "1.65rem", sm: "2.125rem" },
                     fontWeight: 'bold',
                     position: 'relative',
                     display: 'inline-block',
@@ -215,7 +216,7 @@ const FacultyDashboard = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 4,
+                p: { xs: 2, sm: 4 },
                 mb: 4,
                 mt: 1,
                 borderRadius: 3,
@@ -238,6 +239,7 @@ const FacultyDashboard = () => {
                   color="info" 
                   gutterBottom
                   sx={{ 
+                    fontSize: { xs: "1.65rem", sm: "2.125rem" },
                     fontWeight: 'bold',
                     position: 'relative',
                     display: 'inline-block',
@@ -267,7 +269,7 @@ const FacultyDashboard = () => {
             </Paper>
           )}
 
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             <Grid item xs={12} sm={6} md={isLight ? 6 : 6} lg={isLight ? 4 : 4}>
               <StudentTile
                 title="Profile"

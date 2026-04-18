@@ -44,22 +44,21 @@ import { alpha, useTheme } from "@mui/material/styles";
 
 import Page from "../../components/Page";
 import api from "../../utils/axios"; // replace with your actual API path
-import axios from "axios";
 import { useSnackbar } from "notistack";
 import { MessageList } from "../Thread/Message/Message";
 import {
   getAvatarSrc,
   getAvatarFallbackText,
 } from "../../utils/avatarResolver";
+import useResponsive from "../../hooks/useResponsive";
 
 const baseURL = import.meta.env.VITE_PYTHON_API;
-
-import processTableData from "./ExportToExcel";
 
 import logger from "../../utils/logger.js";
 const Report = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const isMobile = useResponsive("down", "sm");
   const [threads, setThreads] = useState([]);
   const [openDialogThreadId, setOpenDialogThreadId] = useState(null);
   const [openChatDialogThreadId, setOpenChatDialogThreadId] = useState(null);
@@ -343,11 +342,14 @@ const Report = () => {
 
   return (
     <Page title="Thread">
-      <Container maxWidth="xl" sx={{ overflowX: "hidden", overflowY: "auto" }}>
+      <Container
+        maxWidth="xl"
+        sx={{ px: { xs: 1.5, sm: 3 }, overflowX: "hidden", overflowY: "auto" }}
+      >
         <Paper
           elevation={0}
           sx={{
-            p: 3,
+            p: { xs: 2, sm: 3 },
             mt: 2,
             mb: 4,
             borderRadius: 2,
@@ -369,6 +371,7 @@ const Report = () => {
             <Typography 
               variant="h4"
               sx={{
+                fontSize: { xs: "1.65rem", sm: "2.125rem" },
                 fontWeight: 'bold',
                 background: isLight 
                   ? `-webkit-linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`
@@ -428,7 +431,8 @@ const Report = () => {
               direction="row" 
               spacing={1}
               sx={{ 
-                flexWrap: 'nowrap',
+                flexWrap: 'wrap',
+                rowGap: 1,
                 justifyContent: { xs: 'space-between', sm: 'flex-end' }
               }}
             >
@@ -440,7 +444,8 @@ const Report = () => {
                 size="small"
                 sx={{
                   borderRadius: 2,
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  width: { xs: 'calc(50% - 4px)', sm: 'auto' },
                 }}
               >
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
@@ -454,7 +459,8 @@ const Report = () => {
                 size="small"
                 sx={{
                   borderRadius: 2,
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  width: { xs: 'calc(50% - 4px)', sm: 'auto' },
                 }}
               >
                 Export to Excel
@@ -625,12 +631,13 @@ const Report = () => {
                   borderRadius: 2,
                   boxShadow: 'none',
                   border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-                  overflow: 'hidden',
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
                   maxWidth: '100%',
                   backgroundColor: 'transparent'
                 }}
               >
-                <Table sx={{ minWidth: 650 }}>
+                <Table sx={{ minWidth: { xs: 980, md: 740 } }}>
                   <TableHead sx={{ 
                     backgroundColor: isLight 
                       ? alpha(theme.palette.primary.main, 0.08) 
@@ -677,7 +684,7 @@ const Report = () => {
                           <Box
                             sx={{
                               maxHeight: "4rem",
-                              maxWidth: "15rem",
+                              maxWidth: { xs: "11rem", md: "15rem" },
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                             }}
@@ -715,6 +722,7 @@ const Report = () => {
                           <Dialog
                             open={openDialogThreadId === thread._id}
                             onClose={handleCloseDialog}
+                            fullScreen={isMobile}
                             PaperProps={{
                               sx: {
                                 borderRadius: 2,
@@ -851,12 +859,13 @@ const Report = () => {
                         <TableCell>
                           <Button
                             variant="outlined"
-                            size="small"
-                            startIcon={<ChatIcon />}
+                            size={isMobile ? "small" : "medium"}
+                            startIcon={!isMobile ? <ChatIcon /> : null}
                             onClick={() => handleOpenChatDialog(thread._id)}
                             sx={{
                               borderRadius: 2,
                               textTransform: 'none',
+                              whiteSpace: 'nowrap',
                               color: isLight ? theme.palette.primary.main : theme.palette.info.main,
                               borderColor: isLight ? theme.palette.primary.main : theme.palette.info.main,
                               '&:hover': {
@@ -911,6 +920,7 @@ const Report = () => {
         <Dialog
           open={Boolean(openChatDialogThreadId)}
           onClose={handleCloseChatDialog}
+          fullScreen={isMobile}
           maxWidth="md"
           fullWidth
           PaperProps={{

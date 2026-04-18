@@ -36,9 +36,8 @@ import { alpha } from "@mui/material/styles";
 
 import logger from "../../utils/logger.js";
 import { Link, useParams } from "react-router-dom"; // Import useParams
-import axios from "axios"; // Import axios
+import api from "../../utils/axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL;
 const StudentTile = ({ title, icon, link, menteeId }) => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -72,7 +71,7 @@ const StudentTile = ({ title, icon, link, menteeId }) => {
             justifyContent: "flex-start",
             flexDirection: "row",
             minHeight: "auto",
-            p: 3,
+            p: { xs: 2, sm: 3 },
             "&:hover": {
               backgroundColor: isLight 
                 ? alpha(theme.palette.primary.main, 0.12) 
@@ -85,10 +84,10 @@ const StudentTile = ({ title, icon, link, menteeId }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 64,
-              height: 64,
+              width: { xs: 52, sm: 64 },
+              height: { xs: 52, sm: 64 },
               borderRadius: '12px',
-              mr: 3,
+              mr: { xs: 2, sm: 3 },
               backgroundColor: isLight
                 ? alpha(theme.palette.primary.main, 0.12)
                 : alpha(theme.palette.info.main, 0.15),
@@ -148,18 +147,9 @@ const StudentDashboard = () => {
   useEffect(() => {
     const fetchMenteeData = async () => {
       try {
-        // Fetch the student profile
-        const profileResponse = await axios.get(
-          `${BASE_URL}/student-profiles/${menteeId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`
-            }
-          }
-        );
+        const profileResponse = await api.get(`/student-profiles/${menteeId}`);
         logger.info("Student profile response:", profileResponse.data);
-        
-        let userData = profileResponse.data;
+        const userData = profileResponse.data?.data || profileResponse.data;
         
         // Skip the user endpoint since it's returning 500 error
         setMenteeData(userData);
@@ -177,11 +167,41 @@ const StudentDashboard = () => {
   }, [menteeId]); // Fetch data when menteeId changes
 
   if (loading) {
-    return <Typography>Loading Mentee Dashboard...</Typography>;
+    return (
+      <Page title="Mentee Dashboard">
+        <Box
+          sx={{
+            minHeight: "55vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            px: 2,
+            textAlign: "center",
+          }}
+        >
+          <Typography>Loading Mentee Dashboard...</Typography>
+        </Box>
+      </Page>
+    );
   }
 
   if (error) {
-    return <Typography color="error">{error}</Typography>;
+    return (
+      <Page title="Mentee Dashboard">
+        <Box
+          sx={{
+            minHeight: "55vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            px: 2,
+            textAlign: "center",
+          }}
+        >
+          <Typography color="error">{error}</Typography>
+        </Box>
+      </Page>
+    );
   }
 
   logger.info("Full menteeData structure:", menteeData);
@@ -225,14 +245,15 @@ const StudentDashboard = () => {
         <Container
           maxWidth="xl"
           sx={{
-            p: 2,
+            px: { xs: 1.5, sm: 3 },
+            py: 0,
           }}
         >
           {isLight ? (
             <Paper
               elevation={0}
               sx={{
-                p: 4,
+                p: { xs: 2, sm: 4 },
                 mb: 4,
                 mt: 1,
                 borderRadius: 3,
@@ -255,6 +276,7 @@ const StudentDashboard = () => {
                   color="primary" 
                   gutterBottom
                   sx={{ 
+                    fontSize: { xs: "1.65rem", sm: "2.125rem" },
                     fontWeight: 'bold',
                     position: 'relative',
                     display: 'inline-block',
@@ -286,7 +308,7 @@ const StudentDashboard = () => {
             <Paper
               elevation={0}
               sx={{
-                p: 4,
+                p: { xs: 2, sm: 4 },
                 mb: 4,
                 mt: 1,
                 borderRadius: 3,
@@ -309,6 +331,7 @@ const StudentDashboard = () => {
                   color="info" 
                   gutterBottom
                   sx={{ 
+                    fontSize: { xs: "1.65rem", sm: "2.125rem" },
                     fontWeight: 'bold',
                     position: 'relative',
                     display: 'inline-block',
@@ -408,13 +431,6 @@ const StudentDashboard = () => {
                 icon={<AssignmentIcon />}
                 link="/student/tyl-scorecard"
                 menteeId={menteeId}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <StudentTile
-                title="Offline Mentor-Mentee Conversation"
-                icon={<QuestionAnswerIcon />}
-                link={`/faculty/mentor-mentee-conversation/${menteeId}`}
               />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>

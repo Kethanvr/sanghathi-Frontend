@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useContext } from "react";
-import axios from "axios";
 import {
   Box,
   Container,
@@ -14,8 +13,8 @@ import {
   useTheme,
 } from "@mui/material";
 import { AuthContext } from "../../context/AuthContext";
+import api from "../../utils/axios";
 import logger from "../../utils/logger.js";
-const BASE_URL = import.meta.env.VITE_API_URL;
 
 const FacultyProfileInfo = () => {
   const theme = useTheme(); // Use theme for consistent styling
@@ -33,9 +32,7 @@ const FacultyProfileInfo = () => {
     }
 
     try {
-      const response = await axios.get(
-        `${BASE_URL}/mentorship/mentor/${user._id}`
-      );
+      const response = await api.get(`/mentorship/mentor/${user._id}`);
       const mentor = response.data?.mentor;
 
       if (mentor?._id) {
@@ -54,9 +51,7 @@ const FacultyProfileInfo = () => {
     if (!mentorId) return;
 
     try {
-      const response = await axios.get(
-        `${BASE_URL}/faculty/profile/${mentorId}`
-      );
+      const response = await api.get(`/faculty/profile/${mentorId}`);
       const faculty = response.data?.data?.facultyProfile;
 
       if (faculty) {
@@ -91,7 +86,8 @@ const FacultyProfileInfo = () => {
     <Container
       maxWidth="xl"
       sx={{
-        p: 8,
+        px: { xs: 1.5, sm: 3 },
+        py: { xs: 3, sm: 5 },
         backgroundColor: theme.palette.background.default, 
         color: theme.palette.text.primary, 
         minHeight: "100vh",
@@ -111,7 +107,8 @@ const FacultyProfileInfo = () => {
         <TableContainer
           component={Paper}
           sx={{
-            maxWidth: 600,
+            maxWidth: { xs: "100%", sm: 600 },
+            overflowX: "auto",
             margin: "auto",
             border: `1px solid ${theme.palette.divider}`,
             backgroundColor: theme.palette.background.paper, 

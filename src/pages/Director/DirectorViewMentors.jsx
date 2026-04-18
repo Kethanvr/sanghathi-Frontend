@@ -35,11 +35,13 @@ import Page from "../../components/Page";
 import api from "../../utils/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { getAvatarSrc, getAvatarFallbackText } from "../../utils/avatarResolver";
+import useResponsive from "../../hooks/useResponsive";
 
 import logger from "../../utils/logger.js";
 function DirectorViewMentors() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const isMobile = useResponsive("down", "sm");
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useContext(AuthContext);
@@ -123,16 +125,18 @@ function DirectorViewMentors() {
             borderBottom: 1, 
             borderColor: 'divider',
             display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between',
-            alignItems: 'center',
-            px: 3,
+            alignItems: { xs: 'stretch', sm: 'center' },
+            gap: { xs: 1, sm: 0 },
+            px: { xs: 2, sm: 3 },
             py: 2
           }}
         >
           <Typography variant="h6" component="h1" sx={{ fontWeight: 500 }}>
             All Faculty Mentors
           </Typography>
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: { xs: 'flex-end', sm: 'flex-start' } }}>
             <Chip 
               icon={<SchoolIcon />}
               label={`${filteredMentors.length} Mentors`}
@@ -143,15 +147,22 @@ function DirectorViewMentors() {
               variant="outlined"
               onClick={() => setShowFilters(!showFilters)}
               startIcon={<FilterListIcon />}
-              size="small"
+              size={isMobile ? "small" : "medium"}
             >
               {showFilters ? "Hide Filters" : "Show Filters"}
             </Button>
           </Stack>
         </Box>
-        <CardContent>
+        <CardContent sx={{ px: { xs: 1.5, sm: 3 } }}>
           <Stack spacing={2}>
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
+                alignItems: "center",
+                flexDirection: { xs: "column", sm: "row" },
+              }}
+            >
               <TextField
                 fullWidth
                 placeholder="Search mentors..."
@@ -173,6 +184,7 @@ function DirectorViewMentors() {
                   variant="text"
                   onClick={clearFilters}
                   startIcon={<ClearIcon />}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Clear
                 </Button>
@@ -185,12 +197,13 @@ function DirectorViewMentors() {
                 backgroundColor: isLight ? alpha(theme.palette.primary.main, 0.05) : alpha(theme.palette.info.main, 0.05),
                 borderRadius: 1
               }}>
-                <Stack direction="row" spacing={2}>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                   <Select
                     value={filterDepartment}
                     onChange={(e) => setFilterDepartment(e.target.value)}
-                    sx={{ minWidth: 200 }}
+                    sx={{ minWidth: { sm: 200 } }}
                     size="small"
+                    fullWidth={isMobile}
                   >
                     {uniqueDepartments.map((dept) => (
                       <MenuItem key={dept} value={dept}>
@@ -202,14 +215,14 @@ function DirectorViewMentors() {
               </Box>
             )}
 
-            <TableContainer component={Paper}>
-              <Table>
+            <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+              <Table sx={{ minWidth: { xs: 780, md: "100%" } }}>
                 <TableHead sx={{ backgroundColor: alpha(tableHeaderColor, 0.1) }}>
                   <TableRow>
                     <TableCell>Avatar</TableCell>
                     <TableCell>Name</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Phone</TableCell>
+                    <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Email</TableCell>
+                    <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>Phone</TableCell>
                     <TableCell>Department</TableCell>
                     <TableCell align="center">Mentees</TableCell>
                     <TableCell align="center">Actions</TableCell>
@@ -258,8 +271,8 @@ function DirectorViewMentors() {
                             {mentor.name}
                           </Typography>
                         </TableCell>
-                        <TableCell>{mentor.email}</TableCell>
-                        <TableCell>{mentor.phone || 'N/A'}</TableCell>
+                        <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>{mentor.email}</TableCell>
+                        <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>{mentor.phone || 'N/A'}</TableCell>
                         <TableCell>
                           <Chip 
                             label={mentor.department || 'N/A'} 
@@ -282,10 +295,11 @@ function DirectorViewMentors() {
                         <TableCell align="center">
                           <Button
                             variant="contained"
-                            size="small"
+                            size={isMobile ? "small" : "medium"}
                             color={isLight ? "primary" : "info"}
                             onClick={() => handleViewMentees(mentor)}
                             disabled={!mentor.menteeCount || mentor.menteeCount === 0}
+                            sx={{ whiteSpace: "nowrap" }}
                           >
                             View Mentees
                           </Button>
@@ -299,7 +313,7 @@ function DirectorViewMentors() {
             </TableContainer>
 
             <TablePagination
-              rowsPerPageOptions={rowsPerPageOptions}
+              rowsPerPageOptions={isMobile ? [10, 20] : rowsPerPageOptions}
               component="div"
               count={filteredMentors.length}
               rowsPerPage={rowsPerPage}
