@@ -1,6 +1,17 @@
 import React from "react";
 import ChatBot from "react-chatbotify";
 import { askRag } from "./apiCalls.js";
+import {
+  Alert,
+  Box,
+  Chip,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
+import ConstructionRoundedIcon from "@mui/icons-material/ConstructionRounded";
+import RocketLaunchRoundedIcon from "@mui/icons-material/RocketLaunchRounded";
 
 const DEPARTMENT_OPTIONS = [
   "Chemistry",
@@ -38,6 +49,12 @@ const getRagResponse = async (prompt) => {
 };
 
 const MyChatBot = () => {
+  const theme = useTheme();
+  const isLight = theme.palette.mode === "light";
+  const accentColor = isLight
+    ? theme.palette.primary.main
+    : theme.palette.info.main;
+
   const themes = [{ id: "omen", version: "0.1.0" }];
 
   const helpOptions = [
@@ -157,7 +174,80 @@ const MyChatBot = () => {
   };
 
   return (
-    <>
+    <Box sx={{ px: { xs: 1, sm: 2 }, pt: { xs: 1, sm: 2 } }}>
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 1.5,
+          px: { xs: 1.5, sm: 2 },
+          py: { xs: 1.2, sm: 1.5 },
+          borderRadius: 2,
+          border: `1px solid ${alpha(accentColor, 0.35)}`,
+          background: isLight
+            ? `linear-gradient(120deg, ${alpha(accentColor, 0.09)} 0%, ${alpha(
+                theme.palette.success.main,
+                0.08
+              )} 100%)`
+            : `linear-gradient(120deg, ${alpha(accentColor, 0.16)} 0%, ${alpha(
+                theme.palette.success.main,
+                0.13
+              )} 100%)`,
+        }}
+      >
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1.2}
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          justifyContent="space-between"
+        >
+          <Box>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                gap: 0.7,
+              }}
+            >
+              <ConstructionRoundedIcon sx={{ fontSize: 18, color: accentColor }} />
+              Campus Buddy is under active development
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              More features are being rolled out soon. Current build supports quick
+              department, exam, and FAQ assistance.
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap>
+            <Chip
+              size="small"
+              icon={<RocketLaunchRoundedIcon />}
+              label="Upcoming: smarter context"
+              sx={{ borderColor: alpha(accentColor, 0.4) }}
+              variant="outlined"
+            />
+            <Chip
+              size="small"
+              label="Feature preview"
+              color={isLight ? "primary" : "info"}
+              variant="filled"
+            />
+          </Stack>
+        </Stack>
+      </Paper>
+
+      <Alert
+        severity="info"
+        sx={{
+          mb: 1.5,
+          borderRadius: 2,
+          border: `1px solid ${alpha(accentColor, 0.3)}`,
+          bgcolor: alpha(accentColor, isLight ? 0.08 : 0.16),
+        }}
+      >
+        Responses may be refined as new data and features are integrated.
+      </Alert>
+
       <style>
         {`
     .rcb-chat-window {
@@ -213,6 +303,19 @@ const MyChatBot = () => {
       display: none !important;
     }
 
+    .rcb-options-container button {
+      border-radius: 999px !important;
+      border: 1px solid rgba(64, 182, 255, 0.6) !important;
+      background: rgba(20, 34, 58, 0.45) !important;
+      color: #d7ebff !important;
+      font-weight: 600 !important;
+    }
+
+    .rcb-options-container button:hover {
+      background: rgba(38, 82, 140, 0.5) !important;
+      border-color: rgba(64, 182, 255, 0.95) !important;
+    }
+
   `}
       </style>
 
@@ -224,7 +327,7 @@ const MyChatBot = () => {
         }}
         flow={flow}
       />
-    </>
+    </Box>
   );
 };
 
