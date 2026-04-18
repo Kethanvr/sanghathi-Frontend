@@ -13,6 +13,7 @@ import {
   Grid,
   Stack,
   Avatar,
+  Link,
   useTheme,
 } from "@mui/material";
 import { useContext, useRef, useState } from "react";
@@ -21,7 +22,7 @@ import { AuthContext } from "../context/AuthContext";
 import Image from "mui-image";
 import Page from "../components/Page";
 import { useSnackbar } from "notistack";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 
 import Illustration from "../public/login_illustration.png";
 
@@ -181,6 +182,12 @@ const Login = () => {
                     inputRef={password}
                     autoComplete="current-password"
                   />
+
+                  <Box display="flex" justifyContent="flex-end">
+                    <Link component={RouterLink} to="/forgot-password" underline="hover">
+                      Forgot Password?
+                    </Link>
+                  </Box>
 
                   {/* <Stack direction="row" justifyContent="space-between">
                     <FormControlLabel
