@@ -43,11 +43,16 @@ if [[ $# -gt 0 ]]; then
   esac
 fi
 
+if ! command -v bun >/dev/null 2>&1; then
+  echo "Bun is required but not installed. Install Bun: https://bun.sh/docs/installation" >&2
+  exit 1
+fi
+
 if [[ "$RUN_BACKEND" == true ]]; then
   echo "[tests] Running backend tests..."
   (
     cd "$ROOT_DIR/sanghathi-Backend"
-    npm test -- --runInBand
+    bun run test -- --runInBand
   )
 fi
 
@@ -55,7 +60,7 @@ if [[ "$RUN_FRONTEND" == true ]]; then
   echo "[tests] Running frontend tests..."
   (
     cd "$ROOT_DIR/sanghathi-Frontend"
-    npm test
+    bun run test
   )
 fi
 

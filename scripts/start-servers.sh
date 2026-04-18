@@ -11,8 +11,8 @@ usage() {
 Usage: ./sanghathi-Frontend/scripts/start-servers.sh [--backend|--frontend|--both]
 
 Options:
-  --backend   Start only backend server (npm run dev)
-  --frontend  Start only frontend server (npm run dev)
+  --backend   Start only backend server (bun run dev)
+  --frontend  Start only frontend server (bun run dev)
   --both      Start both backend and frontend servers (default)
   -h, --help  Show this help message
 USAGE
@@ -41,6 +41,11 @@ if [[ $# -gt 0 ]]; then
   esac
 fi
 
+if ! command -v bun >/dev/null 2>&1; then
+  echo "Bun is required but not installed. Install Bun: https://bun.sh/docs/installation" >&2
+  exit 1
+fi
+
 cleanup() {
   if [[ -n "$BACKEND_PID" ]] && kill -0 "$BACKEND_PID" 2>/dev/null; then
     kill "$BACKEND_PID" 2>/dev/null || true
@@ -56,25 +61,25 @@ trap cleanup INT TERM EXIT
 if [[ "$MODE" == "backend" ]]; then
   echo "[start] Starting backend server (development mode)..."
   cd "$ROOT_DIR/sanghathi-Backend"
-  exec npm run dev
+  exec bun run dev
 fi
 
 if [[ "$MODE" == "frontend" ]]; then
   echo "[start] Starting frontend server (development mode)..."
   cd "$ROOT_DIR/sanghathi-Frontend"
-  exec npm run dev
+  exec bun run dev
 fi
 
 echo "[start] Starting backend and frontend servers..."
 (
   cd "$ROOT_DIR/sanghathi-Backend"
-  npm run dev
+  bun run dev
 ) &
 BACKEND_PID=$!
 
 (
   cd "$ROOT_DIR/sanghathi-Frontend"
-  npm run dev
+  bun run dev
 ) &
 FRONTEND_PID=$!
 
