@@ -1,0 +1,51 @@
+erDiagram
+    ROLES ||--o{ USERS : assigns
+    USERS ||--o| STUDENT_PROFILES : has
+    USERS ||--o| FACULTY_PROFILES : has
+
+    USERS ||--o| ADMISSION_DETAILS : owns
+    USERS ||--o| ACADEMIC_DETAILS : owns
+    USERS ||--o| ATTENDANCES : owns
+    USERS ||--o| CONTACT_DETAILS : owns
+    USERS ||--o| PARENT_DETAILS : owns
+    USERS ||--o| LOCAL_GUARDIANS : owns
+    USERS ||--o| PTM_RECORDS : owns
+    USERS ||--o| IAT_MARKS : owns
+    USERS ||--o| EXTERNAL_MARKS : owns
+    USERS ||--o| PO_ATTAINMENTS : owns
+    USERS ||--o| TYL_SCORES : owns
+
+    USERS ||--o| ACTIVITIES : owns
+    USERS ||--o| MOOC_DATA : owns
+    USERS ||--o| MINI_PROJECT_DATA : owns
+    USERS ||--o| CLUBS : owns
+    USERS ||--o| CLUB_EVENTS : owns
+    USERS ||--o| PROFESSIONAL_BODIES : owns
+    USERS ||--o| PB_EVENTS : owns
+    USERS ||--o| HOBBIES : owns
+    USERS ||--o| CAREER_COUNSELLING : owns
+
+    USERS ||--o| PLACEMENTS : owns
+    USERS ||--o| INTERNSHIPS : owns
+    USERS ||--o{ PROJECTS : owns
+
+    USERS ||--o{ MENTORSHIPS : mentors
+    USERS ||--o{ MENTORSHIPS : mentees
+    USERS ||--o{ CONVERSATIONS : mentor
+    USERS ||--o{ CONVERSATIONS : mentee
+
+    USERS ||--o{ THREADS : authors
+    USERS }o--o{ THREADS : participates
+    THREADS }o--o{ MESSAGES : references
+
+    USERS }o--o{ PRIVATE_CONVERSATIONS : participates
+    PRIVATE_CONVERSATIONS }o--o{ MESSAGES : references
+
+    USERS ||--o{ GROUP_CONVERSATIONS : administers
+    USERS }o--o{ GROUP_CONVERSATIONS : participates
+    GROUP_CONVERSATIONS }o--o{ MESSAGES : references
+
+    USERS ||--o{ NOTIFICATIONS : receives
+    USERS ||--o{ MEETINGS : attends
+    USERS ||--o{ FEEDBACK_DETAILS : submits
+    USERS ||--o{ COMPLAINTS : submits

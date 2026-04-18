@@ -1,0 +1,174 @@
+Table roles {
+  _id objectid [pk]
+  id int [unique]
+  name varchar [unique]
+}
+
+Table users {
+  _id objectid [pk]
+  roleId objectid
+  roleName varchar
+  email varchar [unique]
+  name varchar
+  status varchar
+  lastActivity datetime
+}
+
+Table student_profiles {
+  _id objectid [pk]
+  userId objectid [unique]
+  usn varchar [unique]
+  department varchar
+  sem varchar
+}
+
+Table faculty_profiles {
+  _id objectid [pk]
+  userId objectid [unique]
+  department varchar
+}
+
+Table student_academic_records {
+  _id objectid [pk]
+  userId objectid [unique]
+  data json
+}
+
+Table student_scores {
+  _id objectid [pk]
+  userId objectid [unique]
+  semesters json
+}
+
+Table student_attendance {
+  _id objectid [pk]
+  userId objectid [unique]
+  semesters json
+}
+
+Table student_career_profiles {
+  _id objectid [pk]
+  userId objectid [unique]
+  data json
+}
+
+Table student_placement_profiles {
+  _id objectid [pk]
+  userId objectid [unique]
+  data json
+}
+
+Table mentorships {
+  _id objectid [pk]
+  mentorId objectid
+  menteeId objectid
+  startDate datetime
+  endDate datetime
+}
+
+Table mentorship_sessions {
+  _id objectid [pk]
+  mentorId objectid
+  menteeId objectid
+  topic varchar
+  summary text
+  status varchar
+  date datetime
+}
+
+Table conversations {
+  _id objectid [pk]
+  type varchar
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table messages {
+  _id objectid [pk]
+  conversationId objectid
+  senderId objectid
+  body text
+  createdAt datetime
+}
+
+Table form_drafts {
+  _id objectid [pk]
+  userId objectid
+  formType varchar
+  scopeId varchar
+  draftData json
+  version int
+  checksum varchar
+  createdAt datetime
+  updatedAt datetime
+
+  Indexes {
+    (userId, formType, scopeId) [unique]
+    (updatedAt)
+  }
+}
+
+Table form_versions {
+  _id objectid [pk]
+  userId objectid
+  formType varchar
+  scopeId varchar
+  version int
+  snapshot json
+  changedFields json
+  reason varchar
+  createdAt datetime
+
+  Indexes {
+    (userId, formType, scopeId, version) [unique]
+    (userId, formType, scopeId, createdAt)
+  }
+}
+
+Table notifications {
+  _id objectid [pk]
+  userId objectid
+  isUnread bool
+  createdAt datetime
+}
+
+Table meetings {
+  _id objectid [pk]
+  data json
+}
+
+Table feedback {
+  _id objectid [pk]
+  userId objectid
+  createdAt datetime
+}
+
+Table complaints {
+  _id objectid [pk]
+  userId objectid
+  createdAt datetime
+}
+
+Ref: users.roleId > roles._id
+Ref: student_profiles.userId > users._id
+Ref: faculty_profiles.userId > users._id
+
+Ref: student_academic_records.userId > users._id
+Ref: student_scores.userId > users._id
+Ref: student_attendance.userId > users._id
+Ref: student_career_profiles.userId > users._id
+Ref: student_placement_profiles.userId > users._id
+
+Ref: mentorships.mentorId > users._id
+Ref: mentorships.menteeId > users._id
+Ref: mentorship_sessions.mentorId > users._id
+Ref: mentorship_sessions.menteeId > users._id
+
+Ref: messages.conversationId > conversations._id
+Ref: messages.senderId > users._id
+
+Ref: form_drafts.userId > users._id
+Ref: form_versions.userId > users._id
+Ref: notifications.userId > users._id
+Ref: feedback.userId > users._id
+Ref: complaints.userId > users._id

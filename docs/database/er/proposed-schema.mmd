@@ -1,0 +1,29 @@
+erDiagram
+    ROLES ||--o{ USERS : assigns
+    USERS ||--o| STUDENT_PROFILES : has
+    USERS ||--o| FACULTY_PROFILES : has
+
+    USERS ||--o| STUDENT_ACADEMIC_RECORDS : owns
+    USERS ||--o| STUDENT_SCORES : owns
+    USERS ||--o| STUDENT_ATTENDANCE : owns
+    USERS ||--o| STUDENT_CAREER_PROFILES : owns
+    USERS ||--o| STUDENT_PLACEMENT_PROFILES : owns
+
+    USERS ||--o{ MENTORSHIPS : mentors
+    USERS ||--o{ MENTORSHIPS : mentees
+    USERS ||--o{ MENTORSHIP_SESSIONS : mentor
+    USERS ||--o{ MENTORSHIP_SESSIONS : mentee
+
+    CONVERSATIONS ||--o{ MESSAGES : contains
+    USERS ||--o{ MESSAGES : sends
+
+    USERS }o--o{ CONVERSATIONS : participates
+
+    USERS ||--o{ FORM_DRAFTS : edits
+    USERS ||--o{ FORM_VERSIONS : versions
+    FORM_DRAFTS ||--o{ FORM_VERSIONS : snapshots
+
+    USERS ||--o{ NOTIFICATIONS : receives
+    USERS ||--o{ MEETINGS : attends
+    USERS ||--o{ FEEDBACK : submits
+    USERS ||--o{ COMPLAINTS : submits
