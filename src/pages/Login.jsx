@@ -37,6 +37,7 @@ const Login = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const from = location.state?.from;
+  const redirectParam = new URLSearchParams(location.search).get("redirect");
 
   const [isAdminDemoChecked, setIsAdminDemoChecked] = useState(false);
   const [isFacultyDemoChecked, setIsFacultyDemoChecked] = useState(false);
@@ -82,9 +83,13 @@ const Login = () => {
         { email: email.current.value, password: password.current.value },
         dispatch
       );
-      const redirectPath = from
-        ? `${from.pathname || "/"}${from.search || ""}`
-        : "/";
+      const savedRedirectPath = sessionStorage.getItem("postLoginRedirectPath");
+      const redirectPath =
+        redirectParam ||
+        savedRedirectPath ||
+        (from ? `${from.pathname || "/"}${from.search || ""}` : "/");
+
+      sessionStorage.removeItem("postLoginRedirectPath");
       navigate(redirectPath, { replace: true });
     } catch (err) {
       logger.info(err);

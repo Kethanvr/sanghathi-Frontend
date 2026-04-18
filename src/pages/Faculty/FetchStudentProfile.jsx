@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
-import axios from "axios";
+import React, { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import {
   Table,
@@ -14,72 +13,20 @@ import {
   useTheme,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import logger from "../../utils/logger.js";
-const BASE_URL = import.meta.env.VITE_API_URL;
-
-const fetchStudentProfiles = async (userId) => {
-  try {
-    const response = await axios.get(
-      `${BASE_URL}/student-profiles/${userId}`
-    );
-    return response.data;
-  } catch (error) {
-    logger.error("Error fetching student profile:", error);
-    return null;
-  }
-};
+import TableRowsSkeleton from "../../components/skeletons/TableRowsSkeleton";
+import useMenteesData from "../../hooks/useMenteesData";
 
 const MenteesList = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const { user } = useContext(AuthContext);
-  const [mentees, setMentees] = useState([]);
-  const [profiles, setProfiles] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const mentorId = user?._id;
+  const { mentees, loading, error } = useMenteesData(mentorId, {
+    enabled: Boolean(mentorId),
+  });
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!user) {
-      setError("User not authenticated.");
-      setLoading(false);
-      return;
-    }
-
-    const fetchMentees = async () => {
-      try {
-        const response = await axios.get(
-          `${BASE_URL}/mentorship/${user._id}/mentees`
-        );
-        setMentees(response.data.mentees);
-      } catch (err) {
-        setError("No mentees found.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMentees();
-  }, [user]);
-
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      const profileData = {};
-      for (const mentee of mentees) {
-        const data = await fetchStudentProfiles(mentee._id);
-        if (data) {
-          profileData[mentee._id] = data;
-        }
-      }
-      setProfiles(profileData);
-    };
-
-    if (mentees.length > 0) {
-      fetchProfiles();
-    }
-  }, [mentees]);
-
-  if (loading) return <Typography>Loading mentees...</Typography>;
+  if (!user) return <Typography color="error">User not authenticated.</Typography>;
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (
@@ -127,9 +74,11 @@ const MenteesList = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {mentees.length === 0 ? (
+          {loading ? (
+            <TableRowsSkeleton columns={6} rows={8} />
+          ) : mentees.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} align="center" sx={{ color: theme.palette.text.primary }}>
+              <TableCell colSpan={6} align="center" sx={{ color: theme.palette.text.primary }}>
                 No mentees allotted.
               </TableCell>
             </TableRow>
@@ -140,10 +89,10 @@ const MenteesList = () => {
                 <TableCell sx={{ color: theme.palette.text.primary }}>{mentee.email}</TableCell>
                 <TableCell sx={{ color: theme.palette.text.primary }}>{mentee.phone}</TableCell>
                 <TableCell sx={{ color: theme.palette.text.primary }}>
-                  {profiles[mentee._id]?.department || "N/A"}
+                  {mentee.profile?.department || "N/A"}
                 </TableCell>
                 <TableCell sx={{ color: theme.palette.text.primary }}>
-                  {profiles[mentee._id]?.sem || "N/A"}
+                  {mentee.profile?.sem || "N/A"}
                 </TableCell>
                 <TableCell>
                   <Button
