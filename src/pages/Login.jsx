@@ -21,19 +21,21 @@ import { AuthContext } from "../context/AuthContext";
 import Image from "mui-image";
 import Page from "../components/Page";
 import { useSnackbar } from "notistack";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import Illustration from "../public/login_illustration.png";
 
 import logger from "../utils/logger.js";
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const email = useRef();
   const password = useRef();
   const { enqueueSnackbar } = useSnackbar();
   const { isFetching, dispatch } = useContext(AuthContext);
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const from = location.state?.from;
 
   const [isAdminDemoChecked, setIsAdminDemoChecked] = useState(false);
   const [isFacultyDemoChecked, setIsFacultyDemoChecked] = useState(false);
@@ -79,7 +81,10 @@ const Login = () => {
         { email: email.current.value, password: password.current.value },
         dispatch
       );
-      navigate("/");
+      const redirectPath = from
+        ? `${from.pathname || "/"}${from.search || ""}`
+        : "/";
+      navigate(redirectPath, { replace: true });
     } catch (err) {
       logger.info(err);
       enqueueSnackbar(err?.response?.data?.message || "Login failed", {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useContext } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Box,
   Table,
@@ -30,7 +30,6 @@ import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
 import Page from "../../components/Page";
 import api from "../../utils/axios";
 
@@ -39,14 +38,12 @@ function DirectorViewMentors() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
   const [mentors, setMentors] = useState([]);
   const [page, setPage] = useState(0);
   const rowsPerPageOptions = [10, 20, 25];
   const [rowsPerPage, setRowsPerPage] = useState(rowsPerPageOptions[0]);
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
-  const [menteeCounts, setMenteeCounts] = useState({});
   const [filterDepartment, setFilterDepartment] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
 
@@ -63,30 +60,13 @@ function DirectorViewMentors() {
 
   const getAllMentors = useCallback(async () => {
     try {
-      // Get all users
-      const response = await api.get("/users");
-      if (response.data.status === "success") {
-        const allUsers = response.data.data.users;
-        
-        // Filter all faculty members
-        const facultyMembers = allUsers.filter(u => u.roleName === "faculty");
-        
-        logger.info("All Faculty Members:", facultyMembers);
-        setMentors(facultyMembers);
+      const response = await api.get("/mentors/mentors-with-mentees");
 
-        // Fetch mentee counts for each mentor
-        const counts = {};
-        for (const mentor of facultyMembers) {
-          try {
-            const menteeResponse = await api.get(`/mentorship/${mentor._id}/mentees`);
-            counts[mentor._id] = menteeResponse.data.mentees?.length || 0;
-          } catch (error) {
-            counts[mentor._id] = 0;
-          }
-        }
-        setMenteeCounts(counts);
+      if (response.data?.mentors) {
+        setMentors(response.data.mentors);
+        logger.info("Fetched mentors with mentee counts:", response.data.mentors);
       } else {
-        throw new Error("Error fetching users");
+        throw new Error("Error fetching mentors");
       }
     } catch (error) {
       logger.info(error);
@@ -275,9 +255,9 @@ function DirectorViewMentors() {
                         <TableCell align="center">
                           <Chip 
                             icon={<PeopleIcon />}
-                            label={menteeCounts[mentor._id] || 0}
+                            label={mentor.menteeCount || 0}
                             size="small"
-                            color={menteeCounts[mentor._id] > 0 ? "success" : "default"}
+                            color={mentor.menteeCount > 0 ? "success" : "default"}
                           />
                         </TableCell>
                         <TableCell align="center">
@@ -286,7 +266,7 @@ function DirectorViewMentors() {
                             size="small"
                             color={isLight ? "primary" : "info"}
                             onClick={() => handleViewMentees(mentor)}
-                            disabled={!menteeCounts[mentor._id] || menteeCounts[mentor._id] === 0}
+                            disabled={!mentor.menteeCount || mentor.menteeCount === 0}
                           >
                             View Mentees
                           </Button>

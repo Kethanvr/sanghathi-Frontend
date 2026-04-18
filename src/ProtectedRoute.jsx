@@ -1,10 +1,11 @@
 import { useContext } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { AuthContext } from "./context/AuthContext";
 import { Box, CircularProgress } from "@mui/material";
 
 function ProtectedRouteWrapper({ children, allowedRoles, ...props }) {
   const { user, isFetching } = useContext(AuthContext); // Get the user and loading state from context
+  const location = useLocation();
 
   // Show loading spinner while fetching user data
   if (isFetching) {
@@ -24,7 +25,7 @@ function ProtectedRouteWrapper({ children, allowedRoles, ...props }) {
 
   // Redirect to login if no user
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   // If allowedRoles is specified and user doesn't have the role, show unauthorized page
