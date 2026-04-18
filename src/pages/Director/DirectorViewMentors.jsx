@@ -104,8 +104,18 @@ function DirectorViewMentors() {
   };
 
   const filteredMentors = mentors.filter((mentor) => {
-    const matchesSearch = mentor.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         mentor.email?.toLowerCase().includes(searchQuery.toLowerCase());
+    const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+    const matchesMenteeName = (mentor.menteeNames || []).some((menteeName) =>
+      menteeName?.toLowerCase().includes(normalizedSearchQuery)
+    );
+
+    const matchesSearch =
+      !normalizedSearchQuery ||
+      mentor.name?.toLowerCase().includes(normalizedSearchQuery) ||
+      mentor.email?.toLowerCase().includes(normalizedSearchQuery) ||
+      mentor.department?.toLowerCase().includes(normalizedSearchQuery) ||
+      matchesMenteeName;
     const matchesDepartment = filterDepartment === "all" || mentor.department === filterDepartment;
     return matchesSearch && matchesDepartment;
   });
@@ -165,7 +175,7 @@ function DirectorViewMentors() {
             >
               <TextField
                 fullWidth
-                placeholder="Search mentors..."
+                placeholder="Search mentors or students..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 InputProps={{

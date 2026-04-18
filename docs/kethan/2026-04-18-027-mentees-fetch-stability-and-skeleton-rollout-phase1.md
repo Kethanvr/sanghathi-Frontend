@@ -160,3 +160,36 @@ Implemented a frontend UX sweep for `/threads`, `/report`, chat message renderin
 - Edited-file diagnostics: no language-service errors.
 - Frontend production build: passed (`bun run build`).
 - Non-blocking large chunk warnings remain and are pre-existing optimization follow-ups.
+
+# 9. Thread + Mentor UX Delta (2026-04-18)
+
+Implemented additional UX polish requested on thread and mentor-management flows.
+
+1. Thread detail card improvements (`/threads/:threadId`)
+- Added a top-level `Back to Threads` action at the top of the thread card.
+- Updated message age display UI (for labels like `3 months ago`) to a cleaner time-pill style with icon.
+- Normalized relative-time label formatting for compact readability (`mo`, `h`, `d`, etc. where applicable).
+
+2. HOD/Director mentors search (`/hod/mentors`, `/director/mentors`)
+- Expanded search to match not only mentor name/email, but also student names under that mentor.
+- Updated search placeholder text to clearly indicate student-search support.
+
+3. Mentor avatar in mentees header (`/hod/mentor/:mentorId/mentees` and director equivalent)
+- Added mentor profile avatar before the mentor title block in the mentees page header.
+- Uses existing avatar resolver with initials fallback when image is unavailable.
+
+4. Backend support for student-name mentor search
+- Enhanced `GET /mentors/mentors-with-mentees` payload to include `menteeNames` per mentor.
+- Computed from mentorship records and student user lookups in one route.
+
+5. Files updated in this delta
+- `sanghathi-Frontend/src/pages/Thread/ThreadWindow.jsx`
+- `sanghathi-Frontend/src/pages/Thread/Message/Message.jsx`
+- `sanghathi-Frontend/src/pages/Director/DirectorViewMentors.jsx`
+- `sanghathi-Frontend/src/pages/Director/DirectorMenteesList.jsx`
+- `sanghathi-Backend/src/routes/Student/mentorRoutes.js`
+
+6. Validation results
+- Frontend diagnostics on edited files: clean.
+- Frontend production build: passed (`bun run build`).
+- Backend tests: passed (`25/25`).

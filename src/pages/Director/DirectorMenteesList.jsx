@@ -51,6 +51,7 @@ const DirectorMenteesList = () => {
   const [mentorInfo, setMentorInfo] = useState(null);
   const [mentorInfoError, setMentorInfoError] = useState(null);
   const navigate = useNavigate();
+  const mentorAvatarSrc = getAvatarSrc(mentorInfo);
 
   useEffect(() => {
     const fetchMentorInfo = async () => {
@@ -118,12 +119,31 @@ const DirectorMenteesList = () => {
               }}
             >
               <Box>
-                <Typography variant="h6" component="h1" sx={{ fontWeight: 500 }}>
-                  {mentorInfo?.name}'s Mentees
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {mentorInfo?.department} Department
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+                  <Avatar
+                    alt={mentorInfo?.name}
+                    src={mentorAvatarSrc || undefined}
+                    sx={{
+                      width: { xs: 38, sm: 44 },
+                      height: { xs: 38, sm: 44 },
+                      backgroundColor: isLight
+                        ? theme.palette.primary.main
+                        : theme.palette.info.main,
+                    }}
+                  >
+                    {!mentorAvatarSrc
+                      ? getAvatarFallbackText(mentorInfo?.name || "Mentor")
+                      : null}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" component="h1" sx={{ fontWeight: 500 }}>
+                      {mentorInfo?.name}'s Mentees
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {mentorInfo?.department} Department
+                    </Typography>
+                  </Box>
+                </Box>
               </Box>
               <Button
                 variant="outlined"

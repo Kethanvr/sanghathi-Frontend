@@ -3,6 +3,7 @@ import { styled } from "@mui/system";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Box, Avatar, Typography } from "@mui/material";
 import { Stack, Input, Divider, IconButton } from "@mui/material";
+import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 
 import Iconify from "../../../components/Iconify";
 import Scrollbar from "../../../components/Scrollbar";
@@ -22,6 +23,28 @@ const ContentStyle = styled("div")(({ theme }) => ({
   color: theme.palette.text.primary,
   border: `1px solid ${theme.palette.divider}`,
 }));
+
+const formatMessageAge = (createdAt) => {
+  const rawLabel = formatDistanceToNowStrict(new Date(createdAt || Date.now()), {
+    addSuffix: true,
+  });
+
+  return rawLabel
+    .replace(" seconds", "s")
+    .replace(" second", "s")
+    .replace(" minutes", "m")
+    .replace(" minute", "m")
+    .replace(" hours", "h")
+    .replace(" hour", "h")
+    .replace(" days", "d")
+    .replace(" day", "d")
+    .replace(" weeks", "w")
+    .replace(" week", "w")
+    .replace(" months", "mo")
+    .replace(" month", "mo")
+    .replace(" years", "y")
+    .replace(" year", "y");
+};
 
 const MessageItem = ({ message, conversation }) => {
   const { user } = useContext(AuthContext);
@@ -76,7 +99,14 @@ const MessageItem = ({ message, conversation }) => {
           </Avatar>
         )}
 
-        <div>
+        <Box
+          sx={{
+            display: "inline-flex",
+            flexDirection: "column",
+            alignItems: isMe ? "flex-end" : "flex-start",
+            maxWidth: "min(75vw, 420px)",
+          }}
+        >
           <ContentStyle
             sx={{
               ...(isMe
@@ -93,19 +123,40 @@ const MessageItem = ({ message, conversation }) => {
           >
             <Typography variant="body2">{message.body}</Typography>
           </ContentStyle>
-          <Typography
-            variant="caption"
+          <Box
             sx={{
-              mt: 0.5,
-              textAlign: isMe ? "right" : "left",
+              mt: 0.75,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: isMe ? "flex-end" : "flex-start",
+              gap: 0.75,
             }}
           >
-            {!isMe && `${firstName}, `}
-            {formatDistanceToNowStrict(new Date(message.createdAt || Date.now()), {
-              addSuffix: true,
-            })}
-          </Typography>
-        </div>
+            {!isMe && firstName ? (
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
+                {firstName}
+              </Typography>
+            ) : null}
+            <Box
+              component="span"
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.4,
+                px: 0.8,
+                py: 0.2,
+                borderRadius: 999,
+                bgcolor: "action.hover",
+                color: "text.secondary",
+              }}
+            >
+              <AccessTimeRoundedIcon sx={{ fontSize: 12 }} />
+              <Typography component="span" variant="caption" sx={{ lineHeight: 1.2 }}>
+                {formatMessageAge(message.createdAt)}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
       </Box>
     </RootStyle>
   );
