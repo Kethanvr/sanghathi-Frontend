@@ -74,7 +74,12 @@ const Report = () => {
   useEffect(() => {
     const fetchThreads = async () => {
       try {
-        const response = await api.get("threads");
+        const response = await api.get("threads", {
+          params: {
+            page: 1,
+            limit: 300,
+          },
+        });
         if (response.status === 200) {
           const { data } = response.data;
           logger.info("All threads:", data.threads);
@@ -201,7 +206,12 @@ const Report = () => {
   const handleOpenChatDialog = async (threadId) => {
     setOpenChatDialogThreadId(threadId);
     try {
-      const response = await api.get(`/threads/${threadId}`);
+      const response = await api.get(`/threads/${threadId}`, {
+        params: {
+          messagePage: 1,
+          messageLimit: 150,
+        },
+      });
       if (response.status === 200) {
         const { data } = response.data;
         setChatMessages(data.thread.messages);

@@ -75,14 +75,35 @@ function UserList({ onEdit }) {
 
   const getAllUsers = useCallback(async () => {
     try {
-      const response = await api.get("/users");
-      if (response.data.status === "success") {
-        const users = response.data.data.users;
-        logger.info("All users data:", users);
-        setUsers(users);
-      } else {
-        throw new Error("Error fetching users");
-      }
+      const pageSize = 200;
+      let pageNumber = 1;
+      let totalPages = 1;
+      const aggregatedUsers = [];
+
+      do {
+        const response = await api.get("/users", {
+          params: {
+            page: pageNumber,
+            limit: pageSize,
+            fields:
+              "_id,name,email,phone,avatar,role,roleName,profile,status,lastActivity,department,sem,usn,cabin",
+            includeProfiles: true,
+          },
+        });
+
+        if (response.data.status !== "success") {
+          throw new Error("Error fetching users");
+        }
+
+        const usersPage = response.data?.data?.users || [];
+        aggregatedUsers.push(...usersPage);
+
+        totalPages = response.data?.pagination?.totalPages || 1;
+        pageNumber += 1;
+      } while (pageNumber <= totalPages);
+
+      logger.info("All users data:", aggregatedUsers);
+      setUsers(aggregatedUsers);
     } catch (error) {
       logger.info(error);
       enqueueSnackbar("Error fetching users", { variant: "error" });

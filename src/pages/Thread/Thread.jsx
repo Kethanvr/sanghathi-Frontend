@@ -52,7 +52,12 @@ const Thread = () => {
   const fetchThreads = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await api.get(`users/${user._id}/threads`);
+      const response = await api.get(`users/${user._id}/threads`, {
+        params: {
+          page: 1,
+          limit: 100,
+        },
+      });
       if (response.data.status === "success") {
         setThreads(response.data.data.threads);
       }
@@ -65,18 +70,23 @@ const Thread = () => {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const response = await api.get("users");
+      const shouldScopeToStudents = ["faculty", "hod", "director"].includes(
+        user?.roleName
+      );
+
+      const response = await api.get("users", {
+        params: {
+          page: 1,
+          limit: 500,
+          role: shouldScopeToStudents ? "student" : undefined,
+          fields: "_id,name,roleName",
+          includeProfiles: false,
+        },
+      });
+
       if (response.data.status === "success") {
-        const allUsers = response.data.data.users;
-        const shouldScopeToStudents = ["faculty", "hod", "director"].includes(
-          user?.roleName
-        );
-
-        const scopedUsers = shouldScopeToStudents
-          ? allUsers.filter((candidate) => candidate.roleName === "student")
-          : allUsers;
-
-        setUsers(scopedUsers);
+        const fetchedUsers = response.data.data.users;
+        setUsers(fetchedUsers);
       }
     } catch (error) {
       logger.error("Error fetching Users:", error);

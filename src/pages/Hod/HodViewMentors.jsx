@@ -62,72 +62,25 @@ function HodViewMentors() {
       setLoading(true);
       logger.info("=== Fetching Mentors for HOD ===");
       logger.info("HOD Department:", user?.department);
-      
-      // Fetch all students with their mentor assignments (same as Admin)
-      const response = await api.get("/mentors/allocation-students");
-      const studentsData = response.data?.data || [];
-      
-      logger.info(`Fetched ${studentsData.length} total students`);
-      
-      // Filter students by HOD's department and group by mentor
-      const mentorMap = new Map();
-      
-      studentsData.forEach((student) => {
-        // Only process students from HOD's department who have mentors
-        if (student.department === user?.department && student.mentor) {
-          const mentorId = student.mentor._id;
-          const mentorName = student.mentor.name;
-          
-          if (!mentorMap.has(mentorId)) {
-            mentorMap.set(mentorId, {
-              _id: mentorId,
-              name: mentorName,
-              students: []
-            });
-          }
-          
-          mentorMap.get(mentorId).students.push(student);
-        }
+
+      const response = await api.get("/mentors/mentors-with-mentees", {
+        params: {
+          department: user?.department,
+          page: 1,
+          limit: 500,
+        },
       });
-      
-      logger.info(`Found ${mentorMap.size} mentors in ${user?.department} department`);
-      
-      if (mentorMap.size === 0) {
-        setMentors([]);
-        enqueueSnackbar("No mentors found with assigned students in your department", { variant: "info" });
-        setLoading(false);
-        return;
-      }
-      
-      // Fetch all faculty to get complete mentor information
-      const facultyResponse = await api.get("/users?role=faculty");
-      const allFaculty = facultyResponse.data?.data?.users || [];
-      
-      logger.info(`Fetched ${allFaculty.length} faculty members`);
-      
-      // Build mentor list with full details
-      const mentorsList = Array.from(mentorMap.values()).map(mentorData => {
-        const facultyInfo = allFaculty.find(f => f._id === mentorData._id);
-        
-        return {
-          _id: mentorData._id,
-          name: mentorData.name,
-          email: facultyInfo?.email || 'N/A',
-          phone: facultyInfo?.phone || 'N/A',
-          department: facultyInfo?.department || user?.department,
-          roleName: 'faculty',
-          menteeCount: mentorData.students.length
-        };
-      });
-      
-      // Sort by mentee count
-      mentorsList.sort((a, b) => b.menteeCount - a.menteeCount);
-      
-      logger.info(`Setting ${mentorsList.length} mentors:`, mentorsList);
+
+      const mentorsList = response.data?.mentors || [];
+
+      logger.info(`Fetched ${mentorsList.length} mentors for ${user?.department}`);
       setMentors(mentorsList);
-      
-      enqueueSnackbar(`Found ${mentorsList.length} assigned mentors`, { variant: "success" });
-      
+
+      if (!mentorsList.length) {
+        enqueueSnackbar("No mentors found with assigned students in your department", {
+          variant: "info",
+        });
+      }
     } catch (error) {
       logger.error("Error fetching mentors:", error);
       enqueueSnackbar("Failed to fetch mentors", { variant: "error" });
@@ -135,7 +88,7 @@ function HodViewMentors() {
     } finally {
       setLoading(false);
     }
-  }, [user, enqueueSnackbar]);
+  }, [user?.department, enqueueSnackbar]);
 
   useEffect(() => {
     if (user && user.department) {

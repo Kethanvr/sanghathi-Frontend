@@ -44,7 +44,12 @@ const useMenteesData = (mentorId, options = {}) => {
     setError(null);
 
     try {
-      const response = await api.get(`/mentorship/${mentorId}/mentees-with-profiles`);
+      const response = await api.get(`/mentorship/${mentorId}/mentees-with-profiles`, {
+        params: {
+          page: 1,
+          limit: 500,
+        },
+      });
       const menteesData = Array.isArray(response.data?.mentees)
         ? response.data.mentees.map(normalizeMentee)
         : [];

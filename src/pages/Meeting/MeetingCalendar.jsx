@@ -143,17 +143,26 @@ const MeetingCalendar = () => {
   const titleRef = useRef();
   const locationRef = useRef();
   const meetingType = useRef();
-  const userId = "6440827f7b7d9337a2202d16";
   const calendarRef = useRef(null);
   const { createMeeting, deleteMeeting } = useMeeting();
   const { user } = useContext(AuthContext);
+  const userId = user?._id;
 
   logger.info(user);
 
   const getAllMeetings = useCallback(async () => {
     try {
-      const response = await api.get("/meetings");
-      const events = response.data.map((meeting) => ({
+      const response = await api.get("/meetings", {
+        params: {
+          page: 1,
+          limit: 300,
+          recipient: user?._id,
+          fields: "_id,title,start,end,type",
+        },
+      });
+
+      const meetings = response.data?.meetings || [];
+      const events = meetings.map((meeting) => ({
         id: meeting._id,
         title: meeting.title,
         start: meeting.start,
@@ -164,7 +173,7 @@ const MeetingCalendar = () => {
     } catch (error) {
       logger.error(error);
     }
-  }, []);
+  }, [user?._id]);
 
   useEffect(() => {
     getAllMeetings();
@@ -206,6 +215,11 @@ const MeetingCalendar = () => {
 
     // Send request to create meeting
     try {
+      if (!userId) {
+        enqueueSnackbar("Unable to identify current user", { variant: "error" });
+        return;
+      }
+
       const meeting = {
         title,
         start: startDateTime,

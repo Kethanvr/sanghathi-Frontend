@@ -66,17 +66,20 @@ const MentorMenteeConversation = () => {
           menteeId: selectedStudent,
         });
 
-        const response = await api.get("/conversations");
-        const conversations = response.data;
+        const response = await api.get("/conversations", {
+          params: {
+            mentorId: user._id,
+            menteeId: selectedStudent,
+            isOffline: true,
+            hasSummary: true,
+            page: 1,
+            limit: 1,
+            fields: "_id,mentorId,menteeId,title,description,isOffline,date",
+          },
+        });
 
-        // Find conversation for this mentor-mentee pair
-        const existing = conversations.find(
-          (conv) =>
-            conv.mentorId === user._id &&
-            conv.menteeId === selectedStudent &&
-            conv.isOffline === true &&
-            conv.description // Has AI-generated summary
-        );
+        const conversations = response.data?.conversations || [];
+        const existing = conversations[0] || null;
 
         if (existing) {
           logger.info("✅ Found existing conversation:", existing);

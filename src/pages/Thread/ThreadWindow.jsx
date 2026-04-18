@@ -184,7 +184,12 @@ export default function ThreadWindow() {
   const fetchThread = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get(`/threads/${threadId}`);
+      const response = await api.get(`/threads/${threadId}`, {
+        params: {
+          messagePage: 1,
+          messageLimit: 150,
+        },
+      });
       if (response.status === 200) {
         const { data } = response.data;
         setThread(data.thread);

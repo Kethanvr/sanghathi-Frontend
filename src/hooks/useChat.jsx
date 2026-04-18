@@ -42,7 +42,13 @@ export default function ChatProvider({ children }) {
     if (!chat) return;
     logger.info(chat);
     try {
-      const response = await api.get(`/messages/${chat._id}/?type=private`);
+      const response = await api.get(`/messages/${chat._id}`, {
+        params: {
+          type: "private",
+          page: 1,
+          limit: 100,
+        },
+      });
       const { data } = response.data;
       setMessages(data.messages);
       socket.current.emit("join_room", chat.conversationId);

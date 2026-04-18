@@ -53,8 +53,12 @@ const MentorAllocation = () => {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        // Use the dedicated allocation-students endpoint
-        const response = await api.get("/mentors/allocation-students");
+        const response = await api.get("/mentors/allocation-students", {
+          params: {
+            page: 1,
+            limit: 1000,
+          },
+        });
         const { data } = response.data;
         logger.info("Fetched students data:", data);
         
@@ -80,8 +84,12 @@ const MentorAllocation = () => {
 
   const refreshStudents = async () => {
     try {
-      // Use the dedicated allocation-students endpoint
-      const response = await api.get("/mentors/allocation-students");
+      const response = await api.get("/mentors/allocation-students", {
+        params: {
+          page: 1,
+          limit: 1000,
+        },
+      });
       const { data } = response.data;
       
       setStudents(data || []);
