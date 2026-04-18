@@ -71,16 +71,62 @@ function DirectorViewMentors() {
 
   const getAllMentors = useCallback(async () => {
     try {
-      const response = await api.get("/mentors/mentors-with-mentees", {
-        params: {
-          page: 1,
-          limit: 500,
-        },
-      });
+      const [mentorsResponse, studentsResponse] = await Promise.all([
+        api.get("/mentors/mentors-with-mentees", {
+          params: {
+            page: 1,
+            limit: 500,
+          },
+        }),
+        api
+          .get("/mentorship/students")
+          .catch(() => ({ data: { data: [] } })),
+      ]);
 
-      if (response.data?.mentors) {
-        setMentors(response.data.mentors);
-        logger.info("Fetched mentors with mentee counts:", response.data.mentors);
+      if (mentorsResponse.data?.mentors) {
+        const mentorsList = mentorsResponse.data.mentors;
+        const studentsList = Array.isArray(studentsResponse.data?.data)
+          ? studentsResponse.data.data
+          : [];
+
+        const menteeNamesByMentorId = new Map();
+        studentsList.forEach((student) => {
+          const mentorId = student?.mentor?._id;
+          const studentName = student?.name;
+
+          if (!mentorId || !studentName) {
+            return;
+          }
+
+          const mentorKey = String(mentorId);
+          if (!menteeNamesByMentorId.has(mentorKey)) {
+            menteeNamesByMentorId.set(mentorKey, new Set());
+          }
+
+          menteeNamesByMentorId.get(mentorKey).add(studentName);
+        });
+
+        const enrichedMentors = mentorsList.map((mentor) => {
+          const mentorKey = String(mentor?._id || "");
+          const backendMenteeNames = Array.isArray(mentor?.menteeNames)
+            ? mentor.menteeNames
+            : [];
+          const fallbackMenteeNames = Array.from(
+            menteeNamesByMentorId.get(mentorKey) || []
+          );
+
+          const mergedMenteeNames = Array.from(
+            new Set([...backendMenteeNames, ...fallbackMenteeNames])
+          );
+
+          return {
+            ...mentor,
+            menteeNames: mergedMenteeNames,
+          };
+        });
+
+        setMentors(enrichedMentors);
+        logger.info("Fetched mentors with enriched student names:", enrichedMentors);
       } else {
         throw new Error("Error fetching mentors");
       }
@@ -93,6 +139,10 @@ function DirectorViewMentors() {
   useEffect(() => {
     getAllMentors();
   }, [getAllMentors]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [searchQuery, filterDepartment]);
 
   const handleViewMentees = (mentor) => {
     navigate(`${routePrefix}/mentor/${mentor._id}/mentees`);
