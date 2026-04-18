@@ -1,5 +1,6 @@
 import axios from "axios";
 import { BASE_URL } from "./config";
+import trackedFetch from "./utils/trackedFetch";
 
 export const loginCall = async (userCredential, dispatch) => {
   dispatch({ type: "LOGIN_START" });
@@ -27,7 +28,7 @@ export const loginCall = async (userCredential, dispatch) => {
 
 export async function askRag(question) {
   const url = `${BASE_URL}/ask`;
-  const res = await fetch(url, {
+  const res = await trackedFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

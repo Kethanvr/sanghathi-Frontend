@@ -152,7 +152,7 @@ const Thread = () => {
 
   return (
     <Page title="Thread">
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 } }}>
         <Box
           sx={{
             display: "flex",
@@ -164,8 +164,10 @@ const Thread = () => {
           <Box
             sx={{
               display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
               justifyContent: "space-between",
-              alignItems: "center",
+              alignItems: { xs: "stretch", sm: "center" },
+              gap: { xs: 1, sm: 0 },
               p: 2,
             }}
           >
@@ -177,7 +179,7 @@ const Thread = () => {
               color={colorMode}
               onClick={handleOpenDialog}
               startIcon={<Add />}
-              sx={{ mt: 1, mb: 2 }}
+              sx={{ mt: 1, mb: 2, width: { xs: "100%", sm: "auto" } }}
             >
               Add new
             </Button>

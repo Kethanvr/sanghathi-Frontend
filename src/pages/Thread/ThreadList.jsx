@@ -21,6 +21,7 @@ import {
   getAvatarSrc,
   getAvatarFallbackText,
 } from "../../utils/avatarResolver";
+import useResponsive from "../../hooks/useResponsive";
 
 const ThreadList = ({
   threads,
@@ -32,6 +33,7 @@ const ThreadList = ({
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const theme = useTheme();
+  const isMobile = useResponsive("down", "sm");
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -73,17 +75,28 @@ const ThreadList = ({
   };
 
   return (
-    <TableContainer component={Paper}>
+    <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
       <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <Table sx={{ tableLayout: "fixed" }}>
+        <Table
+          sx={{
+            tableLayout: { xs: "auto", md: "fixed" },
+            minWidth: { xs: 620, md: "100%" },
+          }}
+        >
           <TableHead>
             <TableRow>
-              <TableCell sx={{ width: "25%" }}>Title</TableCell>
-              <TableCell sx={{ width: "12%" }}>Status</TableCell>
-              <TableCell sx={{ width: "15%" }}>Category</TableCell>
-              <TableCell sx={{ width: "15%" }}>Date</TableCell>
-              <TableCell sx={{ width: "13%" }}>Members</TableCell>
-              <TableCell sx={{ width: "20%", pl: 1 }}>Actions</TableCell>
+              <TableCell sx={{ width: { xs: "32%", md: "25%" } }}>Title</TableCell>
+              <TableCell sx={{ width: { xs: "18%", md: "12%" } }}>Status</TableCell>
+              <TableCell sx={{ width: "15%", display: { xs: "none", sm: "table-cell" } }}>
+                Category
+              </TableCell>
+              <TableCell sx={{ width: "15%", display: { xs: "none", md: "table-cell" } }}>
+                Date
+              </TableCell>
+              <TableCell sx={{ width: "13%", display: { xs: "none", sm: "table-cell" } }}>
+                Members
+              </TableCell>
+              <TableCell sx={{ width: { xs: "50%", md: "20%" }, pl: 1 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -109,12 +122,14 @@ const ThreadList = ({
                       {thread.status}
                     </Typography>
                   </TableCell>
-                  <TableCell>{thread.topic}</TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
+                    {thread.topic}
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
                     {new Date(thread.createdAt).toLocaleDateString()}
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
                     <Box sx={{ display: "flex", cursor: "pointer", ml: -1 }}>
                       {getDisplayParticipants(thread).map((participant, idx) => {
                         const participantAvatarSrc = getAvatarSrc(participant);
@@ -150,7 +165,8 @@ const ThreadList = ({
                     <Box
                       sx={{
                         display: "flex",
-                        gap: 1.5,
+                        flexWrap: { xs: "wrap", sm: "nowrap" },
+                        gap: 1,
                         alignItems: "center",
                         pl: 1,
                       }}
@@ -160,10 +176,11 @@ const ThreadList = ({
                         color={colorMode}
                         onClick={() => onThreadClick(thread)}
                         sx={{
-                          px: 2,
+                          px: { xs: 1.25, sm: 2 },
                           py: 0.5,
                           fontSize: "0.8rem",
                         }}
+                        size={isMobile ? "small" : "medium"}
                       >
                         View
                       </Button>
@@ -173,7 +190,7 @@ const ThreadList = ({
                           sx={{
                             backgroundColor: "#f44336",
                             color: "white",
-                            px: 1.5,
+                            px: { xs: 1.25, sm: 1.5 },
                             py: 0.5,
                             fontSize: "0.8rem",
                             minWidth: "auto",
@@ -186,6 +203,7 @@ const ThreadList = ({
                           }}
                           onClick={() => onThreadDelete(thread)}
                           startIcon={<Delete fontSize="small" />}
+                          size={isMobile ? "small" : "medium"}
                         >
                           Delete
                         </Button>
@@ -208,7 +226,7 @@ const ThreadList = ({
           }}
         >
           <TablePagination
-            rowsPerPageOptions={rowsPerPageOptions}
+            rowsPerPageOptions={isMobile ? [5, 10] : rowsPerPageOptions}
             component="div"
             count={threads.length}
             rowsPerPage={rowsPerPage}

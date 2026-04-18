@@ -52,9 +52,16 @@ const DashboardHeader = ({ isSidebarOpen, setIsSidebarOpen }) => {
         borderBottom: `1px solid ${theme.palette.divider}`,
       }}
     >
-      <Toolbar sx={{ justifyContent: "space-between" }}>
+      <Toolbar
+        sx={{
+          justifyContent: "space-between",
+          minHeight: { xs: 56, sm: 64 },
+          px: { xs: 1.5, sm: 2.5 },
+          gap: 1,
+        }}
+      >
         {/* LEFT SIDE */}
-        <FlexBetween gap="1.5rem">
+        <FlexBetween gap={{ xs: 0.5, sm: 1.5 }}>
           <IconButton 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             sx={{ color: theme.palette.text.primary }}
@@ -71,7 +78,7 @@ const DashboardHeader = ({ isSidebarOpen, setIsSidebarOpen }) => {
         </FlexBetween>
 
         {/* RIGHT SIDE */}
-        <FlexBetween gap="1rem">
+        <FlexBetween gap={{ xs: 0.5, sm: 1 }}>
           <Tooltip title={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}>
             <IconButton 
               onClick={toggleThemeMode}

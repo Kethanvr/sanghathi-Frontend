@@ -2,6 +2,7 @@ import { Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { useContext, useEffect, lazy } from "react";
 import ThemeProvider from "./theme";
 import LazyLoadWrapper from "./components/loader/LazyLoadWrapper";
+import GlobalTopLoader from "./components/loader/GlobalTopLoader";
 import ProtectedRouteWrapper from "./ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
 import MotionLazyContainer from "./components/animate/MotionLazyContainer";
@@ -63,6 +64,7 @@ function App() {
   const { user } = useContext(AuthContext);
   return (
     <ThemeProvider>
+      <GlobalTopLoader />
       <NotistackProvider>
         <MotionLazyContainer>
           <div className="app">
