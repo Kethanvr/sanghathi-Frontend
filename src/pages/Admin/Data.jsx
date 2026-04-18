@@ -19,7 +19,6 @@ import useTabs from "../../hooks/useTabs";
 // components
 import Page from "../../components/Page";
 import Iconify from "../../components/Iconify";
-import HeaderBreadcrumbs from "../../components/HeaderBreadcrumbs";
 // sections
 
 import AddIat from "./AddIat";
@@ -29,10 +28,8 @@ import AddMarks from "../Scorecard/AddMarks";
 import AddTylMarks from "./AddTylMarks";
 import AddMoocDetails from "./AddMoocDetails";
 import AddMiniProjectDetails from "./AddMiniProjectDetails";
-import React from "react";
 
 // ----------------------------------------------------------------------
-``
 export default function Data() {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
@@ -95,11 +92,11 @@ export default function Data() {
   ];
   return (
     <Page title="User: Account Settings">
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
         <Paper
           elevation={0}
           sx={{
-            p: 3,
+            p: { xs: 2, sm: 3 },
             mb: 4,
             borderRadius: 2,
             backgroundColor: isLight
@@ -121,6 +118,7 @@ export default function Data() {
               variant="h4"
               sx={{
                 fontWeight: 'bold',
+                fontSize: { xs: '1.6rem', sm: '2.125rem' },
                 background: isLight
                   ? `-webkit-linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`
                   : `-webkit-linear-gradient(45deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
@@ -135,7 +133,7 @@ export default function Data() {
             <Typography
               variant="body1"
               color="text.secondary"
-              sx={{ maxWidth: 600, mx: 'auto' }}
+              sx={{ maxWidth: { xs: '100%', sm: 600 }, mx: 'auto' }}
             >
               Upload and manage data for students, attendance, and academic records
             </Typography>
@@ -160,7 +158,7 @@ export default function Data() {
               },
               '& .MuiTab-root': {
                 minHeight: 48,
-                px: 3,
+                px: { xs: 1.5, sm: 3 },
                 mx: 0.5,
                 borderRadius: '8px 8px 0 0',
                 transition: 'all 0.2s',

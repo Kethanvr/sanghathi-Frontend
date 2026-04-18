@@ -4,7 +4,6 @@ import Papa from 'papaparse';
 import { 
   Container, 
   Button, 
-  Card, 
   Stack, 
   Typography,
   Box,
@@ -13,7 +12,6 @@ import {
   CircularProgress,
   Tab,
   Tabs,
-  IconButton,
   Alert,
   List,
   ListItem,
@@ -24,12 +22,10 @@ import {
   FileDownload as FileDownloadIcon,
   Person as PersonIcon,
   School as SchoolIcon,
-  AdminPanelSettings as AdminIcon,
   HelpOutline as HelpOutlineIcon,
   SupervisorAccount as SupervisorAccountIcon
 } from '@mui/icons-material';
 import api from "../../utils/axios";
-import { getUserSchema } from "../Users/UserForm";
 import { alpha, useTheme } from "@mui/material/styles";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
@@ -313,11 +309,11 @@ const AddStudents = () => {
   };
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          p: { xs: 2, sm: 4 },
           borderRadius: 2,
           backgroundColor: isLight 
             ? 'rgba(255, 255, 255, 0.8)'
@@ -353,7 +349,7 @@ const AddStudents = () => {
           <Typography 
             variant="body1" 
             color="text.secondary"
-            sx={{ maxWidth: 600, mx: 'auto' }}
+            sx={{ maxWidth: { xs: '100%', sm: 600 }, mx: 'auto' }}
           >
             Upload a CSV file to add multiple users at once
           </Typography>
@@ -587,7 +583,7 @@ const AddStudents = () => {
             border: `1px dashed ${alpha(theme.palette.warning.main, 0.2)}`,
             borderRadius: 2,
             display: 'flex',
-            alignItems: 'center',
+            alignItems: { xs: 'flex-start', sm: 'center' },
             gap: 1,
           }}
         >
