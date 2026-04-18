@@ -25,9 +25,9 @@ import {
 import { useSnackbar } from "notistack";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../utils/axios";
+import useMenteesData from "../../hooks/useMenteesData";
 
 import logger from "../../utils/logger.js";
-const BASE_URL = import.meta.env.VITE_API_URL;
 
 const MentorMenteeConversation = () => {
   const { user } = useContext(AuthContext);
@@ -40,42 +40,16 @@ const MentorMenteeConversation = () => {
   const [topic, setTopic] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch actual mentees
-  const [mentees, setMentees] = useState([]);
-  const [loadingMentees, setLoadingMentees] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    mentees,
+    loading: loadingMentees,
+    error,
+  } = useMenteesData(user?._id, {
+    enabled: Boolean(user?._id),
+  });
+
   const [existingConversation, setExistingConversation] = useState(null);
   const [checkingConversation, setCheckingConversation] = useState(false);
-
-  useEffect(() => {
-    if (!user) {
-      setError("User not authenticated.");
-      setLoadingMentees(false);
-      return;
-    }
-
-    const fetchMentees = async () => {
-      try {
-        logger.info("📥 Fetching mentees for user:", user._id);
-        const response = await api.get(`/mentorship/${user._id}/mentees`);
-        logger.info("✅ Mentees fetched successfully:", response.data.mentees);
-        setMentees(response.data.mentees);
-      } catch (err) {
-        logger.error("❌ Error fetching mentees:", err);
-        logger.error("❌ Error details:", {
-          message: err.message,
-          response: err.response?.data,
-          status: err.response?.status,
-        });
-        setError("No mentees found.");
-        enqueueSnackbar("Failed to load mentees", { variant: "error" });
-      } finally {
-        setLoadingMentees(false);
-      }
-    };
-
-    fetchMentees();
-  }, [user, enqueueSnackbar]);
 
   // Check if conversation already exists for selected mentee
   useEffect(() => {
@@ -209,6 +183,16 @@ const MentorMenteeConversation = () => {
     setMooc(false);
     setMiniProject(false);
   };
+
+  if (!user) {
+    return (
+      <Container maxWidth="sm" sx={{ mt: 6 }}>
+        <Paper sx={{ p: 4, borderRadius: 3, textAlign: "center" }}>
+          <Typography color="error">User not authenticated.</Typography>
+        </Paper>
+      </Container>
+    );
+  }
 
   if (loadingMentees) {
     return (

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import axios from "axios";
 import {
   Container,
   Typography,
@@ -33,19 +32,11 @@ import {
 } from "@mui/icons-material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Page from "../../components/Page";
+import api from "../../utils/axios";
+import TableRowsSkeleton from "../../components/skeletons/TableRowsSkeleton";
+import useMenteesData from "../../hooks/useMenteesData";
 
 import logger from "../../utils/logger.js";
-const BASE_URL = import.meta.env.VITE_API_URL;
-
-const fetchStudentProfiles = async (userId) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/student-profiles/${userId}`);
-    return response.data;
-  } catch (error) {
-    logger.error("Error fetching student profile:", error);
-    return null;
-  }
-};
 
 const MentorTile = ({ title, icon, onClick, menteeId }) => {
   const theme = useTheme();
@@ -136,20 +127,20 @@ const HodMentorDashboard = () => {
   const isLight = theme.palette.mode === "light";
   const { mentorId } = useParams();
   const navigate = useNavigate();
+  const { mentees, loading, error: menteesError } = useMenteesData(mentorId, {
+    enabled: Boolean(mentorId),
+  });
   const [mentorInfo, setMentorInfo] = useState(null);
-  const [mentees, setMentees] = useState([]);
-  const [profiles, setProfiles] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [mentorInfoError, setMentorInfoError] = useState(null);
 
   useEffect(() => {
     const fetchMentorInfo = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/users/${mentorId}`);
+        const response = await api.get(`/users/${mentorId}`);
         setMentorInfo(response.data.data.user);
       } catch (err) {
         logger.error("Error fetching mentor info:", err);
-        setError("Error fetching mentor information");
+        setMentorInfoError("Error fetching mentor information");
       }
     };
 
@@ -158,58 +149,14 @@ const HodMentorDashboard = () => {
     }
   }, [mentorId]);
 
-  useEffect(() => {
-    const fetchMentees = async () => {
-      try {
-        const response = await axios.get(
-          `${BASE_URL}/mentorship/${mentorId}/mentees`
-        );
-        setMentees(response.data.mentees);
-      } catch (err) {
-        setError("No mentees found for this mentor.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (mentorId) {
-      fetchMentees();
-    }
-  }, [mentorId]);
-
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      const profileData = {};
-      for (const mentee of mentees) {
-        const data = await fetchStudentProfiles(mentee._id);
-        if (data) {
-          profileData[mentee._id] = data;
-        }
-      }
-      setProfiles(profileData);
-    };
-
-    if (mentees.length > 0) {
-      fetchProfiles();
-    }
-  }, [mentees]);
-
   const handleViewMenteeDashboard = (menteeId) => {
     navigate(`/hod/mentee-profile/${menteeId}`);
   };
 
-  if (loading) {
+  if (mentorInfoError || menteesError) {
     return (
       <Page title="Mentor Dashboard">
-        <Typography>Loading mentor dashboard...</Typography>
-      </Page>
-    );
-  }
-
-  if (error) {
-    return (
-      <Page title="Mentor Dashboard">
-        <Typography color="error">{error}</Typography>
+        <Typography color="error">{mentorInfoError || menteesError}</Typography>
       </Page>
     );
   }
@@ -370,7 +317,7 @@ const HodMentorDashboard = () => {
                   }}
                 >
                   <Typography variant="h2" color="success.main">
-                    {mentees.length}
+                    {loading ? "-" : mentees.length}
                   </Typography>
                   <Typography variant="h6" sx={{ ml: 2 }}>
                     Assigned Mentees
@@ -415,7 +362,9 @@ const HodMentorDashboard = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {mentees.length === 0 ? (
+                  {loading ? (
+                    <TableRowsSkeleton columns={8} rows={8} avatarColumns={[0]} />
+                  ) : mentees.length === 0 ? (
                     <TableRow>
                       <TableCell
                         colSpan={8}
@@ -459,7 +408,7 @@ const HodMentorDashboard = () => {
                         <TableCell
                           sx={{ color: theme.palette.text.primary }}
                         >
-                          {profiles[mentee._id]?.usn || "N/A"}
+                          {mentee.profile?.usn || "N/A"}
                         </TableCell>
                         <TableCell
                           sx={{ color: theme.palette.text.primary }}
@@ -475,9 +424,7 @@ const HodMentorDashboard = () => {
                           sx={{ color: theme.palette.text.primary }}
                         >
                           <Chip
-                            label={
-                              profiles[mentee._id]?.department || "N/A"
-                            }
+                            label={mentee.profile?.department || "N/A"}
                             size="small"
                             sx={{
                               backgroundColor: isLight
@@ -489,7 +436,7 @@ const HodMentorDashboard = () => {
                         <TableCell
                           sx={{ color: theme.palette.text.primary }}
                         >
-                          {profiles[mentee._id]?.sem || "N/A"}
+                          {mentee.profile?.sem || "N/A"}
                         </TableCell>
                         <TableCell align="center">
                           <Button
