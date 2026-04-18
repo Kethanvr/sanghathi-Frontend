@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -18,6 +18,8 @@ import {
 } from "@mui/icons-material";
 import Papa from "papaparse";
 import axios from "axios";
+import useDraftPersistence from "../../hooks/useDraftPersistence";
+import { resolveDraftScopeId } from "../../utils/draftScope";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -26,6 +28,29 @@ const AddMoocDetails = () => {
   const [successCount, setSuccessCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
   const [errors, setErrors] = useState([]);
+
+  const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
+
+  const restoreDraftState = useCallback((draftData = {}) => {
+    setSuccessCount(Number(draftData.successCount) || 0);
+    setErrorCount(Number(draftData.errorCount) || 0);
+    setErrors(Array.isArray(draftData.errors) ? draftData.errors : []);
+  }, []);
+
+  const persistedErrors = useMemo(() => errors.slice(0, 200), [errors]);
+
+  useDraftPersistence({
+    formType: "admin-mooc-upload",
+    scopeId: draftScopeId,
+    values: {
+      successCount,
+      errorCount,
+      errors: persistedErrors,
+      isProcessing: processing,
+    },
+    reset: restoreDraftState,
+    enableServerSync: false,
+  });
 
   // ================= TEMPLATE DOWNLOAD =================
   const downloadTemplate = () => {
