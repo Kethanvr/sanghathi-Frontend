@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-
 import { useSnackbar } from "notistack";
 import {
   Box,
@@ -29,12 +28,19 @@ import {
 } from "../../utils/avatarResolver";
 
 import logger from "../../utils/logger.js";
-const NewThreadDialog = ({ open, onClose, users, currentUser, onSave, colorMode = 'primary' }) => {
+
+const NewThreadDialog = ({
+  open,
+  onClose,
+  users,
+  currentUser,
+  onSave,
+  colorMode = "primary",
+}) => {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const isLight = theme.palette.mode === 'light';
 
   const [newThreadData, setNewThreadData] = useState({
     title: "",
@@ -45,6 +51,13 @@ const NewThreadDialog = ({ open, onClose, users, currentUser, onSave, colorMode 
 
   const TOPICS = ["general", "attendance", "performance", "well-being"];
 
+  const membersForDisplay =
+    currentUser?.roleName === "faculty"
+      ? newThreadData.participants.filter(
+          (participant) => participant._id !== currentUser._id
+        )
+      : newThreadData.participants;
+
   useEffect(() => {
     if (searchTerm.trim()) {
       const filtered = users.filter((user) =>
@@ -54,7 +67,7 @@ const NewThreadDialog = ({ open, onClose, users, currentUser, onSave, colorMode 
     } else {
       setFilteredUsers([]);
     }
-  }, [searchTerm]);
+  }, [searchTerm, users]);
 
   const handleCloseDialog = () => {
     onClose();
@@ -62,9 +75,10 @@ const NewThreadDialog = ({ open, onClose, users, currentUser, onSave, colorMode 
       title: "",
       topic: "",
       author: currentUser._id,
-      participants: [{ _id: currentUser._id, name: "Current User" }],
+      participants: [{ _id: currentUser._id, name: currentUser.name }],
     });
     setSearchTerm("");
+    setFilteredUsers([]);
   };
 
   const handleNewThreadChange = (e) => {
@@ -141,19 +155,18 @@ const NewThreadDialog = ({ open, onClose, users, currentUser, onSave, colorMode 
             />
           </Box>
           <Box sx={{ py: 1 }}>
-            <InputLabel shrink htmlFor="tag-select" color={colorMode}>
+            <InputLabel shrink htmlFor="topic-select" color={colorMode}>
               Topic
             </InputLabel>
-
             <Select
-              name="top"
+              name="topic"
               value={newThreadData.topic}
               onChange={handleNewThreadChange}
               inputProps={{ name: "topic", id: "topic-select" }}
               fullWidth
               color={colorMode}
             >
-              <MenuItem value="Topic" disabled>
+              <MenuItem value="" disabled>
                 Topic
               </MenuItem>
               {TOPICS.map((topic, index) => (
@@ -182,61 +195,74 @@ const NewThreadDialog = ({ open, onClose, users, currentUser, onSave, colorMode 
             />
           </Box>
         </Box>
+
         <List>
-          {filteredUsers.map((user) => (
-            <ListItem
-              key={user._id}
-              onClick={() => handleAddMember(user)}
-              sx={{
-                "&:hover": { backgroundColor: theme.palette.action.hover },
-              }}
-            >
-              <ListItemAvatar>
-                <Avatar src={getAvatarSrc(user) || undefined}>
-                  {!getAvatarSrc(user)
-                    ? getAvatarFallbackText(user.name)
-                    : null}
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={user.name} />
-            </ListItem>
-          ))}
+          {filteredUsers.map((user) => {
+            const userAvatarSrc = getAvatarSrc(user);
+
+            return (
+              <ListItem
+                key={user._id}
+                onClick={() => handleAddMember(user)}
+                sx={{
+                  "&:hover": { backgroundColor: theme.palette.action.hover },
+                }}
+              >
+                <ListItemAvatar>
+                  <Avatar alt={user.name} src={userAvatarSrc || undefined}>
+                    {!userAvatarSrc ? getAvatarFallbackText(user.name) : null}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText primary={user.name} />
+              </ListItem>
+            );
+          })}
         </List>
+
         <Typography variant="subtitle1" mt={2}>
           Members:
         </Typography>
         <List>
-          {newThreadData.participants.map((participant) => (
-            <ListItem
-              key={participant._id}
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Avatar src={getAvatarSrc(participant) || undefined}>
-                  {!getAvatarSrc(participant)
-                    ? getAvatarFallbackText(participant.name)
-                    : null}
-                </Avatar>
-                <ListItemText sx={{ ml: 2 }} primary={participant.name} />
-              </Box>
-              {participant._id !== currentUser._id && (
-                <IconButton
-                  onClick={() => handleDeselectMember(participant._id)}
-                >
-                  <Close />
-                </IconButton>
-              )}
-            </ListItem>
-          ))}
+          {membersForDisplay.map((participant) => {
+            const participantAvatarSrc = getAvatarSrc(participant);
+
+            return (
+              <ListItem
+                key={participant._id}
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Avatar
+                    alt={participant.name}
+                    src={participantAvatarSrc || undefined}
+                  >
+                    {!participantAvatarSrc
+                      ? getAvatarFallbackText(participant.name)
+                      : null}
+                  </Avatar>
+                  <ListItemText sx={{ ml: 2 }} primary={participant.name} />
+                </Box>
+                {participant._id !== currentUser._id && (
+                  <IconButton
+                    onClick={() => handleDeselectMember(participant._id)}
+                  >
+                    <Close />
+                  </IconButton>
+                )}
+              </ListItem>
+            );
+          })}
         </List>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCloseDialog}>Cancel</Button>
-        <Button onClick={handleSave} color={colorMode}>Save</Button>
+        <Button onClick={handleSave} color={colorMode}>
+          Save
+        </Button>
       </DialogActions>
     </Dialog>
   );

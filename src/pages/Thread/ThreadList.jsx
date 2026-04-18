@@ -24,6 +24,7 @@ import {
 
 const ThreadList = ({
   threads,
+  currentUser,
   onThreadClick,
   onThreadDelete,
   colorMode = "primary",
@@ -47,6 +48,28 @@ const ThreadList = ({
     open: "#4caf50",
     "In Progress": "#ff9800",
     closed: "#f44336",
+  };
+
+  const getDisplayParticipants = (thread) => {
+    const participants = Array.isArray(thread?.participants)
+      ? thread.participants
+      : [];
+
+    if (currentUser?.roleName !== "faculty") {
+      return participants;
+    }
+
+    const studentParticipants = participants.filter(
+      (participant) => participant?.roleName === "student"
+    );
+
+    if (studentParticipants.length > 0) {
+      return studentParticipants;
+    }
+
+    return participants.filter(
+      (participant) => participant?._id !== currentUser?._id
+    );
   };
 
   return (
@@ -93,7 +116,7 @@ const ThreadList = ({
 
                   <TableCell>
                     <Box sx={{ display: "flex", cursor: "pointer", ml: -1 }}>
-                      {thread.participants.map((participant, idx) => {
+                      {getDisplayParticipants(thread).map((participant, idx) => {
                         const participantAvatarSrc = getAvatarSrc(participant);
 
                         return (
