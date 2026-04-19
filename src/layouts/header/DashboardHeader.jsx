@@ -1,6 +1,7 @@
 import { useContext, createRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
+  ArrowBackRounded,
   LightModeOutlined,
   DarkModeOutlined,
   Menu as MenuIcon,
@@ -38,9 +39,31 @@ const DashboardHeader = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const isLight = theme.palette.mode === 'light';
   const { onToggleMode } = useSettings();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useContext(AuthContext);
+
+  const dashboardPathByRole = {
+    student: "/",
+    faculty: "/faculty/dashboard",
+    admin: "/admin/dashboard",
+    hod: "/hod/dashboard",
+    director: "/director/dashboard",
+  };
+
+  const dashboardHomePath = dashboardPathByRole[user?.roleName] || "/";
+  const showBackButton = location.pathname !== dashboardHomePath;
 
   const toggleThemeMode = () => {
     onToggleMode.toggleThemeMode();
+  };
+
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate(dashboardHomePath, { replace: true });
   };
 
   return (
@@ -68,6 +91,25 @@ const DashboardHeader = ({ isSidebarOpen, setIsSidebarOpen }) => {
           >
             <MenuIcon />
           </IconButton>
+          {showBackButton && (
+            <Tooltip title="Go Back">
+              <Button
+                onClick={handleGoBack}
+                variant="outlined"
+                size="small"
+                startIcon={<ArrowBackRounded />}
+                sx={{
+                  minWidth: { xs: 0, sm: 104 },
+                  px: { xs: 1, sm: 1.5 },
+                  fontWeight: 700,
+                }}
+              >
+                <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
+                  Back
+                </Box>
+              </Button>
+            </Tooltip>
+          )}
           {/* Search Bar */}
           {/* <FlexBetween backgroundColor={theme.palette.background.alt} borderRadius="9px" gap="3rem" p="0.1rem 1.5rem">
             <InputBase placeholder="Search..." />
