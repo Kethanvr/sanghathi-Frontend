@@ -28,6 +28,7 @@ import Illustration from "../public/login_illustration.png";
 
 import logger from "../utils/logger.js";
 const Login = () => {
+  const RELEASE_ANNOUNCEMENT_SESSION_KEY = "showSanghathi20Announcement";
   const navigate = useNavigate();
   const location = useLocation();
   const email = useRef();
@@ -83,6 +84,7 @@ const Login = () => {
         { email: email.current.value, password: password.current.value },
         dispatch
       );
+      sessionStorage.setItem(RELEASE_ANNOUNCEMENT_SESSION_KEY, "true");
       const savedRedirectPath = sessionStorage.getItem("postLoginRedirectPath");
       const redirectPath =
         redirectParam ||
