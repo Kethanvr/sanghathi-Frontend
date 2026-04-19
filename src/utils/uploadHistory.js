@@ -41,6 +41,7 @@ export const recordAdminUploadSession = async ({
 
   try {
     await api.post("/admin/upload-history", {
+      source: "dashboard-ui",
       tabType,
       fileName,
       totalRows,

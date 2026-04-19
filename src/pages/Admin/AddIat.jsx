@@ -235,7 +235,7 @@ const AddIat = () => {
             color="text.secondary"
             sx={{ maxWidth: 600, mx: 'auto' }}
           >
-            Upload a CSV file with Internal Assessment Test marks for students
+            Upload a row-wise CSV/JSON file with Internal Assessment Test marks for students.
           </Typography>
         </Box>
 
@@ -254,7 +254,7 @@ const AddIat = () => {
           </Typography>
           
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Please ensure your CSV file has the following columns:
+            Please ensure each row represents one subject for one student and includes these columns:
           </Typography>
           
           <Box 
@@ -274,7 +274,12 @@ const AddIat = () => {
             <Typography variant="body2" color="text.secondary">• SubjectName - Course name</Typography>
             <Typography variant="body2" color="text.secondary">• IAT1 - First IAT marks</Typography>
             <Typography variant="body2" color="text.secondary">• IAT2 - Second IAT marks</Typography>
+            <Typography variant="body2" color="text.secondary">• Avg - Optional average field</Typography>
           </Box>
+
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Accepted mark values: numeric marks and AB/NE/ABSENT. If your file has repeated subject blocks in one row (wide-format sheet), use local script ingest.
+          </Alert>
 
           <Divider sx={{ my: 3 }} />
 

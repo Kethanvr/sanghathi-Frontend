@@ -64,3 +64,4 @@ Example:
 - [2026-04-19-040-admin-upload-history-restore-workflow](./2026-04-19-040-admin-upload-history-restore-workflow.md)
 - [2026-04-19-041-local-iat-ingest-and-rollback-scripts](./2026-04-19-041-local-iat-ingest-and-rollback-scripts.md)
 - [2026-04-19-042-iat6-csv-ingest-execution-and-verification](./2026-04-19-042-iat6-csv-ingest-execution-and-verification.md)
+- [2026-04-19-043-upload-history-visibility-and-admin-data-guidance-upgrade](./2026-04-19-043-upload-history-visibility-and-admin-data-guidance-upgrade.md)
