@@ -444,7 +444,7 @@ function App() {
                   <Route
                     path="/faculty/mentor-mentee-conversation/:menteeId"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["faculty"]}>
+                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "director"]}>
                         <LazyLoadWrapper component={MentorMenteeConversation} />
                       </ProtectedRouteWrapper>
                     }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import {
   Container,
   Typography,
@@ -21,9 +21,11 @@ import {
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import {
+  ArrowBackRounded,
   CheckCircleOutline,
   InfoOutlined,
 } from "@mui/icons-material";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../utils/axios";
@@ -41,6 +43,9 @@ const MentorMenteeConversation = () => {
   const accentColor = isLight
     ? theme.palette.primary.main
     : theme.palette.info.main;
+  const navigate = useNavigate();
+  const { menteeId: menteeIdFromPath } = useParams();
+  const [searchParams] = useSearchParams();
   const { user } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
   const [selectedStudent, setSelectedStudent] = useState("");
@@ -61,6 +66,35 @@ const MentorMenteeConversation = () => {
 
   const [existingConversation, setExistingConversation] = useState(null);
   const [checkingConversation, setCheckingConversation] = useState(false);
+  const preselectedMenteeId = searchParams.get("menteeId") || menteeIdFromPath || "";
+  const normalizedMentees = useMemo(() => {
+    if (!preselectedMenteeId) {
+      return mentees;
+    }
+
+    const isPresent = mentees.some((mentee) => mentee._id === preselectedMenteeId);
+    if (isPresent) {
+      return mentees;
+    }
+
+    return [
+      {
+        _id: preselectedMenteeId,
+        name: "Selected Mentee",
+        profile: {
+          usn: "",
+          sem: "",
+        },
+      },
+      ...mentees,
+    ];
+  }, [mentees, preselectedMenteeId]);
+
+  useEffect(() => {
+    if (preselectedMenteeId) {
+      setSelectedStudent(preselectedMenteeId);
+    }
+  }, [preselectedMenteeId]);
 
   // Check if conversation already exists for selected mentee
   useEffect(() => {
@@ -217,7 +251,7 @@ const MentorMenteeConversation = () => {
     );
   }
 
-  if (error) {
+  if (error && !preselectedMenteeId) {
     return (
       <Container maxWidth="sm" sx={{ mt: 6 }}>
         <Paper sx={{ p: 4, borderRadius: 3, textAlign: "center" }}>
@@ -229,6 +263,23 @@ const MentorMenteeConversation = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: { xs: 2, md: 4 }, pb: 3 }}>
+      <Box sx={{ mb: 2 }}>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackRounded />}
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+              return;
+            }
+
+            navigate("/", { replace: true });
+          }}
+          sx={{ fontWeight: 700 }}
+        >
+          Back
+        </Button>
+      </Box>
       <Grid container spacing={3}>
         {/* Left Side - Form */}
         <Grid item xs={12} md={7}>
@@ -264,8 +315,14 @@ const MentorMenteeConversation = () => {
                 fullWidth
                 required
                 sx={{ mb: 3 }}
-                disabled={mentees.length === 0}
-                helperText={mentees.length === 0 ? "No mentees assigned to you" : ""}
+                disabled={normalizedMentees.length === 0 && !preselectedMenteeId}
+                helperText={
+                  normalizedMentees.length === 0 && !preselectedMenteeId
+                    ? "No mentees assigned to you"
+                    : preselectedMenteeId
+                      ? "Mentee preselected from dashboard"
+                      : ""
+                }
                 SelectProps={{
                   displayEmpty: true,
                   renderValue: (selectedValue) => {
@@ -276,6 +333,10 @@ const MentorMenteeConversation = () => {
                     const selectedMentee = mentees.find(
                       (mentee) => mentee._id === selectedValue
                     );
+
+                    if (!selectedMentee && selectedValue) {
+                      return `Mentee ID: ${selectedValue}`;
+                    }
 
                     if (!selectedMentee) {
                       return "Select Mentee";
@@ -310,7 +371,7 @@ const MentorMenteeConversation = () => {
                   },
                 }}
               >
-                {mentees.map((mentee) => {
+                {normalizedMentees.map((mentee) => {
                   const menteeAvatarSrc = getAvatarSrc(mentee);
                   return (
                     <MenuItem key={mentee._id} value={mentee._id}>

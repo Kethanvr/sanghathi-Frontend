@@ -339,7 +339,7 @@ const StudentDashboard = () => {
               <StudentTile
                 title="Offline Mentor-Mentee Conversation"
                 icon={<QuestionAnswerIcon />}
-                link={`/faculty/mentor-mentee-conversation/${menteeId}`}
+                link="/mentor-mentee-conversation"
                 menteeId={menteeId}   // ✅ add this prop for consistency
               />
             </Grid>
