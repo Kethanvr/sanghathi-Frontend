@@ -70,7 +70,6 @@ function App() {
     "/forgot-password",
     "/reset-password",
     "/resetPassword",
-    "/about-developers",
   ];
 
   const shouldRenderGlobalFooter = globalFooterPrefixes.some(
@@ -111,7 +110,6 @@ function App() {
                 <Route path="/reset-password/:token" element={<LazyLoadWrapper component={ResetPassword} />} />
                 <Route path="/resetPassword/:token" element={<LazyLoadWrapper component={ResetPassword} />} />
                 <Route path="/signup" element={<LazyLoadWrapper component={Signup} />} />
-                <Route path="/about-developers" element={<LazyLoadWrapper component={AboutDevelopers} />} />
 
                 <Route element={<DashboardLayout />}>
                   <Route
@@ -463,6 +461,14 @@ function App() {
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={MentorMenteeConversation} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/about-developers"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={AboutDevelopers} />
                       </ProtectedRouteWrapper>
                     }
                   />

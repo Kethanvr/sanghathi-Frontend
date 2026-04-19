@@ -11,13 +11,18 @@ import {
 } from "@mui/material";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import logo from "../public/logo.svg";
+
+const logo = "/apple-touch-icon.png";
 
 const commonLinks = [
-  { label: "About Developers", to: "/about-developers" },
   { label: "Campus Buddy", to: "/campus-buddy" },
   { label: "Threads", to: "/threads" },
   { label: "Settings", to: "/settings" },
+];
+
+const contactLinks = [
+  { label: "About Developers", to: "/about-developers" },
+  { label: "kethan.ise24@cmrit.ac.in", href: "mailto:kethan.ise24@cmrit.ac.in" },
 ];
 
 const roleLinks = {
@@ -52,9 +57,12 @@ const FooterLinkGroup = ({ title, links }) => (
     <Stack spacing={0.75}>
       {links.map((link) => (
         <MuiLink
-          key={link.to}
-          component={RouterLink}
-          to={link.to}
+          key={link.to || link.href}
+          component={link.href ? "a" : RouterLink}
+          to={link.href ? undefined : link.to}
+          href={link.href || undefined}
+          target={link.href ? "_blank" : undefined}
+          rel={link.href ? "noreferrer" : undefined}
           underline="hover"
           color="text.secondary"
           sx={{
@@ -110,7 +118,7 @@ const Footer = () => {
     >
       <Container maxWidth="xl" sx={{ py: { xs: 2, md: 2.5 } }}>
         <Grid container spacing={2.5} alignItems="flex-start">
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={3}>
             <Stack spacing={1}>
               <Stack direction="row" spacing={1.2} alignItems="center">
                 <Box
@@ -121,6 +129,7 @@ const Footer = () => {
                     width: 36,
                     height: 36,
                     objectFit: "contain",
+                    borderRadius: "50%",
                   }}
                 />
                 <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
@@ -136,15 +145,19 @@ const Footer = () => {
             </Stack>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid item xs={12} sm={6} md={3}>
             <FooterLinkGroup title="Quick Links" links={commonLinks} />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid item xs={12} sm={6} md={3}>
             <FooterLinkGroup
               title={role ? `${role.charAt(0).toUpperCase()}${role.slice(1)} Links` : "Role Links"}
               links={footerLinks.length ? footerLinks : [{ label: "Login", to: "/login" }]}
             />
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <FooterLinkGroup title="Contact" links={contactLinks} />
           </Grid>
         </Grid>
 
