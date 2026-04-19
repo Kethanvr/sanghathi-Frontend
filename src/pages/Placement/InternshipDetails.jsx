@@ -1,6 +1,6 @@
-import React, { useEffect, useCallback, useContext } from "react";
+import React, { useEffect, useCallback, useContext, useMemo, useState } from "react";
 import { useSnackbar } from "notistack";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import {
   Box,
   Grid,
@@ -10,6 +10,7 @@ import {
   IconButton,
   Typography,
   useTheme,
+  Chip,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { Delete as DeleteIcon } from "@mui/icons-material";
@@ -17,7 +18,9 @@ import { FormProvider, RHFTextField } from "../../components/hook-form";
 import api from "../../utils/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useSearchParams } from "react-router-dom";
+import useDraftPersistence from "../../hooks/useDraftPersistence";
 
+import logger from "../../utils/logger.js";
 const DEFAULT_EMPTY_INTERNSHIP = {
   companyName: "",
   location: "",
@@ -33,8 +36,14 @@ export default function InternshipDetails() {
   const { user } = useContext(AuthContext);
   const [searchParams] = useSearchParams();
   const menteeId = searchParams.get("menteeId");
+  const [isDataFetched, setIsDataFetched] = useState(false);
   const theme = useTheme();
   const isLight = theme.palette.mode === "light";
+
+  const draftScopeId = useMemo(
+    () => menteeId || user?._id || "default",
+    [menteeId, user?._id]
+  );
 
   const methods = useForm({
     defaultValues: {
@@ -48,6 +57,24 @@ export default function InternshipDetails() {
     formState: { isSubmitting, errors },
   } = methods;
 
+  const watchedValues = useWatch({ control: methods.control });
+
+  const { syncState, lastSavedAt } = useDraftPersistence({
+    formType: "placement-internship",
+    scopeId: draftScopeId,
+    values: watchedValues,
+    reset,
+    enableServerSync: Boolean(user?._id),
+    enablePersistence: isDataFetched,
+  });
+
+  const formatDateTime = (value) => {
+    if (!value) return "Not saved yet";
+    const asDate = new Date(value);
+    if (Number.isNaN(asDate.getTime())) return "Not saved yet";
+    return asDate.toLocaleString();
+  };
+
   const { fields, append, remove } = useFieldArray({
     control: methods.control,
     name: "internships",
@@ -56,6 +83,14 @@ export default function InternshipDetails() {
   // Fetch internships from the backend
   const fetchInternships = useCallback(async () => {
     try {
+      const existingLocalDraft = localStorage.getItem(
+        `sanghathi:draft:placement-internship:${draftScopeId}`
+      );
+      if (existingLocalDraft) {
+        setIsDataFetched(true);
+        return;
+      }
+
       let response;
       if (menteeId) {
         response = await api.get(`/internship/${menteeId}`);
@@ -86,11 +121,13 @@ export default function InternshipDetails() {
         reset({ internships: [{ ...DEFAULT_EMPTY_INTERNSHIP }] });
       }
     } catch (error) {
-      console.error("Error fetching internship data:", error);
+      logger.error("Error fetching internship data:", error);
       enqueueSnackbar("Failed to fetch internship data", { variant: "error" });
       reset({ internships: [{ ...DEFAULT_EMPTY_INTERNSHIP }] });
+    } finally {
+      setIsDataFetched(true);
     }
-  }, [user?._id, menteeId, reset, enqueueSnackbar]);
+  }, [draftScopeId, user?._id, menteeId, reset, enqueueSnackbar]);
 
   useEffect(() => {
     if (user?._id || menteeId) {
@@ -146,7 +183,7 @@ export default function InternshipDetails() {
         });
         await fetchInternships();
       } catch (error) {
-        console.error("Error saving internship data:", error);
+        logger.error("Error saving internship data:", error);
         enqueueSnackbar(
           error.message || "An error occurred while processing the request",
           {
@@ -165,8 +202,19 @@ export default function InternshipDetails() {
   }, [errors, enqueueSnackbar]);
 
   return (
-    <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+    <FormProvider
+      methods={methods}
+      onSubmit={handleSubmit(onSubmit)}
+      disableAutoDraft
+    >
       <Card sx={{ p: 3 }}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 2 }}>
+          <Chip size="small" variant="outlined" label={`Draft: ${syncState}`} />
+          <Typography variant="caption" color="text.secondary" sx={{ alignSelf: "center" }}>
+            Last saved: {formatDateTime(lastSavedAt)}
+          </Typography>
+        </Stack>
+
         <Typography variant="h6" gutterBottom>
           Internship Details
         </Typography>

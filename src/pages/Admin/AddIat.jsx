@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { 
   Box, 
   Button, 
@@ -20,9 +20,10 @@ import {
 } from '@mui/icons-material';
 import { alpha, useTheme } from "@mui/material/styles";
 import Papa from "papaparse";
-import axios from "axios";
-
-const BASE_URL = import.meta.env.VITE_API_URL;
+import api from "../../utils/axios";
+import useDraftPersistence from "../../hooks/useDraftPersistence";
+import { resolveDraftScopeId } from "../../utils/draftScope";
+import { recordAdminUploadSession } from "../../utils/uploadHistory";
 
 const AddIat = () => {
   const theme = useTheme();
@@ -32,6 +33,30 @@ const AddIat = () => {
   const [errorCount, setErrorCount] = useState(0);
   const [errors, setErrors] = useState([]);
   const [file, setFile] = useState(null);
+
+  const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
+
+  const restoreDraftState = useCallback((draftData = {}) => {
+    setSuccessCount(Number(draftData.successCount) || 0);
+    setErrorCount(Number(draftData.errorCount) || 0);
+    setErrors(Array.isArray(draftData.errors) ? draftData.errors : []);
+  }, []);
+
+  const persistedErrors = useMemo(() => errors.slice(0, 200), [errors]);
+
+  useDraftPersistence({
+    formType: "admin-iat-upload",
+    scopeId: draftScopeId,
+    values: {
+      successCount,
+      errorCount,
+      errors: persistedErrors,
+      hasSelectedFile: Boolean(file),
+      isProcessing: processing,
+    },
+    reset: restoreDraftState,
+    enableServerSync: false,
+  });
 
   const downloadTemplate = () => {
     const headers = [
@@ -96,6 +121,7 @@ const AddIat = () => {
     let success = 0;
     let errors = 0;
     const newErrors = [];
+    const affectedUserIds = new Set();
 
     // Group rows by USN and Semester
     const groupedData = {};
@@ -128,9 +154,7 @@ const AddIat = () => {
       const data = groupedData[key];
       try {
         // Get userId by USN (as before)
-        const response = await axios.get(
-          `${BASE_URL}/users/usn/${data.usn}`
-        );
+        const response = await api.get(`/users/usn/${data.usn}`);
         if (!response.data?.userId) {
           throw new Error(`User with USN ${data.usn} not found`);
         }
@@ -143,16 +167,24 @@ const AddIat = () => {
         };
 
         // Submit IAT data
-        await axios.post(
-          `${BASE_URL}/students/iat/${userId}`,
-          iatData
-        );
+        await api.post(`/students/iat/${userId}`, iatData);
         success++;
+        affectedUserIds.add(String(userId));
       } catch (error) {
         errors++;
         newErrors.push(`Error for USN ${data.usn}, Semester ${data.semester}: ${error.message}`);
       }
     }
+
+    await recordAdminUploadSession({
+      tabType: "add-iat-marks",
+      fileName: file?.name || "",
+      totalRows: rows.length,
+      successCount: success,
+      errorCount: errors,
+      errors: newErrors,
+      affectedUserIds: Array.from(affectedUserIds),
+    });
 
     setSuccessCount(success);
     setErrorCount(errors);
@@ -161,11 +193,11 @@ const AddIat = () => {
   };
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          p: { xs: 2, sm: 4 },
           borderRadius: 2,
           backgroundColor: isLight 
             ? 'rgba(255, 255, 255, 0.8)'
@@ -203,7 +235,7 @@ const AddIat = () => {
             color="text.secondary"
             sx={{ maxWidth: 600, mx: 'auto' }}
           >
-            Upload a CSV file with Internal Assessment Test marks for students
+            Upload a row-wise CSV/JSON file with Internal Assessment Test marks for students.
           </Typography>
         </Box>
 
@@ -222,7 +254,7 @@ const AddIat = () => {
           </Typography>
           
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Please ensure your CSV file has the following columns:
+            Please ensure each row represents one subject for one student and includes these columns:
           </Typography>
           
           <Box 
@@ -242,7 +274,12 @@ const AddIat = () => {
             <Typography variant="body2" color="text.secondary">• SubjectName - Course name</Typography>
             <Typography variant="body2" color="text.secondary">• IAT1 - First IAT marks</Typography>
             <Typography variant="body2" color="text.secondary">• IAT2 - Second IAT marks</Typography>
+            <Typography variant="body2" color="text.secondary">• Avg - Optional average field</Typography>
           </Box>
+
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Accepted mark values: numeric marks and AB/NE/ABSENT. If your file has repeated subject blocks in one row (wide-format sheet), use local script ingest.
+          </Alert>
 
           <Divider sx={{ my: 3 }} />
 

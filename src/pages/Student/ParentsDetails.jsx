@@ -6,6 +6,7 @@ import { useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Box, Grid, Card, Stack, Typography, Divider } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
+import logger from "../../utils/logger.js";
 import {
   FormProvider,
   RHFTextField,
@@ -55,20 +56,20 @@ export default function ParentsDetails() {
     try {
       const userId = menteeId || user?._id;
       if (!userId) {
-        console.error('No userId available for fetching data');
+        logger.error('No userId available for fetching data');
         return;
       }
       
       const response = await api.get(`/parent-details/${userId}`);
-      console.log("Full API response:", response);
+      logger.info("Full API response:", response);
       
       let parentDetails = null;
       
       if (response.data?.data?.parentDetails) {
         parentDetails = response.data.data.parentDetails;
-        console.log("Found parent details:", parentDetails);
+        logger.info("Found parent details:", parentDetails);
       } else {
-        console.log("No parent details found or different response structure");
+        logger.info("No parent details found or different response structure");
         return;
       }
       
@@ -78,11 +79,11 @@ export default function ParentsDetails() {
           formData[key] = parentDetails[key] || "";
         });
         
-        console.log("Setting form data:", formData);
+        logger.info("Setting form data:", formData);
         reset(formData);
       }
     } catch (error) {
-      console.error("Error fetching parent details:", error);
+      logger.error("Error fetching parent details:", error);
       if (error.response?.status !== 404) {
         enqueueSnackbar("Error fetching parent details", { variant: "error" });
       }
@@ -103,31 +104,30 @@ export default function ParentsDetails() {
         return;
       }
       
-      console.log("Form data:", formData);
+      logger.info("Form data:", formData);
       const requestData = {
         ...formData,
         userId,
       };
       
-      console.log("Sending data with userId:", requestData);
+      logger.info("Sending data with userId:", requestData);
       const response = await api.post("/parent-details", requestData);
       
       enqueueSnackbar("Parent details saved successfully!", {
         variant: "success",
       });
     } catch (error) {
-      console.error("Error saving parent details:", error);
+      logger.error("Error saving parent details:", error);
       const errorMessage = error.response?.data?.message || error.message || "An error occurred while saving parent details";
       enqueueSnackbar(errorMessage, { variant: "error" });
     }
   };
 
   return (
-    <div>
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-        <Grid container spacing={2}>
+        <Grid container spacing={{ xs: 2, md: 3 }}>
           <Grid item xs={12} md={12}>
-            <Card sx={{ p: 3 }}>
+            <Card sx={{ p: { xs: 2, sm: 3 } }}>
               <Typography variant="h5" gutterBottom>Parents Details</Typography>
               <Divider sx={{ mb: 3 }} />
               
@@ -191,8 +191,8 @@ export default function ParentsDetails() {
           {isDataFetched && (
             <>
               <Grid item xs={12} md={6}>
-                <Card sx={{ p: 3 }}>
-                  <Stack spacing={3} sx={{ mt: 1}}>
+                <Card sx={{ p: { xs: 2, sm: 3 } }}>
+                  <Stack spacing={{ xs: 2, sm: 3 }} sx={{ mt: 1}}>
                     <Typography variant="h6">Father's Details</Typography>
                     <RHFTextField
                       name="fatherOccupation"
@@ -235,8 +235,8 @@ export default function ParentsDetails() {
                 </Card>
               </Grid>
               <Grid item xs={12} md={6}>
-                <Card sx={{ p: 3 }}>
-                  <Stack spacing={3} sx={{ mt: 1}}>
+                <Card sx={{ p: { xs: 2, sm: 3 } }}>
+                  <Stack spacing={{ xs: 2, sm: 3 }} sx={{ mt: 1}}>
                     <Typography variant="h6">Mother's Details</Typography>
                     <RHFTextField
                       name="motherOccupation"
@@ -279,13 +279,14 @@ export default function ParentsDetails() {
                 </Card>
               </Grid>
               <Grid item xs={12} md={12}>
-                <Card sx={{p:3}}>
-                  <Stack spacing={3} alignItems="flex-end" >
-                    <Box display="flex" gap={1}>
+                <Card sx={{ p: { xs: 2, sm: 3 } }}>
+                  <Stack spacing={2} alignItems={{ xs: "stretch", sm: "flex-end" }}>
+                    <Box sx={{ display: "flex", gap: 1, width: { xs: "100%", sm: "auto" } }}>
                       <LoadingButton
                         type="submit"
                         variant="contained"
                         loading={isSubmitting}
+                        sx={{ width: { xs: "100%", sm: "auto" } }}
                       >
                         Save
                       </LoadingButton>
@@ -297,6 +298,5 @@ export default function ParentsDetails() {
           )}
         </Grid>
       </FormProvider>
-    </div>
   );
 }

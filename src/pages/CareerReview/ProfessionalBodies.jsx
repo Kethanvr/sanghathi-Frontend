@@ -9,6 +9,7 @@ import { Delete as DeleteIcon } from "@mui/icons-material";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
 import { useSearchParams } from "react-router-dom";
 
+import logger from "../../utils/logger.js";
 export default function ProffessionalBodiesEvents() {
   const { enqueueSnackbar } = useSnackbar();
     const { user } = useContext(AuthContext);
@@ -16,8 +17,8 @@ export default function ProffessionalBodiesEvents() {
     const menteeId = searchParams.get('menteeId');
     const theme = useTheme();
     const isLight = theme.palette.mode === 'light';
-    console.log("User : ",user);
-    console.log("id: ",menteeId);
+    logger.info("User : ",user);
+    logger.info("id: ",menteeId);
 
     const methods = useForm({
       defaultValues: {
@@ -38,7 +39,7 @@ export default function ProffessionalBodiesEvents() {
             response = await api.get(`/proffessional-body/proffessionalbody/${menteeId}`);
           else
             response = await api.get(`/proffessional-body/proffessionalbody/${user._id}`);
-          console.log("Proffessional Bodies data fetched: ", response.data);
+          logger.info("Proffessional Bodies data fetched: ", response.data);
           const { data } = response.data;
   
           if (data && Array.isArray(data.proffessionalbody)) { 
@@ -48,11 +49,11 @@ export default function ProffessionalBodiesEvents() {
             }));
             reset({ proffessionalbodies: formattedProffessionalBodies });
           } else {
-            console.warn("No proffessional bodies data found for this user");
+            logger.warn("No proffessional bodies data found for this user");
             reset({ proffessionalbodies: [{ ProffessionalBodyName: "", UniqueID: "", registeredDate: null }] });
           }
         } catch (error) {
-          console.log("Error fetching proffessional bodies data:", error);
+          logger.info("Error fetching proffessional bodies data:", error);
         }
       }, [user._id, reset, enqueueSnackbar]);
 
@@ -77,7 +78,7 @@ export default function ProffessionalBodiesEvents() {
           });
           await fetchProffessionalBodies();
         } catch (error) {
-          console.error("Error updating proffessional bodies data:", error);
+          logger.error("Error updating proffessional bodies data:", error);
           enqueueSnackbar("Error updating proffessional bodies data", {
             variant: "error",
           });

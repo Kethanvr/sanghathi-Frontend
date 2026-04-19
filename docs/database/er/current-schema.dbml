@@ -1,0 +1,141 @@
+Table roles {
+  _id objectid [pk]
+  id int [unique]
+  name varchar [unique]
+}
+
+Table users {
+  _id objectid [pk]
+  role objectid
+  roleName varchar
+  profile objectid
+  email varchar [unique]
+  name varchar
+  status varchar
+  lastActivity datetime
+}
+
+Table student_profiles {
+  _id objectid [pk]
+  userId objectid
+  usn varchar
+  department varchar
+  sem varchar
+}
+
+Table admissions {
+  _id objectid [pk]
+  userId objectid [unique]
+  usn varchar [unique]
+  collegeId varchar [unique]
+}
+
+Table academic_details {
+  _id objectid [pk]
+  userId objectid [unique]
+}
+
+Table attendances {
+  _id objectid [pk]
+  userId objectid
+}
+
+Table mentorships {
+  _id objectid [pk]
+  mentorId objectid
+  menteeId objectid
+  startDate datetime
+}
+
+Table conversations {
+  _id objectid [pk]
+  mentorId objectid
+  menteeId objectid
+  conversationId varchar
+  status varchar
+  date datetime
+}
+
+Table threads {
+  _id objectid [pk]
+  author objectid
+  status varchar
+  topic varchar
+  createdAt datetime
+}
+
+Table private_conversations {
+  _id objectid [pk]
+  senderId objectid
+  type varchar
+  createdAt datetime
+}
+
+Table group_conversations {
+  _id objectid [pk]
+  admin objectid
+  name varchar
+  createdAt datetime
+}
+
+Table messages {
+  _id objectid [pk]
+  senderId objectid
+  body text
+  createdAt datetime
+}
+
+Table placements {
+  _id objectid [pk]
+  userId objectid [unique]
+}
+
+Table internships {
+  _id objectid [pk]
+  userId objectid [unique]
+}
+
+Table projects {
+  _id objectid [pk]
+  userId objectid
+}
+
+Table activities {
+  _id objectid [pk]
+  userId objectid [unique]
+}
+
+Table mooc_data {
+  _id objectid [pk]
+  userId objectid [unique]
+}
+
+Table notifications {
+  _id objectid [pk]
+  userId objectid
+  isUnread bool
+  createdAt datetime
+}
+
+Ref: users.role > roles._id
+Ref: student_profiles.userId > users._id
+Ref: admissions.userId > users._id
+Ref: academic_details.userId > users._id
+Ref: attendances.userId > users._id
+
+Ref: mentorships.mentorId > users._id
+Ref: mentorships.menteeId > users._id
+Ref: conversations.mentorId > users._id
+Ref: conversations.menteeId > users._id
+
+Ref: threads.author > users._id
+Ref: private_conversations.senderId > users._id
+Ref: group_conversations.admin > users._id
+Ref: messages.senderId > users._id
+
+Ref: placements.userId > users._id
+Ref: internships.userId > users._id
+Ref: projects.userId > users._id
+Ref: activities.userId > users._id
+Ref: mooc_data.userId > users._id
+Ref: notifications.userId > users._id

@@ -1,0 +1,453 @@
+import React from "react";
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Container,
+  Grid,
+  Paper,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { Link as RouterLink, useParams } from "react-router-dom";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import MailOutlineRoundedIcon from "@mui/icons-material/MailOutlineRounded";
+import Page from "../components/Page";
+import { developers } from "../data/developers";
+import { buildCanonicalUrl, compactObject, toAbsoluteUrl } from "../utils/seo";
+
+const buildKeywords = (developer, isKethanProfile) => {
+  if (isKethanProfile) {
+    return [
+      "Kethan VR",
+      "Kethanvr",
+      "Kethan VR developer",
+      "Full Stack AI Engineer",
+      "DevOps Engineer",
+      "Sanghathi",
+      "Sanghathi developer",
+      "CMRIT mentoring platform",
+      "React Node.js MongoDB engineer",
+      "AI app developer India",
+    ].join(", ");
+  }
+
+  return [
+    developer.name,
+    `${developer.name} developer profile`,
+    "Sanghathi contributors",
+    "Sanghathi developers",
+    "CMRIT mentoring platform",
+  ].join(", ");
+};
+
+const DeveloperProfile = () => {
+  const theme = useTheme();
+  const { developerId } = useParams();
+  const developer = developers[developerId];
+  const isLight = theme.palette.mode === "light";
+
+  if (!developer) {
+    return (
+      <Page
+        title="Developer Profile Not Found"
+        description="The requested developer profile is unavailable."
+        canonicalPath="/about-developers"
+        noIndex
+      >
+        <Container maxWidth="md" sx={{ py: { xs: 4, md: 6 } }}>
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 3,
+              p: { xs: 2.4, sm: 3.2 },
+              border: `1px solid ${alpha(theme.palette.divider, 0.85)}`,
+            }}
+          >
+            <Stack spacing={1.6}>
+              <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                Developer not found
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                The profile you are looking for does not exist.
+              </Typography>
+              <Button component={RouterLink} to="/about-developers" variant="contained" sx={{ width: "fit-content" }}>
+                Back to Developers
+              </Button>
+            </Stack>
+          </Paper>
+        </Container>
+      </Page>
+    );
+  }
+
+  const hasFullProfile = Boolean(developer.fullProfile);
+  const canonicalPath = `/about-developers/${developer.id}`;
+  const canonicalUrl = buildCanonicalUrl(canonicalPath);
+  const isKethanProfile = developer.id === "kethanvr";
+  const profileDescription = isKethanProfile
+    ? "Kethan VR is a Full-Stack AI and DevOps Engineer building Sanghathi, with expertise in React, Node.js, Docker, CI/CD, and production AI systems."
+    : `${developer.name} is a contributor to Sanghathi. Explore role, profile summary, and contribution details.`;
+  const profileKeywords = buildKeywords(developer, isKethanProfile);
+
+  const skillsFromProfile = developer.fullProfile
+    ? Object.values(developer.fullProfile.techStack || {}).flat()
+    : [];
+
+  const personStructuredData = compactObject({
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: developer.name,
+    url: canonicalUrl,
+    image: toAbsoluteUrl(developer.image),
+    jobTitle: developer.role,
+    description: profileDescription,
+    worksFor: {
+      "@type": "Organization",
+      name: "Sanghathi",
+      url: buildCanonicalUrl("/"),
+    },
+    sameAs: [developer.github, developer.linkedin],
+    email: developer.email ? `mailto:${developer.email}` : undefined,
+    knowsAbout: skillsFromProfile.slice(0, 20),
+  });
+
+  const profilePageStructuredData = compactObject({
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    name: `${developer.name} | Sanghathi`,
+    description: profileDescription,
+    url: canonicalUrl,
+    mainEntity: {
+      "@type": "Person",
+      name: developer.name,
+      url: canonicalUrl,
+    },
+  });
+
+  const breadcrumbStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "About Developers",
+        item: buildCanonicalUrl("/about-developers"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: developer.name,
+        item: canonicalUrl,
+      },
+    ],
+  };
+
+  return (
+    <Page
+      title={`${developer.name} Developer Profile`}
+      description={profileDescription}
+      canonicalPath={canonicalPath}
+      image={developer.image || "/apple-touch-icon.png"}
+      type="profile"
+      keywords={profileKeywords}
+      structuredData={[profilePageStructuredData, personStructuredData, breadcrumbStructuredData]}
+    >
+      <Box
+        sx={{
+          minHeight: "100%",
+          py: { xs: 4, md: 6 },
+          background: isLight
+            ? `radial-gradient(circle at 10% 10%, ${alpha(theme.palette.primary.light, 0.18)} 0%, transparent 38%),
+               linear-gradient(180deg, ${alpha(theme.palette.grey[100], 0.95)} 0%, ${alpha(theme.palette.background.default, 0.98)} 100%)`
+            : `radial-gradient(circle at 10% 10%, ${alpha(theme.palette.info.light, 0.18)} 0%, transparent 36%),
+               linear-gradient(180deg, ${alpha(theme.palette.background.default, 0.98)} 0%, ${alpha("#0D1117", 0.98)} 100%)`,
+        }}
+      >
+        <Container maxWidth="lg">
+          <Stack spacing={3}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 2.2, sm: 3.2 },
+                borderRadius: 3,
+                border: `1px solid ${alpha(theme.palette.divider, 0.85)}`,
+                backgroundColor: alpha(theme.palette.background.paper, 0.84),
+              }}
+            >
+              <Stack spacing={2}>
+                <Button
+                  component={RouterLink}
+                  to="/about-developers"
+                  variant="text"
+                  sx={{ width: "fit-content", px: 0, fontWeight: 700 }}
+                >
+                  Back to Developers
+                </Button>
+
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  spacing={2.2}
+                  alignItems={{ xs: "flex-start", md: "center" }}
+                >
+                  {developer.image ? (
+                    <Box
+                      component="img"
+                      src={developer.image}
+                      alt={developer.name}
+                      sx={{
+                        width: { xs: "100%", md: 260 },
+                        height: { xs: 250, md: 260 },
+                        objectFit: "cover",
+                        borderRadius: 3,
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.35)}`,
+                      }}
+                    />
+                  ) : (
+                    <Avatar
+                      sx={{
+                        width: 96,
+                        height: 96,
+                        bgcolor: theme.palette.mode === "light" ? "primary.main" : "info.main",
+                        fontSize: 36,
+                        fontWeight: 800,
+                      }}
+                    >
+                      {developer.name.charAt(0).toUpperCase()}
+                    </Avatar>
+                  )}
+
+                  <Stack spacing={1.1}>
+                    <Typography variant="h4" sx={{ fontWeight: 900 }}>
+                      {developer.name}
+                    </Typography>
+                    <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 700 }}>
+                      {developer.role}
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      {developer.shortBio}
+                    </Typography>
+                      {isKethanProfile ? (
+                        <Typography variant="body2" color="text.secondary">
+                          Kethan VR works across full-stack engineering, AI integrations, and DevOps automation for production systems at Sanghathi.
+                        </Typography>
+                      ) : null}
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+                        <Button
+                          component="a"
+                          href={developer.github}
+                          target="_blank"
+                          rel="noreferrer"
+                          variant="outlined"
+                          startIcon={<GitHubIcon />}
+                          sx={{ width: "fit-content" }}
+                        >
+                          GitHub
+                        </Button>
+                      {developer.linkedin && (
+                          <Button
+                            component="a"
+                          href={developer.linkedin}
+                          target="_blank"
+                          rel="noreferrer"
+                            variant="outlined"
+                            startIcon={<LinkedInIcon />}
+                            sx={{ width: "fit-content" }}
+                        >
+                            LinkedIn
+                          </Button>
+                      )}
+                        {developer.email ? (
+                          <Button
+                            component="a"
+                            href={`mailto:${developer.email}`}
+                            variant="outlined"
+                            startIcon={<MailOutlineRoundedIcon />}
+                            sx={{ width: "fit-content" }}
+                          >
+                            Email
+                          </Button>
+                        ) : null}
+                    </Stack>
+                  </Stack>
+                </Stack>
+              </Stack>
+            </Paper>
+
+              {isKethanProfile ? (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: { xs: 2.2, sm: 3 },
+                    borderRadius: 3,
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.35)}`,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  }}
+                >
+                  <Stack spacing={0.8}>
+                    <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                      Kethan VR at Sanghathi
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      Kethan VR is a Full-Stack AI and DevOps Engineer at Sanghathi, focused on building scalable web platforms, AI-powered workflows, and reliable deployment pipelines.
+                    </Typography>
+                  </Stack>
+                </Paper>
+              ) : null}
+
+            {hasFullProfile ? (
+              <Stack spacing={2.5}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: { xs: 2.2, sm: 3 },
+                    borderRadius: 3,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.85)}`,
+                    backgroundColor: alpha(theme.palette.background.paper, 0.84),
+                  }}
+                >
+                  <Stack spacing={1.1}>
+                    <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                      Overview
+                    </Typography>
+                    {developer.fullProfile.intro.map((paragraph) => (
+                      <Typography key={paragraph} variant="body1" color="text.secondary">
+                        {paragraph}
+                      </Typography>
+                    ))}
+                    <Typography variant="body2" sx={{ fontStyle: "italic" }}>
+                      {developer.fullProfile.philosophy}
+                    </Typography>
+                  </Stack>
+                </Paper>
+
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: { xs: 2.2, sm: 3 },
+                    borderRadius: 3,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.85)}`,
+                    backgroundColor: alpha(theme.palette.background.paper, 0.84),
+                  }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 800, mb: 1.5 }}>
+                    Tech Stack
+                  </Typography>
+                  <Grid container spacing={1.8}>
+                    {Object.entries(developer.fullProfile.techStack).map(([group, items]) => (
+                      <Grid item xs={12} sm={6} key={group}>
+                        <Card
+                          sx={{
+                            borderRadius: 2.2,
+                            border: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
+                            backgroundColor: alpha(theme.palette.background.paper, 0.8),
+                            height: "100%",
+                          }}
+                        >
+                          <CardContent>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.1 }}>
+                              {group}
+                            </Typography>
+                            <Stack direction="row" spacing={0.8} useFlexGap flexWrap="wrap">
+                              {items.map((item) => (
+                                <Chip key={item} label={item} size="small" variant="outlined" />
+                              ))}
+                            </Stack>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Paper>
+
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: { xs: 2.2, sm: 3 },
+                    borderRadius: 3,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.85)}`,
+                    backgroundColor: alpha(theme.palette.background.paper, 0.84),
+                  }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 800, mb: 1.5 }}>
+                    Featured Work
+                  </Typography>
+                  <Grid container spacing={1.8}>
+                    {developer.fullProfile.featuredWork.map((work) => (
+                      <Grid item xs={12} md={4} key={work.title}>
+                        <Card
+                          sx={{
+                            borderRadius: 2.2,
+                            border: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
+                            backgroundColor: alpha(theme.palette.background.paper, 0.8),
+                            height: "100%",
+                          }}
+                        >
+                          <CardContent>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.9 }}>
+                              {work.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {work.description}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Paper>
+
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: { xs: 2.2, sm: 3 },
+                    borderRadius: 3,
+                    border: `1px solid ${alpha(theme.palette.divider, 0.85)}`,
+                    backgroundColor: alpha(theme.palette.background.paper, 0.84),
+                  }}
+                >
+                  <Typography variant="h5" sx={{ fontWeight: 800, mb: 1.3 }}>
+                    Current Focus
+                  </Typography>
+                  <Stack spacing={0.8}>
+                    {developer.fullProfile.currentFocus.map((focus) => (
+                      <Typography key={focus} variant="body1" color="text.secondary">
+                        - {focus}
+                      </Typography>
+                    ))}
+                  </Stack>
+                </Paper>
+              </Stack>
+            ) : (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: { xs: 2.2, sm: 3 },
+                  borderRadius: 3,
+                  border: `1px solid ${alpha(theme.palette.divider, 0.85)}`,
+                  backgroundColor: alpha(theme.palette.background.paper, 0.84),
+                }}
+              >
+                <Typography variant="h5" sx={{ fontWeight: 800, mb: 1.2 }}>
+                  Profile Details
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  Detailed profile information for {developer.name} will be updated soon.
+                </Typography>
+              </Paper>
+            )}
+          </Stack>
+        </Container>
+      </Box>
+    </Page>
+  );
+};
+
+export default DeveloperProfile;

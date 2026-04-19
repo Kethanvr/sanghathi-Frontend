@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -20,9 +20,10 @@ import {
 } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
 import Papa from "papaparse";
-import axios from "axios";
-
-const BASE_URL = import.meta.env.VITE_API_URL;
+import api from "../../utils/axios";
+import useDraftPersistence from "../../hooks/useDraftPersistence";
+import { resolveDraftScopeId } from "../../utils/draftScope";
+import { recordAdminUploadSession } from "../../utils/uploadHistory";
 
 const AddTylMarks = () => {
   const theme = useTheme();
@@ -33,6 +34,30 @@ const AddTylMarks = () => {
   const [errorCount, setErrorCount] = useState(0);
   const [errors, setErrors] = useState([]);
   const [file, setFile] = useState(null);
+
+  const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
+
+  const restoreDraftState = useCallback((draftData = {}) => {
+    setSuccessCount(Number(draftData.successCount) || 0);
+    setErrorCount(Number(draftData.errorCount) || 0);
+    setErrors(Array.isArray(draftData.errors) ? draftData.errors : []);
+  }, []);
+
+  const persistedErrors = useMemo(() => errors.slice(0, 200), [errors]);
+
+  useDraftPersistence({
+    formType: "admin-tyl-upload",
+    scopeId: draftScopeId,
+    values: {
+      successCount,
+      errorCount,
+      errors: persistedErrors,
+      hasSelectedFile: Boolean(file),
+      isProcessing: processing,
+    },
+    reset: restoreDraftState,
+    enableServerSync: false,
+  });
 
   // ================= TEMPLATE DOWNLOAD =================
   const downloadTemplate = () => {
@@ -134,6 +159,7 @@ const AddTylMarks = () => {
     let success = 0;
     let errCount = 0;
     const newErrors = [];
+    const affectedUserIds = new Set();
 
     for (const row of rows) {
 
@@ -234,33 +260,39 @@ const AddTylMarks = () => {
           .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
           .toUpperCase();
 
-        const response = await axios.get(`${BASE_URL}/users/usn/${encodeURIComponent(normalizedUsn)}`, {
+        const response = await api.get(`/users/usn/${encodeURIComponent(normalizedUsn)}`, {
           params: { _ts: Date.now() },
           headers: {
             "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-            Authorization: `Bearer ${localStorage.getItem("token")}`
+            Pragma: "no-cache"
           }
         });
         const userId = response.data?.userId || response.data?._id;
         if (!userId) throw new Error("User not found");
 
-        await axios.post(`${BASE_URL}/tyl-scores`, {
+        await api.post(`/tyl-scores`, {
           userId,
           semester: 1,
           scores
-        }, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-          }
         });
 
         success++;
+        affectedUserIds.add(String(userId));
       } catch (error) {
         errCount++;
         newErrors.push(`Error for ${row.USN}: ${error.message}`);
       }
     }
+
+    await recordAdminUploadSession({
+      tabType: "add-tyl-marks",
+      fileName: file?.name || "",
+      totalRows: rows.length,
+      successCount: success,
+      errorCount: errCount,
+      errors: newErrors,
+      affectedUserIds: Array.from(affectedUserIds),
+    });
 
     setSuccessCount(success);
     setErrorCount(errCount);
@@ -270,17 +302,18 @@ const AddTylMarks = () => {
 
   // ================= UI =================
   return (
-    <Container maxWidth="md">
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 2, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+      <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2, mb: 4 }}>
         <Typography variant="h4" align="center" sx={{ mb: 2 }}>
           Upload TYL Marks
         </Typography>
 
-        <Stack direction="row" spacing={2} justifyContent="center">
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center" alignItems="stretch">
           <Button
             variant="outlined"
             startIcon={<FileDownloadIcon />}
             onClick={downloadTemplate}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             Download Template
           </Button>
@@ -290,6 +323,7 @@ const AddTylMarks = () => {
             component="label"
             startIcon={<CloudUploadIcon />}
             disabled={processing}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             {processing ? "Processing..." : "Upload File"}
             <input

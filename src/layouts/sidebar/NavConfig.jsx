@@ -11,6 +11,8 @@ import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import SummarizeOutlinedIcon from '@mui/icons-material/SummarizeOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
+import DatasetOutlinedIcon from '@mui/icons-material/DatasetOutlined';
 
 // Campus buddy icon needs special treatment as it represents a feature
 // NavItemButton already handles the correct color for all icons based on theme mode
@@ -39,6 +41,11 @@ const adminNavConfig = [
     icon: <PersonAddOutlinedIcon />,
     link: "/admin/add-user",
   },
+  {
+    text: "Add Data",
+    icon: <DatasetOutlinedIcon />,
+    link: "/admin/data",
+  },
   { text: "View Users", 
     icon: <PeopleOutlinedIcon />, 
     link: "/admin/users" },
@@ -46,6 +53,11 @@ const adminNavConfig = [
     text: "Mentor Assignment",
     icon: <PersonOutlinedIcon />,
     link: "/admin/mentor-assignment",
+  },
+  {
+    text: "Upload History",
+    icon: <HistoryOutlinedIcon />,
+    link: "/admin/upload-history",
   },
   { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
@@ -89,7 +101,6 @@ const studentNavConfig = [
 ];
 
 const getNavConfig = (role) => {
-  console.log("ROLE", role);
   switch (role) {
     case "admin":
       return adminNavConfig;

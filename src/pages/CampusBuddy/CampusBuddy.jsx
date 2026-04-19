@@ -18,6 +18,7 @@ import AssistantIcon from "@mui/icons-material/Assistant";
 import PersonIcon from "@mui/icons-material/Person";
 import api from "../../utils/axios";
 import { useSnackbar } from "notistack";
+import logger from "../../utils/logger.js";
 const bounce = keyframes`
   0%, 100% {
     transform: translateY(0);
@@ -147,7 +148,7 @@ const CampusBuddy = () => {
 
   // api for communicating with campusBuddy (chatbot)
   const handleSendMessage = async () => {
-    console.log(messageInput);
+    logger.info(messageInput);
     setMessageInput("");
     if (messageInput.trim().length > 0) {
       setMessages([...messages, { body: messageInput, sender: "user" }]);
@@ -162,7 +163,7 @@ const CampusBuddy = () => {
           { body: data.output, sender: "ai" },
         ]);
       } catch (error) {
-        console.error("Error communicating with Campus Buddy:", error);
+        logger.error("Error communicating with Campus Buddy:", error);
         enqueueSnackbar(
           "Error communicating with Campus Buddy. Please try again.",
           { variant: "error" }
