@@ -26,16 +26,8 @@ const ReleaseAnnouncementDialog = ({ open, onDismiss, onCheckUpdates }) => {
         sx: {
           borderRadius: 3,
           border: `1px solid ${alpha(theme.palette.primary.main, 0.28)}`,
-          background:
-            theme.palette.mode === "light"
-              ? `linear-gradient(170deg, ${alpha(theme.palette.primary.light, 0.16)} 0%, ${alpha(
-                  theme.palette.background.paper,
-                  0.98
-                )} 64%)`
-              : `linear-gradient(170deg, ${alpha(theme.palette.info.light, 0.2)} 0%, ${alpha(
-                  theme.palette.background.paper,
-                  0.98
-                )} 64%)`,
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: "none",
         },
       }}
     >
