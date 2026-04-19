@@ -4,6 +4,41 @@ Date: 2026-04-19
 Prepared for: Project Documentation and Operations Handoff
 Prepared by: Sanghathi Engineering Documentation (workspace-generated)
 
+## 0. Branding and Image Upload Space
+
+Upload all report images to:
+- docs/assets/project-report-images/
+
+Primary branding placeholders:
+
+![Sanghathi Primary Logo](./assets/project-report-images/logo.jpeg)
+
+![Sanghathi Secondary Logo](./assets/project-report-images/logo-secondary.jpeg)
+
+Operational screenshot placeholders:
+
+![Frontend Netlify Dashboard](./assets/project-report-images/frontend-netlify-dashboard.png)
+
+![Backend Fly Dashboard](./assets/project-report-images/backend-fly-dashboard.png)
+
+![Cloudflare Analytics](./assets/project-report-images/cloudflare-analytics.png)
+
+![MongoDB Atlas Dashboard](./assets/project-report-images/mongodb-atlas-dashboard.png)
+
+![Resend Domain Verified](./assets/project-report-images/resend-domain-verified.png)
+
+![Google Search Console](./assets/project-report-images/google-search-console.png)
+
+Architecture and process placeholders:
+
+![User Flow Diagram](./assets/project-report-images/user-flow.png)
+
+![Deployment Flow Diagram](./assets/project-report-images/deployment-flow.png)
+
+![Current ER Diagram](./assets/project-report-images/er-current.png)
+
+![Proposed ER Diagram](./assets/project-report-images/er-proposed.png)
+
 ## 1. Executive Overview
 
 Sanghathi is an AI-powered mentoring platform designed to unify academic mentoring workflows for students, faculty, HOD, directors, and administrators. It centralizes student lifecycle records, mentoring sessions, communication, score tracking, reporting, and AI-assisted guidance into one role-based web application.
@@ -244,6 +279,23 @@ Note:
 - Frontend README and backend README both explicitly list contributor groups.
 - GitHub contributor graph screenshots show active contribution distribution.
 
+### 9.1 Contribution Mentions
+
+| Contributor | Mentioned Contribution Areas |
+|---|---|
+| shovan-mondal | Core architecture, development coordination, product direction |
+| monu564100 | Feature modules, debugging support, cross-module improvements |
+| SUJAY-HK | Platform enhancements, testing support, implementation assistance |
+| Kulsum06 | UI and workflow improvements, module-level development |
+| Sai-Emani25 | Feature implementation, module support, issue fixes |
+| vsuryacharan | Engineering support, integration tasks, maintenance |
+| advitha24 | Frontend and feature support contributions |
+| Kethan VR | Security, role routing, SEO, docs, migration, deployment and reliability hardening |
+
+Team image placeholder:
+
+![Contributors Team Photo](./assets/project-report-images/contributors-team-photo.png)
+
 ## 10. Environment and Service Matrix
 
 | Area | Platform/Service | Notes |
@@ -325,6 +377,14 @@ Project and module docs:
 - README-LOGINS-DASHBOARDS.md
 - sanghathi-Frontend/README.md
 - sanghathi-Backend/README.md
+
+New documentation added in docs:
+- sanghathi-Frontend/docs/README.md
+- sanghathi-Frontend/docs/ER-DIAGRAM-README.md
+- sanghathi-Frontend/docs/USER-FLOW-DEPLOYMENT-README.md
+- sanghathi-Frontend/docs/CONTRIBUTORS-README.md
+- sanghathi-Frontend/docs/KETHAN-CONTRIBUTIONS-README.md
+- sanghathi-Frontend/docs/assets/project-report-images/README.md
 
 Deployment and runtime configs:
 - sanghathi-Frontend/netlify.toml
