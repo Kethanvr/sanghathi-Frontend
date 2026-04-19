@@ -21,6 +21,7 @@ import MailOutlineRoundedIcon from "@mui/icons-material/MailOutlineRounded";
 import Page from "../components/Page";
 import { developers } from "../data/developers";
 import { buildCanonicalUrl, compactObject, toAbsoluteUrl } from "../utils/seo";
+import { buildBrandedMailto } from "../utils/mailto";
 
 const buildKeywords = (developer, isKethanProfile) => {
   if (isKethanProfile) {
@@ -267,7 +268,11 @@ const DeveloperProfile = () => {
                         {developer.email ? (
                           <Button
                             component="a"
-                            href={`mailto:${developer.email}`}
+                            href={buildBrandedMailto(developer.email, {
+                              subject: `Sanghathi Developer Contact - ${developer.name}`,
+                              intro: `Hello ${developer.name},`,
+                              details: "I am reaching out from your Sanghathi developer profile.",
+                            })}
                             variant="outlined"
                             startIcon={<MailOutlineRoundedIcon />}
                             sx={{ width: "fit-content" }}
