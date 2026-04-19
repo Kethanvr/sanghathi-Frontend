@@ -59,12 +59,12 @@ const roleLinks = {
   ],
 };
 
-const FooterLinkGroup = ({ title, links }) => (
-  <Stack spacing={1}>
+const FooterLinkGroup = ({ title, links, linkFontSize = "0.92rem" }) => (
+  <Stack spacing={1.15}>
     <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
       {title}
     </Typography>
-    <Stack spacing={0.75}>
+    <Stack spacing={0.95}>
       {links.map((link) => (
         <MuiLink
           key={link.to || link.href}
@@ -77,7 +77,7 @@ const FooterLinkGroup = ({ title, links }) => (
           color="text.secondary"
           sx={{
             width: "fit-content",
-            fontSize: "0.92rem",
+            fontSize: linkFontSize,
             transition: "color 0.2s ease",
             "&:hover": {
               color: "primary.main",
@@ -126,7 +126,7 @@ const Footer = () => {
         backdropFilter: "blur(12px)",
       }}
     >
-      <Container maxWidth="xl" sx={{ py: { xs: 2, md: 2.5 } }}>
+      <Container maxWidth="xl" sx={{ py: { xs: 2.8, md: 3.4 } }}>
         <Grid container spacing={2.5} alignItems="flex-start">
           <Grid item xs={12} md={3}>
             <Stack spacing={1}>
@@ -171,11 +171,15 @@ const Footer = () => {
           </Grid>
 
           <Grid item xs={12} sm={6} md={2}>
-            <FooterLinkGroup title="Having any issues / problems?" links={supportLinks} />
+            <FooterLinkGroup
+              title="Having any issues / problems?"
+              links={supportLinks}
+              linkFontSize="0.85rem"
+            />
           </Grid>
         </Grid>
 
-        <Divider sx={{ mb: 2 }} />
+        <Divider sx={{ mt: 0.6, mb: 2.2 }} />
 
         <Stack
           direction={{ xs: "column", sm: "row" }}
