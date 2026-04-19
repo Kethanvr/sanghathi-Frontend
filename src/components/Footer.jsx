@@ -22,7 +22,12 @@ const commonLinks = [
 
 const contactLinks = [
   { label: "About Developers", to: "/about-developers" },
-  { label: "kethan.ise24@cmrit.ac.in", href: "mailto:kethan.ise24@cmrit.ac.in" },
+];
+
+const supportEmails = [
+  "kethan.ise24@cmrit.ac.in",
+  "shmo23ise@cmrit.ac.in",
+  "moku23ise@cmrit.ac.in",
 ];
 
 const roleLinks = {
@@ -162,6 +167,31 @@ const Footer = () => {
         </Grid>
 
         <Divider sx={{ my: 2 }} />
+
+        <Stack spacing={0.8} sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+            Having any issues / problems?
+          </Typography>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={{ xs: 0.5, sm: 2.2 }}
+            sx={{ flexWrap: "wrap", rowGap: 0.4 }}
+          >
+            {supportEmails.map((email) => (
+              <MuiLink
+                key={email}
+                href={`mailto:${email}`}
+                underline="hover"
+                color="text.secondary"
+                sx={{ fontSize: "0.92rem" }}
+              >
+                {email}
+              </MuiLink>
+            ))}
+          </Stack>
+        </Stack>
+
+        <Divider sx={{ mb: 2 }} />
 
         <Stack
           direction={{ xs: "column", sm: "row" }}
