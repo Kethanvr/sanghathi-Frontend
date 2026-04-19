@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useContext } from "react";
 import {
+  Avatar,
   Box,
   Container,
   Table,
@@ -15,72 +16,88 @@ import {
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../utils/axios";
 import logger from "../../utils/logger.js";
+import { getAvatarFallbackText, getAvatarSrc } from "../../utils/avatarResolver";
 
 const FacultyProfileInfo = () => {
-  const theme = useTheme(); // Use theme for consistent styling
+  const theme = useTheme();
   const { user } = useContext(AuthContext);
-  const [mentorId, setMentorId] = useState("");
-  const [facultyProfile, setFacultyProfile] = useState(null);
+  const [mentorDetails, setMentorDetails] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const isLight = theme.palette.mode === "light";
 
-  const fetchMentorId = useCallback(async () => {
+  const fetchMentorDetails = useCallback(async () => {
     if (!user || !user._id) {
       logger.error("User ID not found");
+      setErrorMessage("Unable to identify current user.");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await api.get(`/mentorship/mentor/${user._id}`);
-      const mentor = response.data?.mentor;
+      setErrorMessage("");
+      const mentorResponse = await api.get(`/mentorship/mentor/${user._id}`);
+      const mentor = mentorResponse.data?.mentor;
 
       if (mentor?._id) {
-        setMentorId(mentor._id);
+        let facultyProfile = null;
+
+        try {
+          const profileResponse = await api.get(`/faculty/profile/${mentor._id}`);
+          facultyProfile = profileResponse.data?.data?.facultyProfile || null;
+        } catch (profileError) {
+          if (profileError?.response?.status !== 404) {
+            logger.error("Error fetching faculty profile:", profileError);
+          }
+        }
+
+        const profileName = facultyProfile?.fullName
+          ? [
+              facultyProfile.fullName.firstName,
+              facultyProfile.fullName.middleName,
+              facultyProfile.fullName.lastName,
+            ]
+              .filter(Boolean)
+              .join(" ")
+          : null;
+
+        setMentorDetails({
+          fullName: profileName || mentor.name || "Not available",
+          department: facultyProfile?.department || mentor.department || "Not available",
+          email: facultyProfile?.email || mentor.email || "Not available",
+          mobileNumber:
+            facultyProfile?.mobileNumber ||
+            mentor.mobileNumber ||
+            mentor.phone ||
+            "Not available",
+          cabin: facultyProfile?.cabin || mentor.cabin || "Not available",
+          photo:
+            facultyProfile?.photo ||
+            mentor.photo ||
+            mentor.avatar ||
+            null,
+        });
       } else {
-        logger.error("Mentor ID not found");
-        setLoading(false);
+        setErrorMessage("No mentor assigned yet.");
       }
     } catch (error) {
-      logger.error("Error fetching mentor ID:", error);
+      logger.error("Error fetching mentor details:", error);
+      if (error?.response?.status === 404) {
+        setErrorMessage("No mentor assigned yet.");
+      } else {
+        setErrorMessage("Unable to load mentor details right now.");
+      }
+    } finally {
       setLoading(false);
     }
   }, [user?._id]);
 
-  const fetchFacultyProfile = useCallback(async () => {
-    if (!mentorId) return;
-
-    try {
-      const response = await api.get(`/faculty/profile/${mentorId}`);
-      const faculty = response.data?.data?.facultyProfile;
-
-      if (faculty) {
-        setFacultyProfile({
-          fullName: `${faculty.fullName.firstName} ${faculty.fullName.middleName || ' '} ${faculty.fullName.lastName || ' '}`,
-          department: faculty.department,
-          email: faculty.email,
-          mobileNumber: faculty.mobileNumber,
-          cabin: faculty.cabin,
-        });
-      } else {
-        logger.error("Faculty profile not found");
-      }
-    } catch (error) {
-      logger.error("Error fetching faculty profile:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [mentorId]);
-
   useEffect(() => {
-    fetchMentorId();
-  }, [fetchMentorId]);
+    fetchMentorDetails();
+  }, [fetchMentorDetails]);
 
-  useEffect(() => {
-    if (mentorId) {
-      fetchFacultyProfile();
-    }
-  }, [mentorId, fetchFacultyProfile]);
+  const mentorAvatarSrc = getAvatarSrc(mentorDetails);
+  const mentorFallbackName = mentorDetails?.fullName || "Mentor";
 
   return (
     <Container
@@ -103,67 +120,91 @@ const FacultyProfileInfo = () => {
         <Typography variant="h6" sx={{ textAlign: "center", color: "#aaa" }}>
           Loading faculty profile...
         </Typography>
-      ) : facultyProfile ? (
-        <TableContainer
-          component={Paper}
-          sx={{
-            maxWidth: { xs: "100%", sm: 600 },
-            overflowX: "auto",
-            margin: "auto",
-            border: `1px solid ${theme.palette.divider}`,
-            backgroundColor: theme.palette.background.paper, 
-          }}
-        >
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: isLight ? theme.palette.primary.main : theme.palette.info.main }}>
-                <TableCell
-                  colSpan={2}
-                  sx={{
-                    textAlign: "center",
-                    fontWeight: "bold",
-                    fontSize: "1.2rem",
-                    color: "#fff",
-                  }}
-                >
-                  Contact Mentor
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {[
-                { label: "Full Name", value: facultyProfile.fullName },
-                { label: "Department", value: facultyProfile.department },
-                { label: "Email", value: facultyProfile.email },
-                { label: "Mobile Number", value: facultyProfile.mobileNumber },
-                { label: "Cabin", value: facultyProfile.cabin },
-              ].map((row, index) => (
-                <TableRow key={index}>
+      ) : errorMessage ? (
+        <Typography variant="h6" sx={{ textAlign: "center", color: "error.main" }}>
+          {errorMessage}
+        </Typography>
+      ) : mentorDetails ? (
+        <>
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+            <Avatar
+              src={mentorAvatarSrc || undefined}
+              alt={mentorFallbackName}
+              sx={{
+                width: 80,
+                height: 80,
+                bgcolor: isLight ? "primary.main" : "info.main",
+                color: "common.white",
+                fontSize: "1.8rem",
+                fontWeight: 700,
+              }}
+            >
+              {!mentorAvatarSrc
+                ? getAvatarFallbackText(mentorFallbackName)
+                : null}
+            </Avatar>
+          </Box>
+          <TableContainer
+            component={Paper}
+            sx={{
+              maxWidth: { xs: "100%", sm: 600 },
+              overflowX: "auto",
+              margin: "auto",
+              border: `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme.palette.background.paper,
+            }}
+          >
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: isLight ? theme.palette.primary.main : theme.palette.info.main }}>
                   <TableCell
+                    colSpan={2}
                     sx={{
+                      textAlign: "center",
                       fontWeight: "bold",
-                      color: theme.palette.text.secondary,
-                      borderBottom: `1px solid ${theme.palette.divider}`,
+                      fontSize: "1.2rem",
+                      color: "#fff",
                     }}
                   >
-                    {row.label}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      color: theme.palette.text.primary,
-                      borderBottom: `1px solid ${theme.palette.divider}`,
-                    }}
-                  >
-                    {row.value}
+                    Contact Mentor
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {[
+                  { label: "Full Name", value: mentorDetails.fullName },
+                  { label: "Department", value: mentorDetails.department },
+                  { label: "Email", value: mentorDetails.email },
+                  { label: "Mobile Number", value: mentorDetails.mobileNumber },
+                  { label: "Cabin", value: mentorDetails.cabin },
+                ].map((row, index) => (
+                  <TableRow key={index}>
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        color: theme.palette.text.secondary,
+                        borderBottom: `1px solid ${theme.palette.divider}`,
+                      }}
+                    >
+                      {row.label}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        color: theme.palette.text.primary,
+                        borderBottom: `1px solid ${theme.palette.divider}`,
+                      }}
+                    >
+                      {row.value}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </>
       ) : (
         <Typography variant="h6" sx={{ textAlign: "center", color: "red" }}>
-          No faculty profile found.
+          No mentor details found.
         </Typography>
       )}
     </Container>

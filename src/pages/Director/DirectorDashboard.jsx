@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   Container,
   Typography,
@@ -8,7 +8,6 @@ import {
   CardContent,
   useTheme,
   Box,
-  Paper,
 } from "@mui/material";
 import {
   PersonAdd as PersonAddIcon,
@@ -21,6 +20,8 @@ import {
 import { Link } from "react-router-dom";
 import { blueGrey } from "@mui/material/colors";
 import { alpha } from "@mui/material/styles";
+import { AuthContext } from "../../context/AuthContext";
+import DashboardHeroCard from "../../components/dashboard/DashboardHeroCard";
 
 
 const DirectorTile = ({ title, icon, link }) => {
@@ -113,6 +114,7 @@ const DirectorTile = ({ title, icon, link }) => {
 const DirectorDashboard = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
+  const { user } = useContext(AuthContext);
   
   return (
     <Box
@@ -126,119 +128,12 @@ const DirectorDashboard = () => {
       }}
     >
       <Container maxWidth="xl" sx={{ px: { xs: 1.5, sm: 0 } }}>
-        {isLight && (
-          <Paper
-            elevation={0}
-            sx={{
-              p: { xs: 2, sm: 4 },
-              mb: 4,
-              mt: 1,
-              borderRadius: 3,
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(20px)',
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-            }}
-          >
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center',
-                textAlign: 'center',
-                mb: 3
-              }}
-            >
-              <Typography 
-                variant="h4" 
-                color="primary" 
-                gutterBottom
-                sx={{ 
-                  fontSize: { xs: "1.65rem", sm: "2.125rem" },
-                  fontWeight: 'bold',
-                  position: 'relative',
-                  display: 'inline-block',
-                  '&:after': {
-                    content: '""',
-                    position: 'absolute',
-                    width: '40%',
-                    height: '4px',
-                    borderRadius: '2px',
-                    backgroundColor: theme.palette.primary.main,
-                    bottom: '-8px',
-                    left: '30%'
-                  }
-                }}
-              >
-                Director Dashboard
-              </Typography>
-              
-              <Typography 
-                variant="body1" 
-                color="text.secondary" 
-                sx={{ maxWidth: '600px', mt: 3 }}
-              >
-                Welcome to the Sanghathi director portal. Manage users and system data from here.
-              </Typography>
-            </Box>
-          </Paper>
-        )}
-        
-        {!isLight && (
-          <Paper
-            elevation={0}
-            sx={{
-              p: { xs: 2, sm: 4 },
-              mb: 4,
-              mt: 1,
-              borderRadius: 3,
-              backgroundColor: alpha(theme.palette.background.paper, 0.6),
-              backdropFilter: 'blur(20px)',
-              border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
-            }}
-          >
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center',
-                textAlign: 'center',
-                mb: 3
-              }}
-            >
-              <Typography 
-                variant="h4" 
-                color="info" 
-                gutterBottom
-                sx={{ 
-                  fontSize: { xs: "1.65rem", sm: "2.125rem" },
-                  fontWeight: 'bold',
-                  position: 'relative',
-                  display: 'inline-block',
-                  '&:after': {
-                    content: '""',
-                    position: 'absolute',
-                    width: '40%',
-                    height: '4px',
-                    borderRadius: '2px',
-                    backgroundColor: theme.palette.info.main,
-                    bottom: '-8px',
-                    left: '30%'
-                  }
-                }}
-              >
-                Director Dashboard
-              </Typography>
-              
-              <Typography 
-                variant="body1" 
-                color="text.secondary" 
-                sx={{ maxWidth: '600px', mt: 3 }}
-              >
-                Welcome to the Sanghathi Director portal. Manage users from here.
-              </Typography>
-            </Box>
-          </Paper>
-        )}
+        <DashboardHeroCard
+          user={user}
+          fallbackName="Director"
+          dashboardTitle="Director Dashboard"
+          description="Welcome to the Sanghathi director portal. Manage users and system data from here."
+        />
         
         <Grid container spacing={{ xs: 2, sm: 3 }}>
           <Grid item xs={12} sm={6} md={isLight ? 6 : 6} lg={isLight ? 4 : 4}>
