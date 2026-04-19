@@ -1,0 +1,157 @@
+import React, { useContext } from "react";
+import {
+  Box,
+  Container,
+  Divider,
+  Grid,
+  Link as MuiLink,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import { Link as RouterLink, useLocation } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+
+const commonLinks = [
+  { label: "Campus Buddy", to: "/campus-buddy" },
+  { label: "Threads", to: "/threads" },
+  { label: "Settings", to: "/settings" },
+];
+
+const roleLinks = {
+  student: [
+    { label: "Mentor Details", to: "/mentor-details" },
+    { label: "Attendance", to: "/student/attendance" },
+  ],
+  faculty: [
+    { label: "My Mentees", to: "/mentees" },
+    { label: "Mentor-Mentee Conversation", to: "/mentor-mentee-conversation" },
+  ],
+  admin: [
+    { label: "Add User", to: "/admin/add-user" },
+    { label: "Assign Mentors", to: "/admin/mentor-assignment" },
+    { label: "Upload History", to: "/admin/upload-history" },
+  ],
+  hod: [
+    { label: "Department Mentors", to: "/hod/mentors" },
+    { label: "Reports", to: "/report" },
+  ],
+  director: [
+    { label: "View Mentors", to: "/director/mentors" },
+    { label: "View Users", to: "/director/users" },
+  ],
+};
+
+const FooterLinkGroup = ({ title, links }) => (
+  <Stack spacing={1}>
+    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+      {title}
+    </Typography>
+    <Stack spacing={0.75}>
+      {links.map((link) => (
+        <MuiLink
+          key={link.to}
+          component={RouterLink}
+          to={link.to}
+          underline="hover"
+          color="text.secondary"
+          sx={{
+            width: "fit-content",
+            fontSize: "0.92rem",
+            transition: "color 0.2s ease",
+            "&:hover": {
+              color: "primary.main",
+            },
+          }}
+        >
+          {link.label}
+        </MuiLink>
+      ))}
+    </Stack>
+  </Stack>
+);
+
+const Footer = () => {
+  const theme = useTheme();
+  const { user } = useContext(AuthContext);
+  const location = useLocation();
+  const role = user?.roleName;
+  const currentYear = new Date().getFullYear();
+  const isDashboardRoute =
+    location.pathname === "/" ||
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/faculty") ||
+    location.pathname.startsWith("/hod") ||
+    location.pathname.startsWith("/director") ||
+    location.pathname.startsWith("/student") ||
+    location.pathname.startsWith("/mentee") ||
+    location.pathname.startsWith("/mentor") ||
+    location.pathname.startsWith("/report") ||
+    location.pathname.startsWith("/threads") ||
+    location.pathname.startsWith("/settings") ||
+    location.pathname.startsWith("/campus-buddy");
+
+  const footerLinks = roleLinks[role] || [];
+
+  return (
+    <Box
+      component="footer"
+      aria-label="Application footer"
+      sx={{
+        mt: "auto",
+        borderTop: `1px solid ${theme.palette.divider}`,
+        backgroundColor: theme.palette.mode === "light"
+          ? "rgba(255,255,255,0.92)"
+          : "rgba(18, 24, 38, 0.96)",
+        backdropFilter: "blur(12px)",
+      }}
+    >
+      <Container maxWidth="xl" sx={{ py: { xs: 2, md: 2.5 } }}>
+        <Grid container spacing={2.5} alignItems="flex-start">
+          <Grid item xs={12} md={4}>
+            <Stack spacing={1}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                Sanghathi
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Mentoring and student success platform for CMRIT.
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {isDashboardRoute ? "Dashboard experience" : "Application experience"}
+              </Typography>
+            </Stack>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={4}>
+            <FooterLinkGroup title="Quick Links" links={commonLinks} />
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={4}>
+            <FooterLinkGroup
+              title={role ? `${role.charAt(0).toUpperCase()}${role.slice(1)} Links` : "Role Links"}
+              links={footerLinks.length ? footerLinks : [{ label: "Login", to: "/login" }]}
+            />
+          </Grid>
+        </Grid>
+
+        <Divider sx={{ my: 2 }} />
+
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", sm: "center" }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            © {currentYear} Sanghathi. All rights reserved.
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Last updated: April 19, 2026
+          </Typography>
+        </Stack>
+      </Container>
+    </Box>
+  );
+};
+
+export default Footer;

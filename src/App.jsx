@@ -1,5 +1,6 @@
 import { Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { useContext, useEffect, lazy } from "react";
+import { Box } from "@mui/material";
 import ThemeProvider from "./theme";
 import LazyLoadWrapper from "./components/loader/LazyLoadWrapper";
 import GlobalTopLoader from "./components/loader/GlobalTopLoader";
@@ -9,6 +10,7 @@ import MotionLazyContainer from "./components/animate/MotionLazyContainer";
 import NotistackProvider from "./components/NotistackProvider";
 import { AuthContext } from "./context/AuthContext";
 import { initGA, trackPageView } from "./ga";
+import Footer from "./components/Footer";
 
 const Signup = lazy(() => import("./pages/Users/Signup"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -68,8 +70,21 @@ function App() {
       <GlobalTopLoader />
       <NotistackProvider>
         <MotionLazyContainer>
-          <div className="app">
-            <main className="content">
+          <Box
+            sx={{
+              minHeight: "100vh",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Box
+              component="main"
+              sx={{
+                flexGrow: 1,
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
               <Routes>
                 <Route
                   path="/login"
@@ -438,8 +453,9 @@ function App() {
                 </Route>
                 
               </Routes>
-            </main>
-          </div>
+              <Footer />
+            </Box>
+          </Box>
         </MotionLazyContainer>
       </NotistackProvider>
     </ThemeProvider>
