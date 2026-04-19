@@ -62,3 +62,5 @@ Example:
 - [2026-04-18-035-phase3-student-profile-wrapper-and-companion-mobile-consistency](./2026-04-18-035-phase3-student-profile-wrapper-and-companion-mobile-consistency.md)
 - [2026-04-18-036-phase3-tyl-scorecard-mobile-shell-unification](./2026-04-18-036-phase3-tyl-scorecard-mobile-shell-unification.md)
 - [2026-04-19-040-admin-upload-history-restore-workflow](./2026-04-19-040-admin-upload-history-restore-workflow.md)
+- [2026-04-19-041-local-iat-ingest-and-rollback-scripts](./2026-04-19-041-local-iat-ingest-and-rollback-scripts.md)
+- [2026-04-19-042-iat6-csv-ingest-execution-and-verification](./2026-04-19-042-iat6-csv-ingest-execution-and-verification.md)
