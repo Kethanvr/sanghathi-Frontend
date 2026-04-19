@@ -153,6 +153,7 @@ const HodMentorDashboard = () => {
   const handleViewMenteeDashboard = (menteeId) => {
     navigate(`/hod/mentee-profile/${menteeId}`);
   };
+  const mentorAvatarSrc = getAvatarSrc(mentorInfo);
 
   if (mentorInfoError || menteesError) {
     return (
@@ -222,6 +223,23 @@ const HodMentorDashboard = () => {
                   mb: 3,
                 }}
               >
+                <Avatar
+                  alt={mentorInfo?.name || "Mentor"}
+                  src={mentorAvatarSrc || undefined}
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    mb: 2,
+                    backgroundColor: isLight
+                      ? theme.palette.primary.main
+                      : theme.palette.info.main,
+                  }}
+                >
+                  {!mentorAvatarSrc
+                    ? getAvatarFallbackText(mentorInfo?.name || "Mentor")
+                    : null}
+                </Avatar>
+
                 <Typography
                   variant="h4"
                   color={isLight ? "primary" : "info"}

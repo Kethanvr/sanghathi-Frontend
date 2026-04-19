@@ -1,5 +1,5 @@
 import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
-import { Container, Grid, Typography, Box, useTheme, Paper } from "@mui/material";
+import { Container, Grid, Typography, Box, useTheme } from "@mui/material";
 import Page from "../../components/Page";
 import { Card, CardHeader, CardContent, CardActionArea } from "@mui/material";
 import { useState, useEffect } from "react"; // Import useEffect
@@ -37,6 +37,7 @@ import { alpha } from "@mui/material/styles";
 import logger from "../../utils/logger.js";
 import { Link, useParams } from "react-router-dom"; // Import useParams
 import api from "../../utils/axios";
+import DashboardHeroCard from "../../components/dashboard/DashboardHeroCard";
 
 const StudentTile = ({ title, icon, link, menteeId }) => {
   const theme = useTheme();
@@ -227,6 +228,12 @@ const StudentDashboard = () => {
   };
   
   const menteeName = getFullName();
+  const menteeHeroUser = {
+    name: menteeName,
+    profile: { photo: menteeData?.photo || null },
+    photo: menteeData?.photo || null,
+    avatar: menteeData?.avatar || null,
+  };
 
   logger.info("Extracted mentee name:", menteeName);
   
@@ -249,117 +256,12 @@ const StudentDashboard = () => {
             py: 0,
           }}
         >
-          {isLight ? (
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 2, sm: 4 },
-                mb: 4,
-                mt: 1,
-                borderRadius: 3,
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(20px)',
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-              }}
-            >
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center',
-                  textAlign: 'center',
-                  mb: 3
-                }}
-              >
-                <Typography 
-                  variant="h4" 
-                  color="primary" 
-                  gutterBottom
-                  sx={{ 
-                    fontSize: { xs: "1.65rem", sm: "2.125rem" },
-                    fontWeight: 'bold',
-                    position: 'relative',
-                    display: 'inline-block',
-                    '&:after': {
-                      content: '""',
-                      position: 'absolute',
-                      width: '40%',
-                      height: '4px',
-                      borderRadius: '2px',
-                      backgroundColor: theme.palette.primary.main,
-                      bottom: '-8px',
-                      left: '30%'
-                    }
-                  }}
-                >
-                  {menteeName}'s Dashboard
-                </Typography>
-                
-                <Typography 
-                  variant="body1" 
-                  color="text.secondary" 
-                  sx={{ maxWidth: '600px', mt: 3 }}
-                >
-                  View and manage all information related to your mentee from this dashboard.
-                </Typography>
-              </Box>
-            </Paper>
-          ) : (
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 2, sm: 4 },
-                mb: 4,
-                mt: 1,
-                borderRadius: 3,
-                backgroundColor: alpha(theme.palette.background.paper, 0.6),
-                backdropFilter: 'blur(10px)',
-                border: `1px solid ${alpha(theme.palette.info.main, 0.15)}`,
-              }}
-            >
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center',
-                  textAlign: 'center',
-                  mb: 3
-                }}
-              >
-                <Typography 
-                  variant="h4" 
-                  color="info" 
-                  gutterBottom
-                  sx={{ 
-                    fontSize: { xs: "1.65rem", sm: "2.125rem" },
-                    fontWeight: 'bold',
-                    position: 'relative',
-                    display: 'inline-block',
-                    '&:after': {
-                      content: '""',
-                      position: 'absolute',
-                      width: '40%',
-                      height: '4px',
-                      borderRadius: '2px',
-                      backgroundColor: theme.palette.info.main,
-                      bottom: '-8px',
-                      left: '30%'
-                    }
-                  }}
-                >
-                  {menteeName}'s Dashboard
-                </Typography>
-                
-                <Typography 
-                  variant="body1" 
-                  color="text.secondary" 
-                  sx={{ maxWidth: '600px', mt: 3 }}
-                >
-                  View and manage all information related to your mentee from this dashboard.
-                </Typography>
-              </Box>
-            </Paper>
-          )}
+          <DashboardHeroCard
+            user={menteeHeroUser}
+            fallbackName="Mentee"
+            dashboardTitle="Dashboard"
+            description="View and manage all information related to your mentee from this dashboard."
+          />
           
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6} md={6} lg={4}>
