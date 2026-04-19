@@ -1,22 +1,30 @@
-import React, { useEffect, useState, useCallback, useContext } from "react";
+import React, { useEffect, useState, useCallback, useContext, useMemo } from "react";
 import { useSnackbar } from "notistack";
 import api from "../../utils/axios";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { AuthContext } from "../../context/AuthContext";
-import { Box, Grid, Card, Stack, Button, IconButton, Typography, TextField } from "@mui/material";
+import { Box, Grid, Card, Stack, Button, IconButton, Typography, TextField, Chip } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { Delete as DeleteIcon } from "@mui/icons-material";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
 import { useSearchParams } from "react-router-dom";
+import useDraftPersistence from "../../hooks/useDraftPersistence";
 
 
+import logger from "../../utils/logger.js";
 export default function Mooc() {
   const { enqueueSnackbar } = useSnackbar();
     const { user } = useContext(AuthContext);
     const [searchParams] = useSearchParams();
     const menteeId = searchParams.get('menteeId');
-    console.log("User : ",user);
-    console.log("id: ",menteeId);
+    const [isDataFetched, setIsDataFetched] = useState(false);
+    logger.info("User : ",user);
+    logger.info("id: ",menteeId);
+
+    const draftScopeId = useMemo(
+      () => menteeId || user?._id || "default",
+      [menteeId, user?._id]
+    );
 
     const methods = useForm({
       defaultValues: {
@@ -25,6 +33,24 @@ export default function Mooc() {
     });
 
   const { handleSubmit, reset, formState: { isSubmitting } } = methods;
+    const watchedValues = useWatch({ control: methods.control });
+
+    const { syncState, lastSavedAt } = useDraftPersistence({
+      formType: "career-mooc",
+      scopeId: draftScopeId,
+      values: watchedValues,
+      reset,
+      enableServerSync: Boolean(user?._id),
+      enablePersistence: isDataFetched,
+    });
+
+    const formatDateTime = (value) => {
+      if (!value) return "Not saved yet";
+      const asDate = new Date(value);
+      if (Number.isNaN(asDate.getTime())) return "Not saved yet";
+      return asDate.toLocaleString();
+    };
+
     const { fields, append, remove } = useFieldArray({
       control: methods.control,
       name: "mooc",
@@ -32,6 +58,14 @@ export default function Mooc() {
 
     const fetchMooc = useCallback(async () => {
       try {
+        const existingLocalDraft = localStorage.getItem(
+          `sanghathi:draft:career-mooc:${draftScopeId}`
+        );
+        if (existingLocalDraft) {
+          setIsDataFetched(true);
+          return;
+        }
+
         let response;
         if(menteeId)
           response = await api.get(`/mooc-data/mooc/${menteeId}`);
@@ -47,13 +81,15 @@ export default function Mooc() {
           }));
           reset({ mooc: formattedMooc });
         } else {
-          console.warn("No mooc data found for this user");
+          logger.warn("No mooc data found for this user");
           reset({ mooc: [{ portal: "", title: "", startDate: null, completedDate: null, score: null, certificateLink: "" }] });
         }
       } catch (error) {
-        console.log("Error fetching mooc data:", error);
+        logger.info("Error fetching mooc data:", error);
+      } finally {
+        setIsDataFetched(true);
       }
-    }, [user._id, reset, enqueueSnackbar]);
+    }, [draftScopeId, user._id, reset, enqueueSnackbar, menteeId]);
 
     useEffect(() => {
       fetchMooc();
@@ -72,7 +108,7 @@ export default function Mooc() {
           });
           await fetchMooc();
         } catch (error) {
-          console.error(error);
+          logger.error(error);
           enqueueSnackbar("An error occurred while processing the request", {
             variant: "error",
           });
@@ -82,8 +118,19 @@ export default function Mooc() {
     );
 
   return (
-    <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+    <FormProvider
+      methods={methods}
+      onSubmit={handleSubmit(onSubmit)}
+      disableAutoDraft
+    >
           <Card sx={{ p: 3 }}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 2 }}>
+              <Chip size="small" variant="outlined" label={`Draft: ${syncState}`} />
+              <Typography variant="caption" color="text.secondary" sx={{ alignSelf: "center" }}>
+                Last saved: {formatDateTime(lastSavedAt)}
+              </Typography>
+            </Stack>
+
             <Grid container spacing={2}>
               {fields.map((item, index) => (
                 <Grid 

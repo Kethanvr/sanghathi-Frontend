@@ -9,6 +9,7 @@ import { Delete as DeleteIcon } from "@mui/icons-material";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
 import { useSearchParams } from "react-router-dom";
 
+import logger from "../../utils/logger.js";
 export default function ClubEvents() {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
@@ -16,8 +17,8 @@ export default function ClubEvents() {
   const menteeId = searchParams.get('menteeId');
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
-  console.log("User : ",user);
-  console.log("id: ",menteeId);
+  logger.info("User : ",user);
+  logger.info("id: ",menteeId);
 
   const methods = useForm({
     defaultValues: {
@@ -48,11 +49,11 @@ export default function ClubEvents() {
         }));
         reset({ clubs: formattedClubs });
       } else {
-        console.warn("No club data found for this user");
+        logger.warn("No club data found for this user");
         reset({ clubs: [{ clubName: "", clubdepartment: "", registeredDate: null }] });
       }
     } catch (error) {
-      console.log("Error fetching club data:", error);
+      logger.info("Error fetching club data:", error);
     }
   }, [user._id, reset, enqueueSnackbar]);
 
@@ -73,7 +74,7 @@ export default function ClubEvents() {
         });
         await fetchClubs();
       } catch (error) {
-        console.error(error);
+        logger.error(error);
         enqueueSnackbar("An error occurred while processing the request", {
           variant: "error",
         });

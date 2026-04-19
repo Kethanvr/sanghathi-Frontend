@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -20,9 +20,10 @@ import {
 } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
 import Papa from "papaparse";
-import axios from "axios";
-
-const BASE_URL = import.meta.env.VITE_API_URL;
+import api from "../../utils/axios";
+import useDraftPersistence from "../../hooks/useDraftPersistence";
+import { resolveDraftScopeId } from "../../utils/draftScope";
+import { recordAdminUploadSession } from "../../utils/uploadHistory";
 
 const AddMiniProjectDetails = () => {
   const theme = useTheme();
@@ -33,6 +34,30 @@ const AddMiniProjectDetails = () => {
   const [errorCount, setErrorCount] = useState(0);
   const [errors, setErrors] = useState([]);
   const [file, setFile] = useState(null);
+
+  const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
+
+  const restoreDraftState = useCallback((draftData = {}) => {
+    setSuccessCount(Number(draftData.successCount) || 0);
+    setErrorCount(Number(draftData.errorCount) || 0);
+    setErrors(Array.isArray(draftData.errors) ? draftData.errors : []);
+  }, []);
+
+  const persistedErrors = useMemo(() => errors.slice(0, 200), [errors]);
+
+  useDraftPersistence({
+    formType: "admin-mini-project-upload",
+    scopeId: draftScopeId,
+    values: {
+      successCount,
+      errorCount,
+      errors: persistedErrors,
+      hasSelectedFile: Boolean(file),
+      isProcessing: processing,
+    },
+    reset: restoreDraftState,
+    enableServerSync: false,
+  });
 
   // ================= TEMPLATE DOWNLOAD =================
   const downloadTemplate = () => {
@@ -101,13 +126,14 @@ const AddMiniProjectDetails = () => {
     let success = 0;
     let errCount = 0;
     const newErrors = [];
+    const affectedUserIds = new Set();
 
     for (const row of rows) {
       try {
         if (!row.USN) throw new Error("USN missing");
         if (!row.Title) throw new Error("Project Title missing");
 
-        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`, {
+        const response = await api.get(`/users/usn/${row.USN}`, {
           params: { _ts: Date.now() },
           headers: {
             "Cache-Control": "no-cache",
@@ -118,7 +144,7 @@ const AddMiniProjectDetails = () => {
 
         if (!userId) throw new Error("User not found");
 
-        await axios.post(`${BASE_URL}/project/miniproject`, {
+        await api.post(`/project/miniproject`, {
           userId,
           miniproject: [
             {
@@ -131,11 +157,22 @@ const AddMiniProjectDetails = () => {
         });
 
         success++;
+        affectedUserIds.add(String(userId));
       } catch (error) {
         errCount++;
         newErrors.push(`Error for ${row.USN}: ${error.message}`);
       }
     }
+
+    await recordAdminUploadSession({
+      tabType: "add-mini-project-details",
+      fileName: file?.name || "",
+      totalRows: rows.length,
+      successCount: success,
+      errorCount: errCount,
+      errors: newErrors,
+      affectedUserIds: Array.from(affectedUserIds),
+    });
 
     setSuccessCount(success);
     setErrorCount(errCount);
@@ -145,11 +182,11 @@ const AddMiniProjectDetails = () => {
 
   // ================= UI =================
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          p: { xs: 2, sm: 4 },
           borderRadius: 2,
           backgroundColor: isLight
             ? "rgba(255, 255, 255, 0.9)"
@@ -179,11 +216,12 @@ const AddMiniProjectDetails = () => {
           <Typography variant="body2">• Do not leave blank rows</Typography>
         </Box>
 
-        <Stack direction="row" spacing={2} justifyContent="center">
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center">
           <Button
             variant="outlined"
             startIcon={<FileDownloadIcon />}
             onClick={downloadTemplate}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             Download Template
           </Button>
@@ -193,6 +231,7 @@ const AddMiniProjectDetails = () => {
             component="label"
             startIcon={<CloudUploadIcon />}
             disabled={processing}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             {processing ? (
               <>

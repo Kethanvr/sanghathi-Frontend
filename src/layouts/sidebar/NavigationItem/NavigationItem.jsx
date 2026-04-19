@@ -21,9 +21,9 @@ const NavigationItem = ({
   };
   const lcText = normalizeText(text);
 
-  //FIXME : This can cause issue with nested item
-  const isActive =
-    pathname === link || pathname.startsWith(`${link}/`) ? lcText : "";
+  const isActiveRoute =
+    Boolean(link) && (pathname === link || pathname.startsWith(`${link}/`));
+  const isActive = isActiveRoute ? lcText : "";
 
   const isDropdown = dropdownItems && dropdownItems.length > 0;
 

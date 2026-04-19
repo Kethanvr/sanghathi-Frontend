@@ -9,6 +9,7 @@ import { Delete as DeleteIcon } from "@mui/icons-material";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
 import { useSearchParams } from "react-router-dom";
 
+import logger from "../../utils/logger.js";
 export default function ClubEvents() {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
@@ -16,8 +17,8 @@ export default function ClubEvents() {
   const menteeId = searchParams.get('menteeId');
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
-  console.log("User : ",user);
-  console.log("id: ",menteeId);
+  logger.info("User : ",user);
+  logger.info("id: ",menteeId);
 
   const methods = useForm({
     defaultValues: {
@@ -38,7 +39,7 @@ export default function ClubEvents() {
       else
         response = await api.get(`/career-counselling/clubevent/${user._id}`);
 
-      console.log("Club event data fetched: ", response.data);
+      logger.info("Club event data fetched: ", response.data);
       const { data } = response.data;
   
       if (data && Array.isArray(data.clubevents)) {
@@ -48,11 +49,11 @@ export default function ClubEvents() {
         }));
         reset({ clubevents: formattedClubEvents });
       } else {
-        console.warn("No club events found for this user");
+        logger.warn("No club events found for this user");
         reset({ clubevents: [{ clubName: "", eventTitle: "", eventDate: null }] });
       }
     } catch (error) {
-      console.log("Error fetching club event data:", error);
+      logger.info("Error fetching club event data:", error);
     }
   }, [user._id, reset, enqueueSnackbar]);
 
@@ -67,14 +68,14 @@ export default function ClubEvents() {
   const onSubmit = useCallback(
     async (formData) => {
       try {
-        console.log("Club event data:", formData.clubevents);
+        logger.info("Club event data:", formData.clubevents);
         await api.post("/career-counselling/clubevent", { clubevents: formData.clubevents, userId: user._id });
         enqueueSnackbar("Club data updated successfully!", {
           variant: "success",
         });
         await fetchClubEvents();
       } catch (error) {
-        console.error(error);
+        logger.error(error);
         enqueueSnackbar("An error occurred while processing the request", {
           variant: "error",
         });

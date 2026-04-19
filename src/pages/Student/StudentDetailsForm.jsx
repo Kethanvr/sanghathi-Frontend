@@ -1,16 +1,13 @@
 import { useSnackbar } from "notistack";
 import { useCallback, useContext, useState, useEffect } from "react";
 import api from "../../utils/axios";
-
-import { useSearchParams } from "react-router-dom";
 // form
 import { useForm, useWatch } from "react-hook-form";
 import { AuthContext } from "../../context/AuthContext";
 
 // @mui
-import { Box, Grid, Card, Stack, Avatar, CircularProgress, Typography } from "@mui/material";
+import { Box, Grid, Card, Stack, Typography } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
-import { useTheme } from "@mui/material/styles";
 
 // components
 import {
@@ -20,6 +17,7 @@ import {
 } from "../../components/hook-form";
 import RHFUploadAvatar from '../../components/RHFUploadAvatar';
 
+import logger from "../../utils/logger.js";
 const yesNoOptions = [
   { value: "yes", label: "Yes" },
   { value: "no", label: "No" },
@@ -57,10 +55,10 @@ const getCloudinaryPublicId = (url) => {
     
     // Get the full path including folders but remove the file extension
     const fullPath = matches[1].replace(/\.[^/.]+$/, '');
-    console.log('[getCloudinaryPublicId] Extracted public ID:', fullPath);
+    logger.info('[getCloudinaryPublicId] Extracted public ID:', fullPath);
     return fullPath;
   } catch (error) {
-    console.error('[getCloudinaryPublicId] Error extracting public ID:', error);
+    logger.error('[getCloudinaryPublicId] Error extracting public ID:', error);
     return null;
   }
 };
@@ -203,9 +201,9 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
         });
         setIsDataFetched(true);
       }
-      console.log("[StudentDetailsForm] Student data fetched successfully:", data);
+      logger.info("[StudentDetailsForm] Student data fetched successfully:", data);
     } catch (error) {
-      console.error("[StudentDetailsForm] Error fetching student data:", error.response || error);
+      logger.error("[StudentDetailsForm] Error fetching student data:", error.response || error);
     }
   }, [user._id, setValue, menteeId]);
 
@@ -262,7 +260,7 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
       const file = acceptedFiles[0];
       
       if (file) {
-        console.log("File received:", {
+        logger.info("File received:", {
           name: file.name,
           type: file.type,
           size: file.size
@@ -270,9 +268,9 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
         
         try {
           // Compress/resize the image before converting to base64
-          // console.log("Starting image compression...");
+          // logger.info("Starting image compression...");
           const compressedBase64 = await compressImage(file, 800, 800, 0.7);
-          // console.log("Image compressed successfully");
+          // logger.info("Image compressed successfully");
           
           // Store the compressed base64 string directly without uploading to Cloudinary
           setValue('studentProfile.photo', compressedBase64);
@@ -280,12 +278,12 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
           // Create a preview URL for display
           const previewUrl = URL.createObjectURL(file);
           setValue('studentProfile.photoPreview', previewUrl);
-          // console.log("Form values updated with new image");
+          // logger.info("Form values updated with new image");
           
           // Force a re-render if needed
           trigger('studentProfile.photo');
         } catch (error) {
-          console.error("Error processing image:", error);
+          logger.error("Error processing image:", error);
           enqueueSnackbar("Error processing image", { variant: "error" });
         }
       }
@@ -318,9 +316,9 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                 if (deleteResponse.data.status !== 'success') {
                   throw new Error('Failed to delete old image');
                 }
-                console.log('[Image Delete] Successfully deleted old image:', publicId);
+                logger.info('[Image Delete] Successfully deleted old image:', publicId);
               } catch (deleteError) {
-                console.error('[Image Delete] Error deleting image:', {
+                logger.error('[Image Delete] Error deleting image:', {
                   status: deleteError.response?.status,
                   message: deleteError.response?.data?.message || deleteError.message,
                   publicId
@@ -344,9 +342,9 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
             }
             
             photoUrl = cloudinaryUrl;
-            console.log('[Image Upload] New image uploaded successfully:', photoUrl.substring(0, 100));
+            logger.info('[Image Upload] New image uploaded successfully:', photoUrl.substring(0, 100));
           } catch (uploadError) {
-            console.error('[Image Upload] Error uploading new image:', {
+            logger.error('[Image Upload] Error uploading new image:', {
               status: uploadError.response?.status,
               message: uploadError.response?.data?.message || uploadError.message
             });
@@ -354,7 +352,7 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
             return;
           }
         } catch (fetchError) {
-          console.error('[Image Delete] Error fetching current profile:', {
+          logger.error('[Image Delete] Error fetching current profile:', {
             status: fetchError.response?.status,
             message: fetchError.response?.data?.message || fetchError.message
           });
@@ -379,7 +377,7 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
         throw new Error('Profile update failed');
       }
     } catch (error) {
-      console.error("[StudentDetailsForm] Error in form submission:", error);
+      logger.error("[StudentDetailsForm] Error in form submission:", error);
       enqueueSnackbar(error.response?.data?.message || "Error updating profile", {
         variant: "error",
       });
@@ -388,9 +386,16 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
 
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-      <Grid container spacing={2}>
+      <Grid container spacing={{ xs: 2, md: 3 }}>
         <Grid item xs={12} md={4}>
-          <Card sx={{ height: "100%", py: 10, px: 3, textAlign: "center" }}>
+          <Card
+            sx={{
+              height: "100%",
+              py: { xs: 4, sm: 7, md: 10 },
+              px: { xs: 2, sm: 3 },
+              textAlign: "center",
+            }}
+          >
             <RHFUploadAvatar
               name="studentProfile.photo"
               value={watch('studentProfile.photo')}
@@ -403,8 +408,8 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
         </Grid>
 
         <Grid item xs={12} md={8}>
-          <Card sx={{ p: 3 }}>
-            <Stack spacing={3}>
+          <Card sx={{ p: { xs: 2, sm: 3 } }}>
+            <Stack spacing={{ xs: 2, sm: 3 }}>
               <RHFTextField
                 name="studentProfile.fullName.firstName"
                 label="First Name"
@@ -483,8 +488,8 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
         </Grid>
 
         <Grid item xs={12}>
-          <Card sx={{ p: 3 }}>
-            <Grid container spacing={3}>
+          <Card sx={{ p: { xs: 2, sm: 3 } }}>
+            <Grid container spacing={{ xs: 2, md: 3 }}>
               <Grid item xs={12} md={6}>
                 <RHFTextField
                   name="studentProfile.email"
@@ -675,10 +680,21 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
               </Grid>
             </Grid>
 
-            <Stack spacing={3} alignItems="flex-end" sx={{ mt: 3 }}>
-              <Box display="flex" gap={1}>
+            <Stack spacing={2} alignItems={{ xs: "stretch", sm: "flex-end" }} sx={{ mt: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  width: { xs: "100%", sm: "auto" },
+                  flexDirection: { xs: "column-reverse", sm: "row" },
+                }}
+              >
                 {import.meta.env.MODE === "development" && (
-                  <LoadingButton variant="outlined" onClick={handleReset}>
+                  <LoadingButton
+                    variant="outlined"
+                    onClick={handleReset}
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
+                  >
                     Reset
                   </LoadingButton>
                 )}
@@ -686,6 +702,7 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   type="submit"
                   variant="contained"
                   loading={isSubmitting}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Save Changes
                 </LoadingButton>

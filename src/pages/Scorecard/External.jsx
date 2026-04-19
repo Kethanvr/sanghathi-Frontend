@@ -1,25 +1,32 @@
 import { useState, useEffect, useContext, useCallback } from "react";
 import {
+  Alert,
   Box,
+  Container,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Select,
-  MenuItem,
   Typography,
-  Button,
-  CircularProgress,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useSearchParams } from "react-router-dom";
-const BASE_URL = import.meta.env.VITE_API_URL;
+import api from "../../utils/axios";
+import logger from "../../utils/logger.js";
 
 const External = () => {
   const { user } = useContext(AuthContext);
+  const theme = useTheme();
+  const isSmDown = useMediaQuery(theme.breakpoints.down("sm"));
   const [searchParams] = useSearchParams();
   const menteeId = searchParams.get('menteeId');
   
@@ -27,34 +34,24 @@ const External = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedSemester, setSelectedSemester] = useState(null);
-  const [availableSemesters, setAvailableSemesters] = useState([1, 2, 3, 4, 5, 6, 7, 8]);
-
-  // Get token from local storage - using "token" instead of "accessToken"
-  const token = localStorage.getItem("token");
+  const availableSemesters = [1, 2, 3, 4, 5, 6, 7, 8];
 
   const fetchExternalData = useCallback(async () => {
     // Use menteeId from URL params if available, otherwise use logged-in user ID
     const userId = menteeId || user?._id;
     
-    if (!userId || !token) {
+    if (!userId) {
       setError("User not authenticated or mentee ID not provided.");
       setLoading(false);
       return;
     }
 
     try {
-      console.log(`Fetching external marks for user ID: ${userId} (${menteeId ? 'menteeId from URL' : 'logged-in user'})`);
+      logger.info(`Fetching external marks for user ID: ${userId} (${menteeId ? 'menteeId from URL' : 'logged-in user'})`);
       
-      const response = await axios.get(
-        `${BASE_URL}/students/external/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const response = await api.get(`/students/external/${userId}`);
       
-      console.log("Response data:", response.data);
+      logger.info("Response data:", response.data);
       
       if (response.data && response.data.data && response.data.data.external) {
         const data = response.data.data.external;
@@ -72,14 +69,14 @@ const External = () => {
 
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching external marks:", err);
+      logger.error("Error fetching external marks:", err);
       
       // For any error, including 404, just show an empty table
       setExternalData([{passingDate: null, sgpa: null, subjects: []}]);
       setSelectedSemester(1); // Default to first semester
       setLoading(false);
     }
-  }, [user, token, menteeId]);
+  }, [user?._id, menteeId]);
 
   useEffect(() => {
     fetchExternalData();
@@ -113,18 +110,20 @@ const External = () => {
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h4" component="h1" gutterBottom align="center">
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+      <Typography variant={isSmDown ? "h5" : "h4"} component="h1" gutterBottom align="center">
         External Marks Report
       </Typography>
 
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-        <label>
-          Select Semester:
+      <Stack direction={{ xs: "column", sm: "row" }} sx={{ mb: 2, justifyContent: "center" }}>
+        <FormControl size="small" sx={{ minWidth: { xs: "100%", sm: 220 } }}>
+          <InputLabel id="external-semester-select-label">Semester</InputLabel>
           <Select
-            value={selectedSemester || 1}
+            labelId="external-semester-select-label"
+            value={selectedSemester || ""}
             onChange={handleSemesterChange}
-            sx={{ ml: 1 }}
+            label="Semester"
+            displayEmpty
           >
             {availableSemesters.map((sem) => (
               <MenuItem key={sem} value={sem}>
@@ -132,11 +131,24 @@ const External = () => {
               </MenuItem>
             ))}
           </Select>
-        </label>
-      </Box>
+        </FormControl>
+      </Stack>
 
-      <TableContainer sx={{ border: "1px solid gray" }}>
-        <Table>
+      {loading && (
+        <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 3 }}>
+          Loading external marks...
+        </Typography>
+      )}
+
+      {!loading && error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {!loading && (
+      <TableContainer sx={{ border: "1px solid gray", overflowX: "auto" }}>
+        <Table sx={{ minWidth: { xs: 920, md: "100%" } }}>
           <TableHead>
             <TableRow>
               <TableCell sx={{ border: "1px solid gray", fontWeight: "bold" }}>
@@ -154,13 +166,13 @@ const External = () => {
               <TableCell sx={{ border: "1px solid gray", fontWeight: "bold" }}>
                 Total
               </TableCell>
-              <TableCell sx={{ border: "1px solid gray", fontWeight: "bold" }}>
+              <TableCell sx={{ border: "1px solid gray", fontWeight: "bold", display: { xs: "none", sm: "table-cell" } }}>
                 Attempt
               </TableCell>
-              <TableCell sx={{ border: "1px solid gray", fontWeight: "bold" }}>
+              <TableCell sx={{ border: "1px solid gray", fontWeight: "bold", display: { xs: "none", md: "table-cell" } }}>
                 Result
               </TableCell>
-              <TableCell sx={{ border: "1px solid gray", fontWeight: "bold" }}>
+              <TableCell sx={{ border: "1px solid gray", fontWeight: "bold", display: { xs: "none", md: "table-cell" } }}>
                 Completion Date
               </TableCell>
             </TableRow>
@@ -184,17 +196,18 @@ const External = () => {
                   <TableCell sx={{ border: "1px solid gray" }}>
                     {subject.total ?? "-"}
                   </TableCell>
-                  <TableCell sx={{ border: "1px solid gray" }}>
+                  <TableCell sx={{ border: "1px solid gray", display: { xs: "none", sm: "table-cell" } }}>
                     {subject.attempt || "1"}
                   </TableCell>
                   <TableCell sx={{ 
                     border: "1px solid gray",
                     color: subject.result === "PASS" ? "success.main" : "error.main",
-                    fontWeight: "bold" 
+                    fontWeight: "bold",
+                    display: { xs: "none", md: "table-cell" }
                   }}>
                     {subject.result || "-"}
                   </TableCell>
-                  <TableCell sx={{ border: "1px solid gray" }}>
+                  <TableCell sx={{ border: "1px solid gray", display: { xs: "none", md: "table-cell" } }}>
                     {externalData.find(s => s.semester === selectedSemester)?.passingDate || "-"}
                   </TableCell>
                 </TableRow>
@@ -232,7 +245,8 @@ const External = () => {
           </TableBody>
         </Table>
       </TableContainer>
-    </Box>
+      )}
+    </Container>
   );
 };
 

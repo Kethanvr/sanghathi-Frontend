@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useMemo, useCallback } from "react";
 import {
   Box,
   Button,
@@ -10,7 +10,7 @@ import {
   Stack,
   Divider,
 } from "@mui/material";
-import axios from "axios";
+import api from "../../utils/axios";
 import { AuthContext } from "../../context/AuthContext";
 import Papa from "papaparse";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -18,7 +18,10 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { alpha, useTheme } from "@mui/material/styles";
-const BASE_URL = import.meta.env.VITE_API_URL;
+import useDraftPersistence from "../../hooks/useDraftPersistence";
+import { resolveDraftScopeId } from "../../utils/draftScope";
+import { recordAdminUploadSession } from "../../utils/uploadHistory";
+import logger from "../../utils/logger.js";
 
 const AddMarks = () => {
   const theme = useTheme();
@@ -28,7 +31,26 @@ const AddMarks = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [file, setFile] = useState(null);
-  const token = localStorage.getItem("token");
+
+  const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
+
+  const restoreDraftState = useCallback((draftData = {}) => {
+    setError(typeof draftData.error === "string" ? draftData.error : "");
+    setSuccess(typeof draftData.success === "string" ? draftData.success : "");
+  }, []);
+
+  useDraftPersistence({
+    formType: "external-marks-upload",
+    scopeId: draftScopeId,
+    values: {
+      error,
+      success,
+      hasSelectedFile: Boolean(file),
+      isLoading: loading,
+    },
+    reset: restoreDraftState,
+    enableServerSync: false,
+  });
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -134,20 +156,16 @@ const AddMarks = () => {
   const fetchUserIdByUSN = async (usn) => {
     try {
       // Call the API to get user ID from USN
-      const response = await axios.get(`${BASE_URL}/users/usn/${usn}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await api.get(`/users/usn/${usn}`);
 
       if (response.data && response.data.userId) {
         return response.data.userId;
       } else {
-        console.error(`No userId found for USN: ${usn}`);
+        logger.error(`No userId found for USN: ${usn}`);
         return null;
       }
     } catch (error) {
-      console.error(`Error looking up userId for USN ${usn}:`, error.response?.data || error.message);
+      logger.error(`Error looking up userId for USN ${usn}:`, error.response?.data || error.message);
       return null;
     }
   };
@@ -174,31 +192,34 @@ const AddMarks = () => {
 
           // Create an array to track results for each student
           const results = [];
+          const affectedUserIds = new Set();
 
           // Process each student
           for (const [usn, semesterGroups] of studentGroups) {
             try {
               // First look up student ID by USN
-              console.log(`Looking up student with USN: ${usn}`);
+              logger.info(`Looking up student with USN: ${usn}`);
 
               let studentId = null;
               try {
-                console.log(`Making API call to fetch user ID for USN: ${usn}`);
+                logger.info(`Making API call to fetch user ID for USN: ${usn}`);
                 studentId = await fetchUserIdByUSN(usn);
-                console.log(`Result of user lookup for USN ${usn}:`, studentId ? `Found: ${studentId}` : "Not found");
+                logger.info(`Result of user lookup for USN ${usn}:`, studentId ? `Found: ${studentId}` : "Not found");
               } catch (lookupError) {
-                console.error(`Error looking up student with USN ${usn}:`, lookupError);
+                logger.error(`Error looking up student with USN ${usn}:`, lookupError);
               }
 
               // If lookup failed, fall back to admin ID
               if (!studentId) {
-                console.warn(`Could not find userId for USN ${usn}, falling back to admin ID: ${user._id}`);
+                logger.warn(`Could not find userId for USN ${usn}, falling back to admin ID: ${user?._id}`);
                 throw new Error(`Student not found for USN: ${usn}`);
               }
 
+              affectedUserIds.add(String(studentId));
+
               // Submit data for each semester
               for (const [semester, subjects] of semesterGroups) {
-                console.log(`Submitting semester ${semester} data for USN ${usn}:`, subjects);
+                logger.info(`Submitting semester ${semester} data for USN ${usn}:`, subjects);
 
                 // Make sure we're sending all fields properly
                 const formattedSubjects = subjects.map(subject => ({
@@ -211,18 +232,13 @@ const AddMarks = () => {
                   result: subject.result || "FAIL"
                 }));
 
-                await axios.post(
-                  `${BASE_URL}/students/external/${studentId}`,
+                await api.post(
+                  `/students/external/${studentId}`,
                   {
                     semester,
                     subjects: formattedSubjects,
                     passingDate: subjects[0]?.passingDate || null,
                     sgpa: subjects[0]?.cgpa || null
-                  },
-                  {
-                    headers: {
-                      Authorization: `Bearer ${token}`
-                    }
                   }
                 );
               }
@@ -236,7 +252,7 @@ const AddMarks = () => {
                 status: 'error',
                 message: error.response?.data?.message || error.message
               });
-              console.error(`Error processing student ${usn}:`, error);
+              logger.error(`Error processing student ${usn}:`, error);
             }
           }
 
@@ -251,13 +267,25 @@ const AddMarks = () => {
             setError(`Failed to process ${totalCount - successCount} students. See console for details.`);
           }
 
+          await recordAdminUploadSession({
+            tabType: "add-external-marks",
+            fileName: file?.name || "",
+            totalRows: totalCount,
+            successCount,
+            errorCount: totalCount - successCount,
+            errors: results
+              .filter((entry) => entry.status === "error")
+              .map((entry) => `${entry.usn}: ${entry.message || "Unknown error"}`),
+            affectedUserIds: Array.from(affectedUserIds),
+          });
+
           setFile(null);
           // Reset file input
           const fileInput = document.getElementById("csv-file-input");
           if (fileInput) fileInput.value = "";
         } catch (err) {
           setError("Error processing CSV file: " + (err.message || "Unknown error"));
-          console.error("CSV processing error:", err);
+          logger.error("CSV processing error:", err);
         }
         setLoading(false);
       };
@@ -275,11 +303,11 @@ const AddMarks = () => {
   };
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
       <Paper
         elevation={3}
         sx={{
-          p: 4,
+          p: { xs: 2, sm: 4 },
           borderRadius: 2,
           backgroundColor: isLight
             ? 'rgba(255, 255, 255, 0.8)'

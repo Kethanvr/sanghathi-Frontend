@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -17,15 +17,40 @@ import {
   CloudUpload as CloudUploadIcon
 } from "@mui/icons-material";
 import Papa from "papaparse";
-import axios from "axios";
-
-const BASE_URL = import.meta.env.VITE_API_URL;
+import api from "../../utils/axios";
+import useDraftPersistence from "../../hooks/useDraftPersistence";
+import { resolveDraftScopeId } from "../../utils/draftScope";
+import { recordAdminUploadSession } from "../../utils/uploadHistory";
 
 const AddMoocDetails = () => {
   const [processing, setProcessing] = useState(false);
   const [successCount, setSuccessCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
   const [errors, setErrors] = useState([]);
+  const [fileName, setFileName] = useState("");
+
+  const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
+
+  const restoreDraftState = useCallback((draftData = {}) => {
+    setSuccessCount(Number(draftData.successCount) || 0);
+    setErrorCount(Number(draftData.errorCount) || 0);
+    setErrors(Array.isArray(draftData.errors) ? draftData.errors : []);
+  }, []);
+
+  const persistedErrors = useMemo(() => errors.slice(0, 200), [errors]);
+
+  useDraftPersistence({
+    formType: "admin-mooc-upload",
+    scopeId: draftScopeId,
+    values: {
+      successCount,
+      errorCount,
+      errors: persistedErrors,
+      isProcessing: processing,
+    },
+    reset: restoreDraftState,
+    enableServerSync: false,
+  });
 
   // ================= TEMPLATE DOWNLOAD =================
   const downloadTemplate = () => {
@@ -72,6 +97,7 @@ const AddMoocDetails = () => {
     const uploadedFile = event.target.files[0];
     if (!uploadedFile) return;
 
+    setFileName(uploadedFile.name || "");
     setProcessing(true);
     setErrors([]);
     setSuccessCount(0);
@@ -97,13 +123,14 @@ const AddMoocDetails = () => {
     let success = 0;
     let errCount = 0;
     const newErrors = [];
+    const affectedUserIds = new Set();
 
     for (const row of rows) {
       try {
         if (!row.USN) throw new Error("USN missing");
         if (!row.CourseName) throw new Error("Course Name missing");
 
-        const response = await axios.get(`${BASE_URL}/users/usn/${row.USN}`, {
+        const response = await api.get(`/users/usn/${row.USN}`, {
           params: { _ts: Date.now() },
           headers: {
             "Cache-Control": "no-cache",
@@ -114,7 +141,7 @@ const AddMoocDetails = () => {
 
         if (!userId) throw new Error("User not found");
 
-        await axios.post(`${BASE_URL}/mooc-data/mooc`, {
+        await api.post(`/mooc-data/mooc`, {
           userId,
           mooc: [
             {
@@ -128,11 +155,22 @@ const AddMoocDetails = () => {
         });
 
         success++;
+        affectedUserIds.add(String(userId));
       } catch (error) {
         errCount++;
         newErrors.push(`Error for ${row.USN}: ${error.message}`);
       }
     }
+
+    await recordAdminUploadSession({
+      tabType: "add-mooc-details",
+      fileName,
+      totalRows: rows.length,
+      successCount: success,
+      errorCount: errCount,
+      errors: newErrors,
+      affectedUserIds: Array.from(affectedUserIds),
+    });
 
     setSuccessCount(success);
     setErrorCount(errCount);
@@ -142,8 +180,8 @@ const AddMoocDetails = () => {
 
   // ================= UI =================
   return (
-    <Container maxWidth="md">
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 2, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+      <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 2, mb: 4 }}>
         <Box sx={{ textAlign: "center", mb: 3 }}>
           <Typography variant="h4" sx={{ fontWeight: "bold", mb: 1 }}>
             Upload MOOC Course Details
@@ -186,11 +224,12 @@ const AddMoocDetails = () => {
           <Typography variant="body2">• Certificate Link must be valid URL</Typography>
         </Box>
 
-        <Stack direction="row" spacing={2} justifyContent="center">
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="center">
           <Button
             variant="outlined"
             startIcon={<FileDownloadIcon />}
             onClick={downloadTemplate}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             Download Template
           </Button>
@@ -200,6 +239,7 @@ const AddMoocDetails = () => {
             component="label"
             startIcon={<CloudUploadIcon />}
             disabled={processing}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             {processing ? "Processing..." : "Upload File"}
             <input
