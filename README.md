@@ -7,15 +7,19 @@ Sanghathi Frontend is the user interface layer of the Sanghathi mentoring platfo
 ## Project Report
 
 ### 1. Project Title
+
 Sanghathi: AI-Powered Mentoring Tool (Frontend Module)
 
 ### 2. Abstract
+
 This project delivers a role-based web interface for mentoring operations in educational institutions. The frontend is built with React and Vite, and it connects to backend services for authentication, student lifecycle data, reporting, uploads, notifications, and chat. The objective is to provide a unified, user-friendly platform that improves mentor-mentee coordination and academic monitoring.
 
 ### 3. Problem Statement
+
 Mentoring and student performance processes are often distributed across spreadsheets, chats, and manual records. This creates delays, data inconsistency, and low visibility for stakeholders. Sanghathi solves this by centralizing workflows into one dashboard-driven application.
 
 ### 4. Objectives
+
 - Build secure role-based access and navigation.
 - Provide structured forms for student and academic data.
 - Support mentor-mentee engagement through communication tools.
@@ -23,6 +27,7 @@ Mentoring and student performance processes are often distributed across spreads
 - Offer responsive and maintainable UI architecture for scale.
 
 ### 5. Scope
+
 - Authentication and protected routes.
 - Admin and department-level dashboards.
 - Student profile and semester data modules.
@@ -62,10 +67,19 @@ Mentoring and student performance processes are often distributed across spreads
 
 The Sanghathi Frontend provides an organized, role-aware experience that reduces manual overhead and improves data visibility across mentoring teams. It serves as the interaction layer for daily institutional mentoring operations.
 
+## New Contributors
+
+- [Kethan VR](https://github.com/Kethanvr)
+
 ## Contributors
 
-- Kethan VR
-- Sanghathi Team Contributors
+- shovan-mondal
+- SUJAY-HK
+- Kulsum06
+- Sai-Emani25
+- monu564100
+- vsuryacharan
+- advitha24
 
 See [contribute.md](contribute.md) for contribution standards.
 
