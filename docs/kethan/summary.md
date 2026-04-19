@@ -17,7 +17,7 @@ Scope: Sanghathi Frontend + Sanghathi Backend
 - Problem: Several routes were either unprotected or had inconsistent role gating.
 - Fix: Added/verified route protection middleware, expanded role validation tests, and normalized role-based navigation behavior for faculty/HOD/director/student paths.
 
-### Reliability and Logging
+### Reliability and Logging![1776609639359](image/summary/1776609639359.png)
 - Problem: Inconsistent console logging and weak observability made issue diagnosis difficult.
 - Fix: Standardized logger usage and removed scattered console usage patterns across backend/frontend code paths.
 
