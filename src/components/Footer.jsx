@@ -30,6 +30,11 @@ const supportEmails = [
   "moku23ise@cmrit.ac.in",
 ];
 
+const supportLinks = supportEmails.map((email) => ({
+  label: email,
+  href: `mailto:${email}`,
+}));
+
 const roleLinks = {
   student: [
     { label: "Mentor Details", to: "/mentor-details" },
@@ -150,7 +155,7 @@ const Footer = () => {
             </Stack>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={2}>
             <FooterLinkGroup title="Quick Links" links={commonLinks} />
           </Grid>
 
@@ -161,35 +166,14 @@ const Footer = () => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={2}>
             <FooterLinkGroup title="Contact" links={contactLinks} />
           </Grid>
+
+          <Grid item xs={12} sm={6} md={2}>
+            <FooterLinkGroup title="Having any issues / problems?" links={supportLinks} />
+          </Grid>
         </Grid>
-
-        <Divider sx={{ my: 2 }} />
-
-        <Stack spacing={0.8} sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-            Having any issues / problems?
-          </Typography>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={{ xs: 0.5, sm: 2.2 }}
-            sx={{ flexWrap: "wrap", rowGap: 0.4 }}
-          >
-            {supportEmails.map((email) => (
-              <MuiLink
-                key={email}
-                href={`mailto:${email}`}
-                underline="hover"
-                color="text.secondary"
-                sx={{ fontSize: "0.92rem" }}
-              >
-                {email}
-              </MuiLink>
-            ))}
-          </Stack>
-        </Stack>
 
         <Divider sx={{ mb: 2 }} />
 

@@ -8,7 +8,6 @@ import {
   Chip,
   Container,
   Grid,
-  Link as MuiLink,
   Paper,
   Stack,
   Typography,
@@ -16,8 +15,37 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { Link as RouterLink, useParams } from "react-router-dom";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import MailOutlineRoundedIcon from "@mui/icons-material/MailOutlineRounded";
 import Page from "../components/Page";
 import { developers } from "../data/developers";
+import { buildCanonicalUrl, compactObject, toAbsoluteUrl } from "../utils/seo";
+
+const buildKeywords = (developer, isKethanProfile) => {
+  if (isKethanProfile) {
+    return [
+      "Kethan VR",
+      "Kethanvr",
+      "Kethan VR developer",
+      "Full Stack AI Engineer",
+      "DevOps Engineer",
+      "Sanghathi",
+      "Sanghathi developer",
+      "CMRIT mentoring platform",
+      "React Node.js MongoDB engineer",
+      "AI app developer India",
+    ].join(", ");
+  }
+
+  return [
+    developer.name,
+    `${developer.name} developer profile`,
+    "Sanghathi contributors",
+    "Sanghathi developers",
+    "CMRIT mentoring platform",
+  ].join(", ");
+};
 
 const DeveloperProfile = () => {
   const theme = useTheme();
@@ -27,7 +55,12 @@ const DeveloperProfile = () => {
 
   if (!developer) {
     return (
-      <Page title="Developer Profile | Sanghathi">
+      <Page
+        title="Developer Profile Not Found"
+        description="The requested developer profile is unavailable."
+        canonicalPath="/about-developers"
+        noIndex
+      >
         <Container maxWidth="md" sx={{ py: { xs: 4, md: 6 } }}>
           <Paper
             elevation={0}
@@ -55,9 +88,78 @@ const DeveloperProfile = () => {
   }
 
   const hasFullProfile = Boolean(developer.fullProfile);
+  const canonicalPath = `/about-developers/${developer.id}`;
+  const canonicalUrl = buildCanonicalUrl(canonicalPath);
+  const isKethanProfile = developer.id === "kethanvr";
+  const profileDescription = isKethanProfile
+    ? "Kethan VR is a Full-Stack AI and DevOps Engineer building Sanghathi, with expertise in React, Node.js, Docker, CI/CD, and production AI systems."
+    : `${developer.name} is a contributor to Sanghathi. Explore role, profile summary, and contribution details.`;
+  const profileKeywords = buildKeywords(developer, isKethanProfile);
+
+  const skillsFromProfile = developer.fullProfile
+    ? Object.values(developer.fullProfile.techStack || {}).flat()
+    : [];
+
+  const personStructuredData = compactObject({
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: developer.name,
+    url: canonicalUrl,
+    image: toAbsoluteUrl(developer.image),
+    jobTitle: developer.role,
+    description: profileDescription,
+    worksFor: {
+      "@type": "Organization",
+      name: "Sanghathi",
+      url: buildCanonicalUrl("/"),
+    },
+    sameAs: [developer.github, developer.linkedin],
+    email: developer.email ? `mailto:${developer.email}` : undefined,
+    knowsAbout: skillsFromProfile.slice(0, 20),
+  });
+
+  const profilePageStructuredData = compactObject({
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    name: `${developer.name} | Sanghathi`,
+    description: profileDescription,
+    url: canonicalUrl,
+    mainEntity: {
+      "@type": "Person",
+      name: developer.name,
+      url: canonicalUrl,
+    },
+  });
+
+  const breadcrumbStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "About Developers",
+        item: buildCanonicalUrl("/about-developers"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: developer.name,
+        item: canonicalUrl,
+      },
+    ],
+  };
 
   return (
-    <Page title={`${developer.name} | Sanghathi`}>
+    <Page
+      title={`${developer.name} Developer Profile`}
+      description={profileDescription}
+      canonicalPath={canonicalPath}
+      image={developer.image || "/apple-touch-icon.png"}
+      type="profile"
+      keywords={profileKeywords}
+      structuredData={[profilePageStructuredData, personStructuredData, breadcrumbStructuredData]}
+    >
       <Box
         sx={{
           minHeight: "100%",
@@ -132,26 +234,73 @@ const DeveloperProfile = () => {
                     <Typography variant="body1" color="text.secondary">
                       {developer.shortBio}
                     </Typography>
+                      {isKethanProfile ? (
+                        <Typography variant="body2" color="text.secondary">
+                          Kethan VR works across full-stack engineering, AI integrations, and DevOps automation for production systems at Sanghathi.
+                        </Typography>
+                      ) : null}
                     <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-                      <MuiLink href={developer.github} target="_blank" rel="noreferrer" underline="hover" sx={{ fontWeight: 700 }}>
-                        GitHub Profile
-                      </MuiLink>
+                        <Button
+                          component="a"
+                          href={developer.github}
+                          target="_blank"
+                          rel="noreferrer"
+                          variant="outlined"
+                          startIcon={<GitHubIcon />}
+                          sx={{ width: "fit-content" }}
+                        >
+                          GitHub
+                        </Button>
                       {developer.linkedin && (
-                        <MuiLink
+                          <Button
+                            component="a"
                           href={developer.linkedin}
                           target="_blank"
                           rel="noreferrer"
-                          underline="hover"
-                          sx={{ fontWeight: 700 }}
+                            variant="outlined"
+                            startIcon={<LinkedInIcon />}
+                            sx={{ width: "fit-content" }}
                         >
-                          LinkedIn Profile
-                        </MuiLink>
+                            LinkedIn
+                          </Button>
                       )}
+                        {developer.email ? (
+                          <Button
+                            component="a"
+                            href={`mailto:${developer.email}`}
+                            variant="outlined"
+                            startIcon={<MailOutlineRoundedIcon />}
+                            sx={{ width: "fit-content" }}
+                          >
+                            Email
+                          </Button>
+                        ) : null}
                     </Stack>
                   </Stack>
                 </Stack>
               </Stack>
             </Paper>
+
+              {isKethanProfile ? (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: { xs: 2.2, sm: 3 },
+                    borderRadius: 3,
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.35)}`,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  }}
+                >
+                  <Stack spacing={0.8}>
+                    <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                      Kethan VR at Sanghathi
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                      Kethan VR is a Full-Stack AI and DevOps Engineer at Sanghathi, focused on building scalable web platforms, AI-powered workflows, and reliable deployment pipelines.
+                    </Typography>
+                  </Stack>
+                </Paper>
+              ) : null}
 
             {hasFullProfile ? (
               <Stack spacing={2.5}>

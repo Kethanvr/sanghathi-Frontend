@@ -467,19 +467,11 @@ function App() {
                   />
                   <Route
                     path="/about-developers"
-                    element={
-                      <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={AboutDevelopers} />
-                      </ProtectedRouteWrapper>
-                    }
+                    element={<LazyLoadWrapper component={AboutDevelopers} />}
                   />
                   <Route
                     path="/about-developers/:developerId"
-                    element={
-                      <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={DeveloperProfile} />
-                      </ProtectedRouteWrapper>
-                    }
+                    element={<LazyLoadWrapper component={DeveloperProfile} />}
                   />
                 </Route>
                 

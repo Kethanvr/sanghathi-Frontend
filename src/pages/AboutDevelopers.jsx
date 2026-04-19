@@ -5,36 +5,95 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   Container,
   Grid,
+  IconButton,
   Paper,
   Link as MuiLink,
   Stack,
+  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { Link as RouterLink } from "react-router-dom";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import MailOutlineRoundedIcon from "@mui/icons-material/MailOutlineRounded";
+import ArrowOutwardRoundedIcon from "@mui/icons-material/ArrowOutwardRounded";
 import Page from "../components/Page";
 import { developers, developerGroups } from "../data/developers";
+import { buildCanonicalUrl, compactObject } from "../utils/seo";
+
+const orderedDeveloperIds = [
+  ...developerGroups.newbie,
+  ...developerGroups.founders,
+  ...developerGroups.others,
+];
+
+const aboutDevelopersStructuredData = compactObject({
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "About Developers | Sanghathi",
+  description:
+    "Meet the Sanghathi development team including Kethan VR, with dedicated profile pages and contribution highlights.",
+  url: buildCanonicalUrl("/about-developers"),
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: orderedDeveloperIds.map((id, index) => {
+      const developer = developers[id];
+
+      if (!developer) {
+        return null;
+      }
+
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        name: developer.name,
+        url: buildCanonicalUrl(`/about-developers/${developer.id}`),
+      };
+    }),
+  },
+});
 
 const DeveloperPreviewCard = ({ developer, featured = false }) => {
   const theme = useTheme();
   const hasImage = Boolean(developer.image);
+  const socialButtonStyle = {
+    border: `1px solid ${alpha(theme.palette.divider, 0.9)}`,
+    color: "text.secondary",
+    backgroundColor: alpha(theme.palette.background.default, 0.65),
+    "&:hover": {
+      color: "primary.main",
+      borderColor: alpha(theme.palette.primary.main, 0.5),
+      backgroundColor: alpha(theme.palette.primary.main, 0.08),
+    },
+  };
 
   return (
     <Card
       sx={{
         borderRadius: 3,
-        border: `1px solid ${alpha(theme.palette.divider, 0.85)}`,
-        backgroundColor: alpha(theme.palette.background.paper, 0.84),
+        border: `1px solid ${alpha(
+          featured ? theme.palette.primary.main : theme.palette.divider,
+          featured ? 0.35 : 0.85
+        )}`,
+        background: featured
+          ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.14)} 0%, ${alpha(
+              theme.palette.background.paper,
+              0.88
+            )} 64%)`
+          : alpha(theme.palette.background.paper, 0.84),
         height: "100%",
+        overflow: "hidden",
       }}
     >
       <CardContent>
         <Stack
-          direction={featured ? { xs: "column", md: "row" } : "row"}
-          spacing={2}
+          direction={featured ? { xs: "column", md: "row" } : { xs: "column", sm: "row" }}
+          spacing={2.2}
           alignItems={featured ? { xs: "flex-start", md: "center" } : "center"}
         >
           {hasImage ? (
@@ -66,6 +125,14 @@ const DeveloperPreviewCard = ({ developer, featured = false }) => {
           )}
 
           <Stack spacing={1.1} sx={{ width: "100%" }}>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: "wrap" }}>
+              <Chip
+                label={featured ? "Featured" : "Contributor"}
+                size="small"
+                color={featured ? "primary" : "default"}
+                variant={featured ? "filled" : "outlined"}
+              />
+            </Stack>
             <Typography variant={featured ? "h5" : "h6"} sx={{ fontWeight: 800 }}>
               {developer.name}
             </Typography>
@@ -75,21 +142,54 @@ const DeveloperPreviewCard = ({ developer, featured = false }) => {
             <Typography variant="body2" color="text.secondary">
               {developer.shortBio}
             </Typography>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-              <MuiLink
-                href={developer.github}
-                target="_blank"
-                rel="noreferrer"
-                underline="hover"
-                sx={{ fontWeight: 600, width: "fit-content" }}
-              >
-                GitHub
-              </MuiLink>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2} alignItems={{ sm: "center" }}>
+              <Stack direction="row" spacing={0.8}>
+                <Tooltip title="GitHub">
+                  <IconButton
+                    component="a"
+                    href={developer.github}
+                    target="_blank"
+                    rel="noreferrer"
+                    size="small"
+                    sx={socialButtonStyle}
+                  >
+                    <GitHubIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                {developer.linkedin ? (
+                  <Tooltip title="LinkedIn">
+                    <IconButton
+                      component="a"
+                      href={developer.linkedin}
+                      target="_blank"
+                      rel="noreferrer"
+                      size="small"
+                      sx={socialButtonStyle}
+                    >
+                      <LinkedInIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                ) : null}
+                {developer.email ? (
+                  <Tooltip title="Email">
+                    <IconButton
+                      component="a"
+                      href={`mailto:${developer.email}`}
+                      size="small"
+                      sx={socialButtonStyle}
+                    >
+                      <MailOutlineRoundedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                ) : null}
+              </Stack>
+
               <Button
                 component={RouterLink}
                 to={`/about-developers/${developer.id}`}
                 variant="outlined"
                 size="small"
+                endIcon={<ArrowOutwardRoundedIcon fontSize="small" />}
                 sx={{ width: "fit-content" }}
               >
                 Read More
@@ -104,7 +204,14 @@ const DeveloperPreviewCard = ({ developer, featured = false }) => {
 
 const TeamSection = ({ title, ids, featuredFirst = false }) => (
   <Stack spacing={1.6}>
-    <Typography variant="h5" sx={{ fontWeight: 800 }}>
+    <Typography
+      variant="h5"
+      sx={{
+        fontWeight: 800,
+        borderLeft: (theme) => `4px solid ${alpha(theme.palette.primary.main, 0.65)}`,
+        pl: 1.2,
+      }}
+    >
       {title}
     </Typography>
     <Grid container spacing={2.2}>
@@ -132,14 +239,29 @@ const AboutDevelopers = () => {
   const isLight = theme.palette.mode === "light";
 
   return (
-    <Page title="About Developers">
+    <Page
+      title="About Developers"
+      description="Meet the developers behind Sanghathi, including Kethan VR. Explore team roles, social profiles, and dedicated developer pages."
+      canonicalPath="/about-developers"
+      image="/developers/kethanvr.jpeg"
+      keywords="Sanghathi developers, Kethan VR, Sanghathi team, CMRIT mentoring platform, full stack AI developer"
+      structuredData={aboutDevelopersStructuredData}
+    >
       <Box
         sx={{
           pt: 3,
           pb: 5,
-          backgroundColor: isLight
-            ? alpha(theme.palette.primary.lighter, 0.4)
-            : alpha(theme.palette.grey[900], 0.2),
+          background: isLight
+            ? `radial-gradient(circle at 8% 10%, ${alpha(theme.palette.primary.light, 0.18)} 0%, transparent 36%),
+               linear-gradient(180deg, ${alpha(theme.palette.primary.lighter, 0.3)} 0%, ${alpha(
+                 theme.palette.background.default,
+                 0.96
+               )} 100%)`
+            : `radial-gradient(circle at 8% 10%, ${alpha(theme.palette.info.light, 0.18)} 0%, transparent 34%),
+               linear-gradient(180deg, ${alpha(theme.palette.grey[900], 0.35)} 0%, ${alpha(
+                 theme.palette.background.default,
+                 0.98
+               )} 100%)`,
           minHeight: "calc(100vh - 64px)",
         }}
       >
@@ -168,6 +290,11 @@ const AboutDevelopers = () => {
               <Typography variant="body1" color="text.secondary">
                 Explore the team behind Sanghathi. Each card shows a short overview, and Read More opens the dedicated profile page.
               </Typography>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 0.8 }}>
+                <Chip label="Sanghathi Engineering" size="small" variant="outlined" />
+                <Chip label="AI + Full Stack" size="small" variant="outlined" />
+                <Chip label="Open Source Contributors" size="small" variant="outlined" />
+              </Stack>
             </Stack>
           </Paper>
 
