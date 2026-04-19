@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { buildBrandedMailto } from "../utils/mailto";
 
 const logo = "/apple-touch-icon.png";
 
@@ -24,16 +25,7 @@ const contactLinks = [
   { label: "About Developers", to: "/about-developers" },
 ];
 
-const supportEmails = [
-  "kethan.ise24@cmrit.ac.in",
-  "shmo23ise@cmrit.ac.in",
-  "moku23ise@cmrit.ac.in",
-];
-
-const supportLinks = supportEmails.map((email) => ({
-  label: email,
-  href: `mailto:${email}`,
-}));
+const SUPPORT_EMAIL = "kethan.ise24@cmrit.ac.in";
 
 const roleLinks = {
   student: [
@@ -112,6 +104,16 @@ const Footer = () => {
     location.pathname.startsWith("/campus-buddy");
 
   const footerLinks = roleLinks[role] || [];
+  const supportLinks = [
+    {
+      label: SUPPORT_EMAIL,
+      href: buildBrandedMailto(SUPPORT_EMAIL, {
+        subject: "Sanghathi Support Request",
+        details: `I am facing an issue in Sanghathi. Route: ${location.pathname}`,
+        includePageContext: false,
+      }),
+    },
+  ];
 
   return (
     <Box
