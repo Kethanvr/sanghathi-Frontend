@@ -50,6 +50,7 @@ const Settings = lazy(() => import("./pages/Settings/Settings"));
 const TYLScorecard = lazy(() => import("./pages/Student/TYLScorecard"));
 const MentorMenteeConversation = lazy(() => import("./pages/MentorMentee/MentorMenteeConversation"));
 const MyChatBot = lazy(() => import("./mychatbot"));
+const AboutDevelopers = lazy(() => import("./pages/AboutDevelopers"));
 
 function App() {
   // Track page views on route change using Google Analytics GA4
@@ -62,6 +63,20 @@ function App() {
   useEffect(() => {
     trackPageView(location.pathname + location.search); // Track page changes
   }, [location]);
+
+  const globalFooterPrefixes = [
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+    "/resetPassword",
+    "/about-developers",
+  ];
+
+  const shouldRenderGlobalFooter = globalFooterPrefixes.some(
+    (prefix) =>
+      location.pathname === prefix || location.pathname.startsWith(`${prefix}/`)
+  );
 
 
   const { user } = useContext(AuthContext);
@@ -96,6 +111,7 @@ function App() {
                 <Route path="/reset-password/:token" element={<LazyLoadWrapper component={ResetPassword} />} />
                 <Route path="/resetPassword/:token" element={<LazyLoadWrapper component={ResetPassword} />} />
                 <Route path="/signup" element={<LazyLoadWrapper component={Signup} />} />
+                <Route path="/about-developers" element={<LazyLoadWrapper component={AboutDevelopers} />} />
 
                 <Route element={<DashboardLayout />}>
                   <Route
@@ -453,7 +469,7 @@ function App() {
                 </Route>
                 
               </Routes>
-              <Footer />
+              {shouldRenderGlobalFooter ? <Footer /> : null}
             </Box>
           </Box>
         </MotionLazyContainer>
