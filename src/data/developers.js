@@ -7,6 +7,7 @@ export const developers = {
     image: "/developers/kethanvr.jpeg",
     github: "https://github.com/Kethanvr",
     linkedin: "https://www.linkedin.com/in/kethanvr/",
+    email: "kethan.ise24@cmrit.ac.in",
     shortBio:
       "Architects, deploys, and scales production-grade full-stack AI systems end-to-end.",
     fullProfile: {
@@ -79,14 +80,16 @@ export const developers = {
     role: "Founder",
     group: "founders",
     github: "https://github.com/shovan-mondal",
+    email: "shmo23ise@cmrit.ac.in",
     shortBio: "Core founding contributor of Sanghathi.",
   },
   monu564100: {
     id: "monu564100",
     name: "monu564100",
-    role: "Founder",
+    role: "CoFounder",
     group: "founders",
     github: "https://github.com/monu564100",
+    email: "moku23ise@cmrit.ac.in",
     shortBio: "Core founding contributor of Sanghathi.",
   },
   "SUJAY-HK": {
