@@ -51,6 +51,7 @@ const TYLScorecard = lazy(() => import("./pages/Student/TYLScorecard"));
 const MentorMenteeConversation = lazy(() => import("./pages/MentorMentee/MentorMenteeConversation"));
 const MyChatBot = lazy(() => import("./mychatbot"));
 const AboutDevelopers = lazy(() => import("./pages/AboutDevelopers"));
+const DeveloperProfile = lazy(() => import("./pages/DeveloperProfile"));
 
 function App() {
   // Track page views on route change using Google Analytics GA4
@@ -469,6 +470,14 @@ function App() {
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={AboutDevelopers} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/about-developers/:developerId"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={DeveloperProfile} />
                       </ProtectedRouteWrapper>
                     }
                   />
