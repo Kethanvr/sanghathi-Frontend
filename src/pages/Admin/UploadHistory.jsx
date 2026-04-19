@@ -10,7 +10,11 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
+  Grid,
+  MenuItem,
   Paper,
+  Select,
   Stack,
   Table,
   TableBody,
@@ -23,6 +27,7 @@ import {
 } from "@mui/material";
 import {
   Autorenew as RestoreIcon,
+  InfoOutlined as DetailsIcon,
   Refresh as RefreshIcon,
   Visibility as PreviewIcon,
 } from "@mui/icons-material";
@@ -53,6 +58,12 @@ const STATUS_COLORS = {
   "restore-failed": "error",
 };
 
+const SOURCE_LABELS = {
+  "dashboard-ui": "Admin Dashboard",
+  "local-script": "Local Script",
+  api: "API",
+};
+
 const formatDateTime = (value) => {
   if (!value) return "-";
 
@@ -71,6 +82,28 @@ const renderPreviewRows = (preview) => {
   return entries.map(([key, value]) => ({ key, value }));
 };
 
+const toUserLabel = (user) => {
+  if (!user || typeof user !== "object") {
+    return "System";
+  }
+
+  if (user.name && user.email) {
+    return `${user.name} (${user.email})`;
+  }
+
+  return user.name || user.email || "System";
+};
+
+const prettySource = (source) => SOURCE_LABELS[source] || source || "Unknown";
+
+const formatJson = (value) => {
+  try {
+    return JSON.stringify(value || {}, null, 2);
+  } catch {
+    return "{}";
+  }
+};
+
 export default function UploadHistory() {
   const theme = useTheme();
   const isLight = theme.palette.mode === "light";
@@ -82,30 +115,72 @@ export default function UploadHistory() {
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
   const [previewData, setPreviewData] = useState(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [detailsSession, setDetailsSession] = useState(null);
   const [restoringId, setRestoringId] = useState(null);
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [tabFilter, setTabFilter] = useState("all");
 
   const loadSessions = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const { sessions: nextSessions } = await listAdminUploadSessions({ limit: 100 });
+      const params = { limit: 100 };
+      if (sourceFilter !== "all") {
+        params.source = sourceFilter;
+      }
+      if (statusFilter !== "all") {
+        params.status = statusFilter;
+      }
+      if (tabFilter !== "all") {
+        params.tabType = tabFilter;
+      }
+
+      const { sessions: nextSessions } = await listAdminUploadSessions(params);
       setSessions(nextSessions);
     } catch (loadError) {
       setError(loadError?.message || "Failed to load upload history.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [sourceFilter, statusFilter, tabFilter]);
 
   useEffect(() => {
     loadSessions();
   }, [loadSessions]);
 
+  const summary = useMemo(
+    () =>
+      sessions.reduce(
+        (accumulator, session) => {
+          accumulator.total += 1;
+          accumulator.success += session.status === "success" ? 1 : 0;
+          accumulator.partial += session.status === "partial" ? 1 : 0;
+          accumulator.failed += session.status === "failed" ? 1 : 0;
+          accumulator.restored += session.status === "restored" ? 1 : 0;
+          return accumulator;
+        },
+        { total: 0, success: 0, partial: 0, failed: 0, restored: 0 }
+      ),
+    [sessions]
+  );
+
   const selectedSessionLabel = useMemo(
     () => TAB_LABELS[selectedSession?.tabType] || selectedSession?.tabType || "Upload",
     [selectedSession]
   );
+
+  const openDetails = (session) => {
+    setDetailsSession(session);
+    setDetailsDialogOpen(true);
+  };
+
+  const closeDetails = () => {
+    setDetailsSession(null);
+    setDetailsDialogOpen(false);
+  };
 
   const openPreview = async (session) => {
     setSelectedSession(session);
@@ -195,6 +270,68 @@ export default function UploadHistory() {
             </Button>
           </Stack>
 
+          <Grid container spacing={1.5} sx={{ mb: 2 }}>
+            {[
+              { label: "Sessions", value: summary.total },
+              { label: "Success", value: summary.success },
+              { label: "Partial", value: summary.partial },
+              { label: "Failed", value: summary.failed },
+              { label: "Restored", value: summary.restored },
+            ].map((item) => (
+              <Grid key={item.label} item xs={6} sm={4} md={2}>
+                <Paper variant="outlined" sx={{ p: 1.25, borderRadius: 1.5 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {item.label}
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    {item.value}
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+
+          <Stack direction={{ xs: "column", md: "row" }} spacing={1.25} sx={{ mb: 2 }}>
+            <Select
+              size="small"
+              value={sourceFilter}
+              onChange={(event) => setSourceFilter(event.target.value)}
+              sx={{ minWidth: 190 }}
+            >
+              <MenuItem value="all">All Sources</MenuItem>
+              <MenuItem value="dashboard-ui">Admin Dashboard</MenuItem>
+              <MenuItem value="local-script">Local Script</MenuItem>
+              <MenuItem value="api">API</MenuItem>
+            </Select>
+
+            <Select
+              size="small"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              sx={{ minWidth: 170 }}
+            >
+              <MenuItem value="all">All Statuses</MenuItem>
+              <MenuItem value="success">Success</MenuItem>
+              <MenuItem value="partial">Partial</MenuItem>
+              <MenuItem value="failed">Failed</MenuItem>
+              <MenuItem value="restored">Restored</MenuItem>
+            </Select>
+
+            <Select
+              size="small"
+              value={tabFilter}
+              onChange={(event) => setTabFilter(event.target.value)}
+              sx={{ minWidth: 210 }}
+            >
+              <MenuItem value="all">All Tabs</MenuItem>
+              {Object.entries(TAB_LABELS).map(([value, label]) => (
+                <MenuItem key={value} value={value}>
+                  {label}
+                </MenuItem>
+              ))}
+            </Select>
+          </Stack>
+
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
@@ -213,11 +350,15 @@ export default function UploadHistory() {
                 <TableHead>
                   <TableRow>
                     <TableCell>Uploaded On</TableCell>
+                    <TableCell>Source</TableCell>
                     <TableCell>Tab</TableCell>
+                    <TableCell>Uploaded By</TableCell>
                     <TableCell>File</TableCell>
                     <TableCell align="right">Rows</TableCell>
                     <TableCell align="right">Success</TableCell>
                     <TableCell align="right">Errors</TableCell>
+                    <TableCell align="right">Affected</TableCell>
+                    <TableCell align="right">Created</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
@@ -230,11 +371,15 @@ export default function UploadHistory() {
                     return (
                       <TableRow key={session._id} hover>
                         <TableCell>{formatDateTime(session.createdAt)}</TableCell>
+                        <TableCell>{prettySource(session.source)}</TableCell>
                         <TableCell>{label}</TableCell>
+                        <TableCell>{toUserLabel(session.adminUserId)}</TableCell>
                         <TableCell>{session.fileName || "-"}</TableCell>
                         <TableCell align="right">{session.totalRows || 0}</TableCell>
                         <TableCell align="right">{session.successCount || 0}</TableCell>
                         <TableCell align="right">{session.errorCount || 0}</TableCell>
+                        <TableCell align="right">{session.affectedUserIds?.length || 0}</TableCell>
+                        <TableCell align="right">{session.createdUserIds?.length || 0}</TableCell>
                         <TableCell>
                           <Chip
                             size="small"
@@ -245,6 +390,20 @@ export default function UploadHistory() {
                         </TableCell>
                         <TableCell align="right">
                           <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            <Tooltip title="View full ingest details">
+                              <span>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<DetailsIcon />}
+                                  onClick={() => openDetails(session)}
+                                  disabled={Boolean(restoringId)}
+                                >
+                                  Details
+                                </Button>
+                              </span>
+                            </Tooltip>
+
                             <Tooltip title="Preview restore impact">
                               <span>
                                 <Button
@@ -320,6 +479,122 @@ export default function UploadHistory() {
           >
             Restore Session
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={detailsDialogOpen} onClose={closeDetails} fullWidth maxWidth="md">
+        <DialogTitle>Ingest Details</DialogTitle>
+        <DialogContent dividers>
+          {!detailsSession ? (
+            <Typography variant="body2" color="text.secondary">
+              No session selected.
+            </Typography>
+          ) : (
+            <Stack spacing={2}>
+              <Grid container spacing={1.25}>
+                {[
+                  ["Tab", TAB_LABELS[detailsSession.tabType] || detailsSession.tabType || "-"],
+                  ["Source", prettySource(detailsSession.source)],
+                  ["Uploaded By", toUserLabel(detailsSession.adminUserId)],
+                  ["Uploaded On", formatDateTime(detailsSession.createdAt)],
+                  ["File", detailsSession.fileName || "-"],
+                  ["Status", detailsSession.status || "unknown"],
+                  ["Total Rows", detailsSession.totalRows || 0],
+                  ["Success Count", detailsSession.successCount || 0],
+                  ["Error Count", detailsSession.errorCount || 0],
+                  ["Affected Users", detailsSession.affectedUserIds?.length || 0],
+                  ["Created Users", detailsSession.createdUserIds?.length || 0],
+                  [
+                    "Restored By",
+                    detailsSession.restoredBy ? toUserLabel(detailsSession.restoredBy) : "-",
+                  ],
+                ].map(([label, value]) => (
+                  <Grid key={label} item xs={12} sm={6}>
+                    <Typography variant="caption" color="text.secondary">
+                      {label}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {String(value)}
+                    </Typography>
+                  </Grid>
+                ))}
+              </Grid>
+
+              <Divider />
+
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Errors ({detailsSession.errors?.length || 0})
+                </Typography>
+                {detailsSession.errors?.length ? (
+                  <Stack spacing={0.75}>
+                    {detailsSession.errors.slice(0, 30).map((entry, index) => (
+                      <Typography key={`${index}-${entry}`} variant="body2" color="error.main">
+                        {`• ${entry}`}
+                      </Typography>
+                    ))}
+                    {detailsSession.errors.length > 30 ? (
+                      <Typography variant="caption" color="text.secondary">
+                        {`Showing first 30 of ${detailsSession.errors.length} errors.`}
+                      </Typography>
+                    ) : null}
+                  </Stack>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    No errors recorded.
+                  </Typography>
+                )}
+              </Box>
+
+              <Divider />
+
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Metadata
+                </Typography>
+                <Box
+                  component="pre"
+                  sx={{
+                    m: 0,
+                    p: 1.5,
+                    borderRadius: 1.5,
+                    backgroundColor: alpha(theme.palette.background.default, 0.65),
+                    overflowX: "auto",
+                    fontSize: 12,
+                  }}
+                >
+                  {formatJson(detailsSession.metadata)}
+                </Box>
+              </Box>
+
+              {detailsSession.restoreSummary ? (
+                <>
+                  <Divider />
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      Restore Summary
+                    </Typography>
+                    <Box
+                      component="pre"
+                      sx={{
+                        m: 0,
+                        p: 1.5,
+                        borderRadius: 1.5,
+                        backgroundColor: alpha(theme.palette.background.default, 0.65),
+                        overflowX: "auto",
+                        fontSize: 12,
+                      }}
+                    >
+                      {formatJson(detailsSession.restoreSummary)}
+                    </Box>
+                  </Box>
+                </>
+              ) : null}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDetails}>Close</Button>
         </DialogActions>
       </Dialog>
     </Page>

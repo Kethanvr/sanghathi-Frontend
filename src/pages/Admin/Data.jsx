@@ -2,6 +2,7 @@ import { capitalCase } from "change-case";
 import { useState } from "react";
 // @mui
 import {
+  Alert,
   Container,
   Tab,
   Box,
@@ -9,6 +10,7 @@ import {
   Paper,
   Typography,
   Button,
+  Divider,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { Link as RouterLink } from "react-router-dom";
@@ -31,6 +33,65 @@ import AddTylMarks from "./AddTylMarks";
 import AddMoocDetails from "./AddMoocDetails";
 import AddMiniProjectDetails from "./AddMiniProjectDetails";
 
+const TAB_GUIDES = {
+  "Add Users": {
+    title: "Add Users",
+    columns: ["Role-wise template columns (required fields are highlighted)", "Use unique email and phone per user", "For students, ensure valid USN and semester"],
+    notes: [
+      "If users already exist with the same email, those rows will fail.",
+      "Upload in smaller batches (50-200 rows) for easier error review.",
+    ],
+  },
+  "Add Attendance": {
+    title: "Add Attendance",
+    columns: ["USN", "Sem", "Month", "WorkingDays", "AttendedDays", "AttendancePercentage"],
+    notes: [
+      "Month values should be valid month names/abbreviations.",
+      "Each row should map to one student and one month in one semester.",
+    ],
+  },
+  "Add IAT Marks": {
+    title: "Add IAT Marks",
+    columns: ["USN", "Sem", "SubjectCode", "SubjectName", "IAT1", "IAT2", "Avg"],
+    notes: [
+      "For wide-format files with repeated subject blocks, use the local script workflow (db:ingest-iat-local).",
+      "Allowed marks include numeric values and AB/NE/ABSENT entries.",
+    ],
+  },
+  "Add External Marks": {
+    title: "Add External Marks",
+    columns: ["USN", "Sem", "SubjectCode", "SubjectName", "ExternalMarks"],
+    notes: [
+      "One row should represent one subject for one student in one semester.",
+      "Verify subject codes before upload to avoid accidental overwrites.",
+    ],
+  },
+  "Add TYL Marks": {
+    title: "Add TYL Marks",
+    columns: ["USN", "Parameter", "Target", "Actual", "Semester"],
+    notes: [
+      "TYL entries are user-scoped; wrong USN will fail the row.",
+      "Confirm semester mapping before uploading large files.",
+    ],
+  },
+  "Add MOOC Details": {
+    title: "Add MOOC Details",
+    columns: ["USN", "CourseName", "Platform", "Duration", "Status"],
+    notes: [
+      "Keep platform names consistent for easier reporting.",
+      "Use final status values only (Completed/Ongoing/etc.).",
+    ],
+  },
+  "Add MiniProject Details": {
+    title: "Add MiniProject Details",
+    columns: ["USN", "ProjectTitle", "Domain", "GuideName", "Outcome/Status"],
+    notes: [
+      "Use the same USN format as student records.",
+      "Avoid empty titles and ambiguous status values.",
+    ],
+  },
+};
+
 // ----------------------------------------------------------------------
 export default function Data() {
   const theme = useTheme();
@@ -40,6 +101,7 @@ export default function Data() {
 
   // Get the color based on the current theme mode
   const activeColor = isLight ? theme.palette.primary.main : theme.palette.info.main;
+  const activeGuide = TAB_GUIDES[currentTab] || TAB_GUIDES["Add Users"];
 
   const ACCOUNT_TABS = [
     {
@@ -137,18 +199,28 @@ export default function Data() {
               color="text.secondary"
               sx={{ maxWidth: { xs: '100%', sm: 600 }, mx: 'auto' }}
             >
-              Upload and manage data for students, attendance, and academic records
+              Upload and manage bulk academic data with safer workflows and history tracking.
             </Typography>
 
-            <Button
-              component={RouterLink}
-              to="/admin/upload-history"
-              variant="outlined"
-              size="small"
-              sx={{ mt: 2 }}
-            >
-              View Upload History & Restore
-            </Button>
+            <Box sx={{ mt: 2, display: "flex", gap: 1, justifyContent: "center", flexWrap: "wrap" }}>
+              <Button
+                component={RouterLink}
+                to="/admin/upload-history"
+                variant="outlined"
+                size="small"
+              >
+                View Upload History & Restore
+              </Button>
+
+              <Button
+                component={RouterLink}
+                to="/admin/data"
+                variant="contained"
+                size="small"
+              >
+                Add Data
+              </Button>
+            </Box>
           </Box>
 
           <Tabs
@@ -196,6 +268,52 @@ export default function Data() {
               />
             ))}
           </Tabs>
+
+          <Paper
+            variant="outlined"
+            sx={{
+              mt: 2,
+              p: { xs: 1.5, sm: 2 },
+              borderRadius: 2,
+              backgroundColor: isLight
+                ? alpha(theme.palette.primary.main, 0.03)
+                : alpha(theme.palette.info.main, 0.08),
+            }}
+          >
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+              Bulk Upload Checklist
+            </Typography>
+            <Typography variant="body2" color="text.secondary">1. Download template from the selected tab first.</Typography>
+            <Typography variant="body2" color="text.secondary">2. Keep header names exactly as expected.</Typography>
+            <Typography variant="body2" color="text.secondary">3. Validate USN values against existing students before upload.</Typography>
+            <Typography variant="body2" color="text.secondary">4. Upload in manageable batches to review errors faster.</Typography>
+            <Typography variant="body2" color="text.secondary">5. Verify the result from Upload History after each run.</Typography>
+
+            <Divider sx={{ my: 1.5 }} />
+
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
+              {`Selected Tab Guide: ${activeGuide.title}`}
+            </Typography>
+            {activeGuide.columns.map((line) => (
+              <Typography key={line} variant="body2" color="text.secondary">
+                {`• ${line}`}
+              </Typography>
+            ))}
+
+            <Box sx={{ mt: 1 }}>
+              {activeGuide.notes.map((line) => (
+                <Typography key={line} variant="body2" color="text.secondary">
+                  {`• ${line}`}
+                </Typography>
+              ))}
+            </Box>
+
+            {currentTab === "Add IAT Marks" ? (
+              <Alert severity="info" sx={{ mt: 1.5 }}>
+                For wide-format semester sheets, ingest from local file script and then verify from Upload History.
+              </Alert>
+            ) : null}
+          </Paper>
         </Paper>
 
         {ACCOUNT_TABS.map((tab) => {
