@@ -11,8 +11,10 @@ import {
 } from "@mui/material";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import logo from "../public/logo.svg";
 
 const commonLinks = [
+  { label: "About Developers", to: "/about-developers" },
   { label: "Campus Buddy", to: "/campus-buddy" },
   { label: "Threads", to: "/threads" },
   { label: "Settings", to: "/settings" },
@@ -110,9 +112,21 @@ const Footer = () => {
         <Grid container spacing={2.5} alignItems="flex-start">
           <Grid item xs={12} md={4}>
             <Stack spacing={1}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                Sanghathi
-              </Typography>
+              <Stack direction="row" spacing={1.2} alignItems="center">
+                <Box
+                  component="img"
+                  src={logo}
+                  alt="Sanghathi logo"
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    objectFit: "contain",
+                  }}
+                />
+                <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                  Sanghathi
+                </Typography>
+              </Stack>
               <Typography variant="body2" color="text.secondary">
                 Mentoring and student success platform for CMRIT.
               </Typography>
@@ -146,7 +160,7 @@ const Footer = () => {
             © {currentYear} Sanghathi. All rights reserved.
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Last updated: April 19, 2026
+            Sangathi version 2.0
           </Typography>
         </Stack>
       </Container>
