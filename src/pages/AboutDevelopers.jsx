@@ -1,63 +1,84 @@
 import React from "react";
 import {
-  Avatar,
   Box,
-  Card,
-  CardContent,
-  Chip,
   Container,
-  Grid,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  Paper,
   Link as MuiLink,
   Stack,
   Typography,
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Link as RouterLink } from "react-router-dom";
 import Page from "../components/Page";
 
-const developers = [
-  {
-    name: "Kethan VR",
-    github: "https://github.com/Kethanvr",
-    source: "Frontend README + Backend README",
-  },
-  {
-    name: "shovan-mondal",
-    github: "https://github.com/shovan-mondal",
-    source: "Frontend README + Backend README",
-  },
-  {
-    name: "SUJAY-HK",
-    github: "https://github.com/SUJAY-HK",
-    source: "Frontend README + Backend README",
-  },
-  {
-    name: "Kulsum06",
-    github: "https://github.com/Kulsum06",
-    source: "Frontend README + Backend README",
-  },
-  {
-    name: "Sai-Emani25",
-    github: "https://github.com/Sai-Emani25",
-    source: "Frontend README + Backend README",
-  },
-  {
-    name: "monu564100",
-    github: "https://github.com/monu564100",
-    source: "Frontend README + Backend README",
-  },
-  {
-    name: "vsuryacharan",
-    github: "https://github.com/vsuryacharan",
-    source: "Frontend README + Backend README",
-  },
-  {
-    name: "advitha24",
-    github: "https://github.com/advitha24",
-    source: "Frontend README",
-  },
+const newbieTeam = [{ name: "Kethan VR", github: "https://github.com/Kethanvr" }];
+
+const founders = [
+  { name: "shovan-mondal", github: "https://github.com/shovan-mondal" },
+  { name: "monu564100", github: "https://github.com/monu564100" },
 ];
+
+const otherDevelopers = [
+  { name: "SUJAY-HK", github: "https://github.com/SUJAY-HK" },
+  { name: "Kulsum06", github: "https://github.com/Kulsum06" },
+  { name: "Sai-Emani25", github: "https://github.com/Sai-Emani25" },
+  { name: "vsuryacharan", github: "https://github.com/vsuryacharan" },
+  { name: "advitha24", github: "https://github.com/advitha24" },
+];
+
+const ContributorSection = ({ title, contributors }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      borderRadius: 3,
+      border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.85)}`,
+      backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.8),
+      p: { xs: 2, sm: 2.5 },
+    }}
+  >
+    <Typography variant="h5" sx={{ fontWeight: 700, mb: 1.5 }}>
+      {title}
+    </Typography>
+    <Divider sx={{ mb: 1 }} />
+    <List disablePadding>
+      {contributors.map((contributor, index) => (
+        <ListItem
+          key={contributor.name}
+          disableGutters
+          sx={{
+            py: 1,
+            borderBottom:
+              index < contributors.length - 1
+                ? (theme) => `1px dashed ${alpha(theme.palette.divider, 0.7)}`
+                : "none",
+          }}
+        >
+          <ListItemText
+            primary={
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                {contributor.name}
+              </Typography>
+            }
+            secondary={
+              <MuiLink
+                href={contributor.github}
+                target="_blank"
+                rel="noreferrer"
+                underline="hover"
+              >
+                {contributor.github}
+              </MuiLink>
+            }
+          />
+        </ListItem>
+      ))}
+    </List>
+  </Paper>
+);
 
 const AboutDevelopers = () => {
   const theme = useTheme();
@@ -67,76 +88,53 @@ const AboutDevelopers = () => {
     <Page title="About Developers">
       <Box
         sx={{
-          minHeight: "100vh",
-          py: { xs: 4, sm: 6 },
-          background: isLight
-            ? "linear-gradient(180deg, rgba(25,118,210,0.08) 0%, rgba(255,255,255,1) 55%)"
-            : "linear-gradient(180deg, rgba(20,29,48,0.7) 0%, rgba(10,15,28,1) 60%)",
+          pt: 3,
+          pb: 5,
+          backgroundColor: isLight
+            ? alpha(theme.palette.primary.lighter, 0.4)
+            : alpha(theme.palette.grey[900], 0.2),
+          minHeight: "calc(100vh - 64px)",
         }}
       >
-        <Container maxWidth="lg">
-          <Stack spacing={1.2} sx={{ mb: 4 }}>
-            <Typography variant="h3" sx={{ fontWeight: 800 }}>
-              About Developers
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Developer names below are sourced from the contributors sections in
-              the project README files.
-            </Typography>
-            <MuiLink component={RouterLink} to="/" underline="hover" sx={{ width: "fit-content" }}>
-              Back to Home
-            </MuiLink>
+        <Container maxWidth="xl" sx={{ px: { xs: 1.5, sm: 0 } }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 4 },
+              mb: 4,
+              mt: 1,
+              borderRadius: 3,
+              backgroundColor: isLight
+                ? "rgba(255, 255, 255, 0.8)"
+                : alpha(theme.palette.background.paper, 0.6),
+              backdropFilter: "blur(20px)",
+              border: `1px solid ${alpha(
+                isLight ? theme.palette.primary.main : theme.palette.info.main,
+                0.15
+              )}`,
+            }}
+          >
+            <Stack spacing={1.2} sx={{ textAlign: "left" }}>
+              <Typography variant="h4" sx={{ fontWeight: 800 }}>
+                About Developers
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Contributors listed here are based on the contributors sections in the frontend and backend README files.
+              </Typography>
+            </Stack>
+          </Paper>
+
+          <Stack spacing={2.5}>
+            <ContributorSection
+              title="NewBiee in Team"
+              contributors={newbieTeam}
+            />
+            <ContributorSection title="Founders" contributors={founders} />
+            <ContributorSection
+              title="Other Developers"
+              contributors={otherDevelopers}
+            />
           </Stack>
-
-          <Grid container spacing={2.5}>
-            {developers.map((developer) => (
-              <Grid item xs={12} sm={6} md={4} key={developer.name}>
-                <Card
-                  sx={{
-                    borderRadius: 3,
-                    height: "100%",
-                    border: `1px solid ${alpha(theme.palette.divider, 0.85)}`,
-                    backgroundColor: alpha(theme.palette.background.paper, isLight ? 0.92 : 0.75),
-                  }}
-                >
-                  <CardContent>
-                    <Stack spacing={1.5}>
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Avatar
-                          sx={{
-                            bgcolor: isLight ? "primary.main" : "info.main",
-                            fontWeight: 700,
-                          }}
-                        >
-                          {developer.name.charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                            {developer.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Contributor
-                          </Typography>
-                        </Box>
-                      </Stack>
-
-                      <Chip label={developer.source} size="small" variant="outlined" />
-
-                      <MuiLink
-                        href={developer.github}
-                        target="_blank"
-                        rel="noreferrer"
-                        underline="hover"
-                        sx={{ fontWeight: 600 }}
-                      >
-                        View GitHub Profile
-                      </MuiLink>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
         </Container>
       </Box>
     </Page>
