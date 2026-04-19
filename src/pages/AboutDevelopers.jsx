@@ -25,6 +25,7 @@ import ArrowOutwardRoundedIcon from "@mui/icons-material/ArrowOutwardRounded";
 import Page from "../components/Page";
 import { developers, developerGroups } from "../data/developers";
 import { buildCanonicalUrl, compactObject } from "../utils/seo";
+import { buildBrandedMailto } from "../utils/mailto";
 
 const orderedDeveloperIds = [
   ...developerGroups.newbie,
@@ -174,7 +175,11 @@ const DeveloperPreviewCard = ({ developer, featured = false }) => {
                   <Tooltip title="Email">
                     <IconButton
                       component="a"
-                      href={`mailto:${developer.email}`}
+                      href={buildBrandedMailto(developer.email, {
+                        subject: `Sanghathi Developer Contact - ${developer.name}`,
+                        intro: `Hello ${developer.name},`,
+                        details: "I am reaching out from Sanghathi.",
+                      })}
                       size="small"
                       sx={socialButtonStyle}
                     >
