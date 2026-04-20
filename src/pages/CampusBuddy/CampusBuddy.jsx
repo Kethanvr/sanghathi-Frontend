@@ -100,17 +100,19 @@ const CampusBuddyHeader = () => {
       sx={{
         display: "flex",
         alignItems: "center",
-        mt: 2,
-        mb: 1,
-        ml: 5,
-        height: "5vh",
+        mt: { xs: 1, sm: 2 },
+        mb: 2,
+        ml: { xs: 2, sm: 4 },
+        height: "auto",
         width: "100%",
       }}
     >
       <Avatar
         sx={{ 
-          bgcolor: isLight ? theme.palette.primary.main : theme.palette.info.main, 
-          mr: 2 
+          bgcolor: theme.palette[colorMode].main, 
+          mr: 2,
+          width: { xs: 40, sm: 48 },
+          height: { xs: 40, sm: 48 }
         }}
         variant="rounded"
         size="large"
@@ -118,10 +120,10 @@ const CampusBuddyHeader = () => {
         <AssistantIcon fontSize="large" />
       </Avatar>
       <Box>
-        <Typography variant="h6" sx={{ mb: 0 }}>
+        <Typography variant="h6" sx={{ mb: 0, fontWeight: 700 }}>
           Campus Buddy
         </Typography>
-        <Typography variant="subtitle1" sx={{ mb: 0 }}>
+        <Typography variant="caption" sx={{ mb: 0, color: 'text.secondary' }}>
           Your Personal AI Assistant
         </Typography>
       </Box>
@@ -180,55 +182,55 @@ const CampusBuddy = () => {
   };
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <CampusBuddyHeader />
-      <Container maxWidth="xl" sx={{ overflowX: "hidden", overflowY: "auto" }}>
-        <Card sx={{ height: "80vh", display: "flex", flexShrink: 0, m: 2 }}>
+      <Container maxWidth="lg" sx={{ flexGrow: 1, display: "flex", flexDirection: "column", pb: 2 }}>
+        <Card 
+          sx={{ 
+            height: { xs: "calc(100vh - 140px)", sm: "calc(100vh - 160px)", md: "70vh" },
+            minHeight: "400px",
+            display: "flex", 
+            flexDirection: "column",
+            backgroundColor: theme => theme.palette.mode === 'light' 
+              ? theme.palette.background.paper 
+              : theme.palette.background.paper,
+            boxShadow: theme => theme.palette.mode === 'light'
+              ? "0 2px 8px rgba(0,0,0,0.08)"
+              : "0 2px 8px rgba(0,0,0,0.3)",
+            border: theme => `1px solid ${theme.palette.divider}`
+          }}
+        >
           <Box
             sx={{
+              flexGrow: 1,
+              overflowY: "auto",
               display: "flex",
               flexDirection: "column",
-              height: "100%",
-              width: "100%",
+              p: { xs: 2, sm: 3 },
+              gap: 1.5,
+              backgroundColor: theme => theme.palette.mode === 'light'
+                ? theme.palette.background.default
+                : theme.palette.background.paper,
             }}
           >
-            <Box
-              sx={{
-                flexGrow: 1,
-                overflowY: "auto",
-                display: "flex",
-                p: 5,
-                flexDirection: "column",
-              }}
-            >
-              {messages.map((message, index) => (
-                <ChatMessage key={index} message={message} />
-              ))}
-              {isLoading && <ThinkingAnimation size={24} />}
-            </Box>
-            <Box sx={{ p: 3 }}>
-              <ChatMessageInput
-                messageInput={messageInput}
-                setMessageInput={setMessageInput}
-                handleSendMessage={handleSendMessage}
-                handleKeyPress={handleKeyPress}
-                isLoading={isLoading}
-              />
-            </Box>
+            {messages.map((message, index) => (
+              <ChatMessage key={index} message={message} />
+            ))}
+            {isLoading && <ThinkingAnimation size={24} />}
           </Box>
-        </Card>
-      </Container>
-    </Box>
-  );
-};
-
-const ChatMessage = ({ message }) => {
-  const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
-  const colorMode = isLight ? 'primary' : 'info';
-  const isUserMessage = message.sender === "user";
-  const justifyContent = isUserMessage ? "flex-end" : "flex-start";
-  const typingSpeed = 5;
+          <Box 
+            sx={{ 
+              p: 2, 
+              borderTop: theme => `1px solid ${theme.palette.divider}`,
+              backgroundColor: theme => theme.palette.background.paper
+            }}
+          >
+            <ChatMessageInput
+              messageInput={messageInput}
+              setMessageInput={setMessageInput}
+              handleSendMessage={handleSendMessage}
+              handleKeyPress={handleKeyPress}
+              isLoadin15;
   const typewriterText = useTypewriter(
     message.sender === "ai" ? message.body : "",
     typingSpeed
@@ -237,27 +239,56 @@ const ChatMessage = ({ message }) => {
   return (
     <Box
       sx={{
-        mb: 2,
         display: "flex",
         justifyContent: justifyContent,
+        gap: 1,
       }}
     >
+      {!isUserMessage && (
+        <Avatar 
+          sx={{ 
+            backgroundColor: theme.palette[colorMode].main,
+            width: 32,
+            height: 32,
+            flexShrink: 0,
+          }}
+        >
+          <AssistantIcon sx={{ fontSize: 18 }} />
+        </Avatar>
+      )}
       <Paper
         sx={{
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           bgcolor: isUserMessage 
-            ? isLight ? theme.palette.primary.main : theme.palette.info.main
-            : "grey.200",
-          color: isUserMessage ? "common.white" : "common.black",
-          borderRadius: "10px",
-          maxWidth: "fit-content",
-          display: "flex",
-          alignItems: "center",
+            ? theme.palette[colorMode].main
+            : theme.palette.mode === 'light'
+            ? theme.palette.grey[100]
+            : theme.palette.grey[800],
+          color: isUserMessage ? "common.white" : theme.palette.text.primary,
+          borderRadius: "12px",
+          maxWidth: "70%",
+          wordWrap: "break-word",
+          boxShadow: isUserMessage
+            ? `0 2px 8px ${theme.palette[colorMode].main}30`
+            : "0 1px 3px rgba(0,0,0,0.1)",
         }}
       >
-        {isUserMessage ? (
-          <Avatar sx={{ mr: 1 }}>
-            <PersonIcon />
+        <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
+          {message.sender === "ai" ? typewriterText : message.body}
+        </Typography>
+      </Paper>
+      {isUserMessage && (
+        <Avatar 
+          sx={{ 
+            backgroundColor: theme.palette[colorMode].main,
+            width: 32,
+            height: 32,
+            flexShrink: 0,
+          }}
+        >
+          <PersonIcon sx={{ fontSize: 18 }} />
+        </Avatar>
+      )}ersonIcon />
           </Avatar>
         ) : (
           <Avatar 
@@ -283,6 +314,7 @@ const ChatMessageInput = ({
   setMessageInput,
   isLoading,
 }) => {
+  const theme = useTheme();
   const [isDisabled, setIsDisabled] = useState(true);
 
   const handleInput = (e) => {
@@ -303,13 +335,39 @@ const ChatMessageInput = ({
         onChange={handleInput}
         onKeyPress={handleKeyPress}
         variant="outlined"
-        placeholder={isLoading ? "Thinking..." : "Type a message"}
+        size="small"
+        placeholder={isLoading ? "Thinking..." : "Type your message..."}
+        disabled={isLoading}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "8px",
+            backgroundColor: theme.palette.mode === 'light'
+              ? theme.palette.background.paper
+              : theme.palette.grey[900],
+            transition: "all 0.2s ease",
+            "&:hover": {
+              backgroundColor: theme.palette.mode === 'light'
+                ? theme.palette.grey[50]
+                : theme.palette.grey[800],
+            },
+            "&.Mui-focused": {
+              backgroundColor: theme.palette.background.paper,
+            }
+          }
+        }}
         InputProps={{
           endAdornment: (
             <IconButton
-              color="primary"
-              disabled={isDisabled}
+              size="small"
+              color={theme.palette.mode === 'light' ? 'primary' : 'info'}
+              disabled={isDisabled || isLoading}
               onClick={handleSendMessage}
+              sx={{
+                transition: "all 0.2s ease",
+                "&:hover:not(:disabled)": {
+                  transform: "scale(1.1)",
+                }
+              }}
             >
               <SendIcon />
             </IconButton>
