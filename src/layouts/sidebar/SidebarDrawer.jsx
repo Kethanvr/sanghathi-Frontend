@@ -18,7 +18,7 @@ const SidebarDrawer = ({
       variant={isNonMobile ? "persistent" : "temporary"}
       anchor="left"
       ModalProps={{
-        keepMounted: true, // Better performance on mobile
+        keepMounted: true,
         onBackdropClick: onBackdropClick || (() => setIsSidebarOpen(false)),
       }}
       sx={{
@@ -37,6 +37,11 @@ const SidebarDrawer = ({
           boxShadow: theme.palette.mode === "light"
             ? "0 0 6px rgba(0, 0, 0, 0.1)"
             : "0 0 8px rgba(0, 0, 0, 0.3)",
+          transition: theme.transitions.create("transform", {
+            duration: theme.transitions.duration.standard,
+          }),
+          overscrollBehavior: "contain",
+          paddingBottom: isNonMobile ? "0" : "20px",
         },
       }}
     >
