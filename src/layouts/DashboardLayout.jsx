@@ -26,12 +26,12 @@ const DashboardLayout = () => {
       return;
     }
 
-    const shouldShowReleaseDialog =
-      sessionStorage.getItem(RELEASE_ANNOUNCEMENT_SESSION_KEY) === "true";
+      const shouldShowReleaseDialog =
+        sessionStorage.getItem(RELEASE_ANNOUNCEMENT_SESSION_KEY) === "true";
 
-    if (shouldShowReleaseDialog) {
-      setIsReleaseDialogOpen(true);
-    }
+      if (shouldShowReleaseDialog) {
+        setIsReleaseDialogOpen(true);
+      }
   }, [user?._id]);
 
   const handleBackdropClick = () => {
@@ -41,12 +41,12 @@ const DashboardLayout = () => {
   };
 
   const handleReleaseDismiss = () => {
-    sessionStorage.removeItem(RELEASE_ANNOUNCEMENT_SESSION_KEY);
+      sessionStorage.removeItem(RELEASE_ANNOUNCEMENT_SESSION_KEY);
     setIsReleaseDialogOpen(false);
   };
 
   const handleReleaseCheckUpdates = () => {
-    sessionStorage.removeItem(RELEASE_ANNOUNCEMENT_SESSION_KEY);
+      sessionStorage.removeItem(RELEASE_ANNOUNCEMENT_SESSION_KEY);
     setIsReleaseDialogOpen(false);
     navigate("/updates");
   };

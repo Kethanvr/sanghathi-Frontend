@@ -42,6 +42,8 @@ const NavigationItem = ({
         key={text}
         sx={{
           textAlign: "center",
+          px: { xs: "8px", sm: "12px" },
+          py: { xs: "4px", sm: "2px" },
         }}
       >
         <NavItemButton
@@ -56,7 +58,7 @@ const NavigationItem = ({
           }
         />
       </ListItem>
-      <List sx={{ px: 2, py: 0 }}>
+      <List sx={{ px: { xs: "8px", sm: "12px" }, py: 0 }}>
         {isDropdown &&
           active === lcText &&
           dropdownItems.map(({ text: itemText, link: itemLink }) => (

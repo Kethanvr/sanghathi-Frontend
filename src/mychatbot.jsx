@@ -1,14 +1,7 @@
 import React from "react";
 import ChatBot from "react-chatbotify";
 import { askRag } from "./apiCalls.js";
-import {
-  Alert,
-  Box,
-  Chip,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Chip, Paper, Stack, Typography } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import ConstructionRoundedIcon from "@mui/icons-material/ConstructionRounded";
 import RocketLaunchRoundedIcon from "@mui/icons-material/RocketLaunchRounded";
@@ -24,7 +17,7 @@ const DEPARTMENT_OPTIONS = [
   "Physics",
   "MBA",
   "AI&DS",
-  "AI&ML"
+  "AI&ML",
 ];
 
 const VTU_OPTIONS = [
@@ -35,7 +28,7 @@ const VTU_OPTIONS = [
   "5th Sem",
   "6th Sem",
   "7th Sem",
-  "8th Sem"
+  "8th Sem",
 ];
 
 const IAT_OPTIONS = ["IAT 1", "IAT 2", "IAT 3"];
@@ -51,9 +44,69 @@ const getRagResponse = async (prompt) => {
 const MyChatBot = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === "light";
-  const accentColor = isLight
-    ? theme.palette.primary.main
-    : theme.palette.info.main;
+  const accentColor = isLight ? theme.palette.primary.main : theme.palette.info.main;
+
+  const chatbotStyles = {
+    chatWindowStyle: {
+      position: "relative",
+      width: "100%",
+      height: "min(78vh, 760px)",
+      maxHeight: "calc(100vh - 120px)",
+      borderRadius: 12,
+      backgroundColor: theme.palette.background.paper,
+      boxShadow: isLight
+        ? "0 10px 30px rgba(15, 23, 42, 0.08)"
+        : "0 10px 30px rgba(0, 0, 0, 0.25)",
+      border: `1px solid ${theme.palette.divider}`,
+    },
+    bodyStyle: {
+      backgroundColor: isLight ? theme.palette.background.default : theme.palette.background.paper,
+      color: theme.palette.text.primary,
+    },
+    chatInputContainerStyle: {
+      backgroundColor: theme.palette.background.paper,
+      borderTop: `1px solid ${theme.palette.divider}`,
+    },
+    chatInputAreaStyle: {
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+    },
+    chatInputAreaFocusedStyle: {
+      boxShadow: `0 0 0 2px ${alpha(accentColor, 0.16)}`,
+      borderColor: accentColor,
+    },
+    userBubbleStyle: {
+      backgroundColor: accentColor,
+      color: theme.palette.common.white,
+      boxShadow: `0 2px 8px ${alpha(accentColor, 0.2)}`,
+    },
+    botBubbleStyle: {
+      backgroundColor: isLight ? theme.palette.grey[100] : theme.palette.grey[800],
+      color: theme.palette.text.primary,
+      border: `1px solid ${theme.palette.divider}`,
+      boxShadow: isLight ? "0 1px 3px rgba(15, 23, 42, 0.05)" : "none",
+    },
+    botOptionStyle: {
+      backgroundColor: isLight ? theme.palette.common.white : "rgba(20, 34, 58, 0.45)",
+      color: isLight ? theme.palette.text.primary : "#d7ebff",
+      borderColor: alpha(accentColor, isLight ? 0.28 : 0.6),
+    },
+    botOptionHoveredStyle: {
+      backgroundColor: alpha(accentColor, isLight ? 0.1 : 0.24),
+      color: theme.palette.text.primary,
+      borderColor: alpha(accentColor, 0.95),
+    },
+    chatMessagePromptStyle: {
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.secondary,
+      border: `0.5px solid ${theme.palette.divider}`,
+    },
+    chatMessagePromptHoveredStyle: {
+      backgroundColor: alpha(accentColor, isLight ? 0.08 : 0.18),
+      color: theme.palette.text.primary,
+      borderColor: accentColor,
+    },
+  };
 
   const themes = [{ id: "omen", version: "0.1.0" }];
 
@@ -62,80 +115,70 @@ const MyChatBot = () => {
     "IAT dates",
     "VTU Examinations",
     "Department HOD",
-    "Other question"
+    "Other question",
   ];
 
   const flow = {
     ask_department_location: {
       message: "Please choose the department you want to know about:",
       options: DEPARTMENT_OPTIONS,
-      path: "get_department_location"
+      path: "get_department_location",
     },
     get_department_location: {
-      message: async (params) => {
-        return getRagResponse(
+      message: async (params) =>
+        getRagResponse(
           `For CMRIT, where is the ${params.userInput} department located on campus? Reply in 2-3 sentences.`
-        );
-      },
-      path: "repeat"
+        ),
+      path: "repeat",
     },
-
     ask_vtu_exams: {
       message: "Please choose the VTU exam you want to know about:",
       options: VTU_OPTIONS,
-      path: "get_vtu_exams"
+      path: "get_vtu_exams",
     },
     get_vtu_exams: {
-      message: async (params) => {
-        return getRagResponse(
+      message: async (params) =>
+        getRagResponse(
           `For CMRIT students, what is the latest information available for ${params.userInput} VTU examinations?`
-        );
-      },
-      path: "repeat"
+        ),
+      path: "repeat",
     },
-
     ask_iat_dates: {
       message: "Please choose the IAT dates you want to know about:",
       options: IAT_OPTIONS,
-      path: "get_iat_dates"
+      path: "get_iat_dates",
     },
     get_iat_dates: {
-      message: async (params) => {
-        return getRagResponse(
-          `For CMRIT, what is the date or schedule information for ${params.userInput}?`
-        );
-      },
-      path: "repeat"
+      message: async (params) =>
+        getRagResponse(`For CMRIT, what is the date or schedule information for ${params.userInput}?`),
+      path: "repeat",
     },
     ask_hod_department: {
       message: "Please choose the department to get HOD details:",
       options: DEPARTMENT_OPTIONS,
-      path: "give_hod_info"
+      path: "give_hod_info",
     },
-
     give_hod_info: {
-      message: async (params) => {
-        return getRagResponse(
+      message: async (params) =>
+        getRagResponse(
           `For CMRIT, who is the HOD of ${params.userInput}? Include name and designation if available.`
-        );
-      },
-      path: "repeat"
+        ),
+      path: "repeat",
     },
-
     start: {
       message: "Hi! Welcome to Sanghathi Assistant. How can I help you today?",
       transition: { duration: 1000 },
-      path: "show_options"
+      path: "show_options",
     },
     show_options: {
       message: "Please choose from the following options:",
       options: helpOptions,
-      path: "process_options"
+      path: "process_options",
     },
     prompt_again: {
       message: "Would you like help with anything else?",
       options: helpOptions,
-      path: "process_options"
+      path: "process_options",
     },
     process_options: {
       transition: { duration: 0 },
@@ -155,22 +198,20 @@ const MyChatBot = () => {
           default:
             return "ask_gemini";
         }
-      }
+      },
     },
     ask_gemini: {
       message: "Please ask your question and I will try to help you!",
-      path: "get_gemini_response"
+      path: "get_gemini_response",
     },
     get_gemini_response: {
-      message: async (params) => {
-        return getRagResponse(params.userInput);
-      },
-      path: "repeat"
+      message: async (params) => getRagResponse(params.userInput),
+      path: "repeat",
     },
     repeat: {
       transition: { duration: 3000 },
-      path: "prompt_again"
-    }
+      path: "prompt_again",
+    },
   };
 
   return (
@@ -184,14 +225,8 @@ const MyChatBot = () => {
           borderRadius: 2,
           border: `1px solid ${alpha(accentColor, 0.35)}`,
           background: isLight
-            ? `linear-gradient(120deg, ${alpha(accentColor, 0.09)} 0%, ${alpha(
-                theme.palette.success.main,
-                0.08
-              )} 100%)`
-            : `linear-gradient(120deg, ${alpha(accentColor, 0.16)} 0%, ${alpha(
-                theme.palette.success.main,
-                0.13
-              )} 100%)`,
+            ? `linear-gradient(120deg, ${alpha(accentColor, 0.09)} 0%, ${alpha(theme.palette.success.main, 0.08)} 100%)`
+            : `linear-gradient(120deg, ${alpha(accentColor, 0.16)} 0%, ${alpha(theme.palette.success.main, 0.13)} 100%)`,
         }}
       >
         <Stack
@@ -214,8 +249,7 @@ const MyChatBot = () => {
               Campus Buddy is under active development
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              More features are being rolled out soon. Current build supports quick
-              department, exam, and FAQ assistance.
+              More features are being rolled out soon. Current build supports quick department, exam, and FAQ assistance.
             </Typography>
           </Box>
           <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap>
@@ -248,82 +282,12 @@ const MyChatBot = () => {
         Responses may be refined as new data and features are integrated.
       </Alert>
 
-      <style>
-        {`
-    .rcb-chat-window {
-      position: relative !important;
-      top: auto !important;
-      left: auto !important;
-      width: 100% !important;
-      height: min(78vh, 760px) !important;
-      max-height: calc(100vh - 120px) !important;
-      border-radius: 12px !important;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
-      background-color: rgba(40, 46, 62, 1) !important;
-      z-index: 1 !important;
-      transition: all 0.3s ease;
-    }
-
-    .rcb-chat-body-container {
-      background-color: rgba(40, 46, 62, 1) !important;
-      height: calc(100% - 72px) !important;
-      width: 100% !important;
-      overflow-y: auto;
-    }
-
-    .rcb-chat-input-textarea {
-      background-color: rgba(60, 66, 82, 1) !important;
-      color: white !important;
-      width: 100% !important;
-      border: none;
-      padding: 10px;
-      border-radius: 4px;
-      resize: none;
-    }
-
-    @media (max-width: 768px) {
-      .rcb-chat-window {
-        height: 72vh !important;
-        max-height: calc(100vh - 100px) !important;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .rcb-chat-window {
-        height: 68vh !important;
-        max-height: calc(100vh - 88px) !important;
-      }
-
-      .rcb-chat-input-textarea {
-        font-size: 14px;
-      }
-    }
-
-    .rcb-chat-header-container {
-      display: none !important;
-    }
-
-    .rcb-options-container button {
-      border-radius: 999px !important;
-      border: 1px solid rgba(64, 182, 255, 0.6) !important;
-      background: rgba(20, 34, 58, 0.45) !important;
-      color: #d7ebff !important;
-      font-weight: 600 !important;
-    }
-
-    .rcb-options-container button:hover {
-      background: rgba(38, 82, 140, 0.5) !important;
-      border-color: rgba(64, 182, 255, 0.95) !important;
-    }
-
-  `}
-      </style>
-
       <ChatBot
         themes={themes}
+        styles={chatbotStyles}
         settings={{
-          general: { embedded: true },
-          chatHistory: { storageKey: "gemini_college_assistant" }
+          general: { embedded: true, showHeader: false },
+          chatHistory: { storageKey: "gemini_college_assistant" },
         }}
         flow={flow}
       />

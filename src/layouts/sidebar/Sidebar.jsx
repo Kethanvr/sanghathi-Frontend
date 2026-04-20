@@ -53,9 +53,10 @@ const Sidebar = ({
               alt="CMRIT Logo"
               style={{
                 filter: "none",
-                margin: "16px 5px",
-                width: isNonMobile ? "145px" : "120px",
+                margin: isNonMobile ? "16px 5px" : "20px 8px",
+                width: isNonMobile ? "145px" : "110px",
                 maxWidth: "100%",
+                transition: "width 0.2s ease",
               }}
             />
           </Box>
