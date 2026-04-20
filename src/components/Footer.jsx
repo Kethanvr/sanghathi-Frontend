@@ -22,10 +22,10 @@ const commonLinks = [
 ];
 
 const contactLinks = [
-  { label: "About Developers", to: "/about-developers" },
+  // { label: "About Developers", to: "/about-developers" },
 ];
 
-const SUPPORT_EMAIL = "kethan.ise24@cmrit.ac.in";
+const SUPPORT_EMAIL = "emithu@gmail.com";
 
 const roleLinks = {
   student: [
@@ -168,9 +168,11 @@ const Footer = () => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={2}>
-            <FooterLinkGroup title="Contact" links={contactLinks} />
-          </Grid>
+          {contactLinks.length > 0 && (
+            <Grid item xs={12} sm={6} md={2}>
+              <FooterLinkGroup title="Contact" links={contactLinks} />
+            </Grid>
+          )}
 
           <Grid item xs={12} sm={6} md={2}>
             <FooterLinkGroup
