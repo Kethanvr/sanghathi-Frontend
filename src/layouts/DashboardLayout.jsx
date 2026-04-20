@@ -26,8 +26,12 @@ const DashboardLayout = () => {
       return;
     }
 
-    // Always show the release announcement dialog to every user
-    setIsReleaseDialogOpen(true);
+      const shouldShowReleaseDialog =
+        sessionStorage.getItem(RELEASE_ANNOUNCEMENT_SESSION_KEY) === "true";
+
+      if (shouldShowReleaseDialog) {
+        setIsReleaseDialogOpen(true);
+      }
   }, [user?._id]);
 
   const handleBackdropClick = () => {
@@ -37,12 +41,12 @@ const DashboardLayout = () => {
   };
 
   const handleReleaseDismiss = () => {
-    // Dismiss closes the dialog but it will reappear on next navigation/refresh
+      sessionStorage.removeItem(RELEASE_ANNOUNCEMENT_SESSION_KEY);
     setIsReleaseDialogOpen(false);
   };
 
   const handleReleaseCheckUpdates = () => {
-    // Close dialog and navigate to updates page
+      sessionStorage.removeItem(RELEASE_ANNOUNCEMENT_SESSION_KEY);
     setIsReleaseDialogOpen(false);
     navigate("/updates");
   };
