@@ -54,6 +54,79 @@ const MyChatBot = () => {
   const accentColor = isLight
     ? theme.palette.primary.main
     : theme.palette.info.main;
+  const chatWindowBackground = isLight
+    ? theme.palette.background.paper
+    : theme.palette.background.paper;
+  const chatBodyBackground = isLight
+    ? theme.palette.background.default
+    : theme.palette.background.paper;
+  const chatInputBackground = isLight
+    ? theme.palette.background.paper
+    : theme.palette.grey[900];
+  const optionButtonBackground = isLight
+    ? theme.palette.common.white
+    : "rgba(20, 34, 58, 0.45)";
+  const optionButtonText = isLight
+    ? theme.palette.text.primary
+    : "#d7ebff";
+  const chatbotStyles = {
+    chatWindowStyle: {
+      backgroundColor: chatWindowBackground,
+      boxShadow: isLight
+        ? "0 10px 30px rgba(15, 23, 42, 0.08)"
+        : "0 10px 30px rgba(0, 0, 0, 0.25)",
+      border: `1px solid ${theme.palette.divider}`,
+    },
+    bodyStyle: {
+      backgroundColor: chatBodyBackground,
+      color: theme.palette.text.primary,
+    },
+    chatInputContainerStyle: {
+      backgroundColor: theme.palette.background.paper,
+      borderTop: `1px solid ${theme.palette.divider}`,
+    },
+    chatInputAreaStyle: {
+      backgroundColor: chatInputBackground,
+      color: theme.palette.text.primary,
+    },
+    chatInputAreaFocusedStyle: {
+      outline: "none",
+      boxShadow: `0 0 0 2px ${alpha(accentColor, 0.16)}`,
+      borderColor: accentColor,
+    },
+    userBubbleStyle: {
+      backgroundColor: accentColor,
+      color: theme.palette.common.white,
+      boxShadow: `0 2px 8px ${alpha(accentColor, 0.2)}`,
+    },
+    botBubbleStyle: {
+      backgroundColor: isLight ? theme.palette.grey[100] : theme.palette.grey[800],
+      color: theme.palette.text.primary,
+      border: `1px solid ${theme.palette.divider}`,
+      boxShadow: isLight ? "0 1px 3px rgba(15, 23, 42, 0.05)" : "none",
+    },
+    botOptionStyle: {
+      backgroundColor: optionButtonBackground,
+      color: optionButtonText,
+      borderColor: alpha(accentColor, isLight ? 0.28 : 0.6),
+      boxShadow: isLight ? "0 1px 2px rgba(15, 23, 42, 0.05)" : "none",
+    },
+    botOptionHoveredStyle: {
+      backgroundColor: alpha(accentColor, isLight ? 0.1 : 0.24),
+      color: theme.palette.text.primary,
+      borderColor: alpha(accentColor, 0.95),
+    },
+    chatMessagePromptStyle: {
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.secondary,
+      border: `0.5px solid ${theme.palette.divider}`,
+    },
+    chatMessagePromptHoveredStyle: {
+      backgroundColor: alpha(accentColor, isLight ? 0.08 : 0.18),
+      color: theme.palette.text.primary,
+      borderColor: accentColor,
+    },
+  };
 
   const themes = [{ id: "omen", version: "0.1.0" }];
 
@@ -258,22 +331,17 @@ const MyChatBot = () => {
       height: min(78vh, 760px) !important;
       max-height: calc(100vh - 120px) !important;
       border-radius: 12px !important;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
-      background-color: rgba(40, 46, 62, 1) !important;
       z-index: 1 !important;
       transition: all 0.3s ease;
     }
 
     .rcb-chat-body-container {
-      background-color: rgba(40, 46, 62, 1) !important;
       height: calc(100% - 72px) !important;
       width: 100% !important;
       overflow-y: auto;
     }
 
     .rcb-chat-input-textarea {
-      background-color: rgba(60, 66, 82, 1) !important;
-      color: white !important;
       width: 100% !important;
       border: none;
       padding: 10px;
@@ -303,24 +371,12 @@ const MyChatBot = () => {
       display: none !important;
     }
 
-    .rcb-options-container button {
-      border-radius: 999px !important;
-      border: 1px solid rgba(64, 182, 255, 0.6) !important;
-      background: rgba(20, 34, 58, 0.45) !important;
-      color: #d7ebff !important;
-      font-weight: 600 !important;
-    }
-
-    .rcb-options-container button:hover {
-      background: rgba(38, 82, 140, 0.5) !important;
-      border-color: rgba(64, 182, 255, 0.95) !important;
-    }
-
   `}
       </style>
 
       <ChatBot
         themes={themes}
+        styles={chatbotStyles}
         settings={{
           general: { embedded: true },
           chatHistory: { storageKey: "gemini_college_assistant" }
