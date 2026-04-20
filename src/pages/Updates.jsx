@@ -140,6 +140,17 @@ const Updates = () => {
 
   const dashboardPath = dashboardPathByRole[user?.roleName] || "/";
 
+  const impactStory = {
+    title: "The Fix That Mattered Most",
+    subtitle: "Why 29,024 new lines came down to one broken feature",
+    paragraphs: [
+      "Frontend → 19,249 lines added",
+      "Backend → 9,775 lines added",
+      "But the one fix that actually mattered to every student?",
+      "They couldn't reset their password."
+    ],
+  };
+
   return (
     <Page
       title="What's New"
@@ -213,6 +224,59 @@ const Updates = () => {
                   >
                     Jump to Full Details
                   </Button>
+                </Stack>
+              </Stack>
+            </Paper>
+
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 2.5, md: 3.5 },
+                borderRadius: 3,
+                border: `2px solid ${alpha(theme.palette.warning.main, 0.24)}`,
+                backgroundColor: alpha(theme.palette.warning.lighter || theme.palette.warning.light, 0.08),
+              }}
+            >
+              <Stack spacing={2}>
+                <Stack spacing={0.8}>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 900,
+                      background: isLight
+                        ? `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.error.main} 100%)`
+                        : `linear-gradient(135deg, ${theme.palette.warning.light} 0%, ${theme.palette.error.light} 100%)`,
+                      backgroundClip: "text",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                    }}
+                  >
+                    {impactStory.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    {impactStory.subtitle}
+                  </Typography>
+                </Stack>
+
+                <Stack spacing={1.4}>
+                  {impactStory.paragraphs.map((paragraph, idx) => (
+                    <Typography
+                      key={idx}
+                      variant="body2"
+                      sx={{
+                        lineHeight: 1.65,
+                        fontWeight: paragraph.includes("They couldn't") || paragraph.includes("password") ? 700 : 500,
+                        color:
+                          paragraph.includes("They couldn't") || paragraph.includes("Locked out")
+                            ? theme.palette.mode === "light"
+                              ? theme.palette.error.main
+                              : theme.palette.error.light
+                            : "text.secondary",
+                      }}
+                    >
+                      {paragraph}
+                    </Typography>
+                  ))}
                 </Stack>
               </Stack>
             </Paper>
