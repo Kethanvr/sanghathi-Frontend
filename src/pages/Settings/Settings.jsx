@@ -95,13 +95,35 @@ export default function Settings() {
     }
   };
 
+  const handleHardReload = async () => {
+    try {
+      enqueueSnackbar("Clearing cache and reloading...", { variant: "info" });
+      
+      // Clear all caches
+      if ("caches" in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+      }
+
+      // Clear sessionStorage
+      sessionStorage.clear();
+
+      // Perform hard reload (Ctrl+Shift+R equivalent)
+      window.location.reload(true);
+    } catch (err) {
+      console.error("Error during hard reload:", err);
+      // Fallback to standard reload if caches API fails
+      window.location.reload(true);
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom color={colorMode}>
         Settings
       </Typography>
 
-      <Card sx={{ p: 3, maxWidth: 600, mx: "auto" }}>
+      <Card sx={{ p: 3, maxWidth: 600, mx: "auto", mb: 3 }}>
         <Typography variant="h6" gutterBottom>
           Change Password
         </Typography>
@@ -163,6 +185,25 @@ export default function Settings() {
             </Button>
           </Stack>
         </form>
+      </Card>
+
+      <Card sx={{ p: 3, maxWidth: 600, mx: "auto" }}>
+        <Typography variant="h6" gutterBottom>
+          Clear Cache
+        </Typography>
+        
+        <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+          Clear browser cache, cookies, and temporary data. This is similar to performing a hard reload (Ctrl+Shift+R).
+        </Typography>
+
+        <Button
+          variant="outlined"
+          color="warning"
+          size="large"
+          onClick={handleHardReload}
+        >
+          Hard Reload & Clear Cache
+        </Button>
       </Card>
     </Box>
   );
