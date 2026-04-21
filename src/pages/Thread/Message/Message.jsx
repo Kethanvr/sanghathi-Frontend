@@ -164,23 +164,44 @@ const MessageItem = ({ message, conversation }) => {
 
 export function MessageList({ conversation, messages }) {
   const scrollRef = useRef(null);
+  const safeMessages = Array.isArray(messages) ? messages : [];
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollToBottom();
     }
-  }, [messages]);
+  }, [safeMessages.length]);
 
   return (
     <>
       <Scrollbar sx={{ p: 3 }} ref={scrollRef}>
-        {messages.map((message) => (
-          <MessageItem
-            key={message._id}
-            message={message}
-            conversation={conversation}
-          />
-        ))}
+        {safeMessages.length === 0 ? (
+          <Box
+            sx={{
+              minHeight: 220,
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              px: 2,
+            }}
+          >
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 700, color: "text.secondary", textAlign: "center" }}
+            >
+              No thread messages are there yet.
+            </Typography>
+          </Box>
+        ) : (
+          safeMessages.map((message) => (
+            <MessageItem
+              key={message._id}
+              message={message}
+              conversation={conversation}
+            />
+          ))
+        )}
       </Scrollbar>
     </>
   );
@@ -226,6 +247,18 @@ export function MessageInput({ disabled, onSend }) {
         onKeyUp={handleKeyUp}
         onChange={(event) => setMessage(event.target.value)}
         placeholder="Type a message"
+        sx={{
+          "& input": {
+            color: "text.primary",
+            fontWeight: 600,
+            fontSize: "1rem",
+          },
+          "& input::placeholder": {
+            color: "text.primary",
+            fontWeight: 800,
+            opacity: 1,
+          },
+        }}
         endAdornment={
           <Stack direction="row" spacing={1} sx={{ flexShrink: 0, mr: 1.5 }}>
             <IconButton disabled={disabled} size="small" onClick={handleAttach}>

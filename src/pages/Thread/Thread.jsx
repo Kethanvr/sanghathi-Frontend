@@ -90,7 +90,7 @@ const Thread = () => {
       const response = await api.get(`users/${user._id}/threads`, {
         params: {
           page: 1,
-          limit: 100,
+          limit: 25,
         },
       });
       if (response.data.status === "success") {

@@ -55,27 +55,41 @@ const Iat = () => {
       
       logger.info(`Fetching IAT marks for user ID: ${userId} (${menteeId ? 'menteeId from URL' : 'logged-in user'})`);
       
-      //  Adapt the endpoint to your IAT data endpoint
-      const response = await api.get(`/students/iat/${userId}`);
-      const data = response.data.data.iat; // Adjust based on your API response structure
+      const response = await api.get(`/students/Iat/${userId}`);
+      const semesters = response?.data?.data?.iat?.semesters;
 
-      if (data && data.semesters) {
-        setIatData(data.semesters);
-        if (data.semesters.length > 0) {
+      if (Array.isArray(semesters) && semesters.length > 0) {
+        setIatData(semesters);
+        if (semesters.length > 0) {
           // Use student's current semester from profile if available and exists in data
-          const defaultSem = studentSemester && data.semesters.find(s => s.semester === studentSemester)
+          const defaultSem = studentSemester && semesters.find(s => s.semester === studentSemester)
             ? studentSemester
-            : data.semesters[0].semester;
-          logger.info('[Iat] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', data.semesters[0].semester, ')');
+            : semesters[0].semester;
+          logger.info('[Iat] Setting semester to:', defaultSem, '(studentSemester:', studentSemester, ', first available:', semesters[0].semester, ')');
           setSelectedSemester(defaultSem);
         }
       } else {
-          setIatData([]);
+        setIatData([]);
+        setSelectedSemester(null);
       }
 
+      setError("");
       setLoading(false);
     } catch (err) {
-      setError("Failed to fetch IAT data");
+      const status = err?.response?.status;
+
+      if (status === 404) {
+        setIatData([]);
+        setSelectedSemester(null);
+        setError("");
+      } else {
+        const message =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to fetch IAT data";
+        setError(message);
+      }
+
       setLoading(false);
       logger.error(err); // Log the error for debugging
     }
