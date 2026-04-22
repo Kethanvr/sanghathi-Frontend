@@ -33,3 +33,13 @@ yarn.lock
 
 # Local Netlify folder
 .netlify
+
+# Security hardening: keep internal project knowledge private
+docs/
+*.md
+!LICENSE
+!LICENSE*
+public/developers/
+netlify.toml
+vercel.json
+.github/
