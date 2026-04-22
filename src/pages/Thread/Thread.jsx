@@ -143,12 +143,31 @@ const Thread = () => {
   const handleAddNewThread = async (newThreadData) => {
     setIsLoading(true);
     try {
-      const response = await api.post("threads", newThreadData);
+      const payload = {
+        author: typeof newThreadData.author === "string"
+          ? newThreadData.author
+          : newThreadData.author?._id,
+        participants: (newThreadData.participants || [])
+          .map((participant) =>
+            typeof participant === "string" ? participant : participant?._id
+          )
+          .filter(Boolean),
+        title: (newThreadData.title || "").trim(),
+        topic: (newThreadData.topic || "").trim(),
+      };
+
+      const response = await api.post("threads", payload);
       if (response.data.status === "success") {
         const newThread = response.data.data.thread;
-        setThreads((prevThreads) => [...prevThreads, newThread]);
+        setThreads((prevThreads) => [
+          newThread,
+          ...prevThreads.filter((thread) => thread._id !== newThread._id),
+        ]);
         setIsLoading(false);
-        return Promise.resolve();
+        if (newThread?._id) {
+          navigate(`/threads/${newThread._id}`);
+        }
+        return Promise.resolve(newThread);
       }
     } catch (error) {
       setIsLoading(false);

@@ -104,13 +104,12 @@ const NewThreadDialog = ({
     onSave(newThreadData)
       .then(() => {
         enqueueSnackbar("Thread created successfully!", { variant: "success" });
+        handleCloseDialog();
       })
       .catch((error) => {
         enqueueSnackbar("Error creating thread!", { variant: "error" });
         logger.error("Error creating new thread:", error);
       });
-
-    handleCloseDialog();
   };
 
   return (

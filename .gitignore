@@ -4,7 +4,8 @@
 /node_modules
 /.pnp
 .pnp.js
-
+*.md
+!README.md
 
 # testing
 /coverage
@@ -12,7 +13,7 @@
 # production
 /build
 /dist
-
+/docs
 # misc
 .DS_Store
 .env.local
@@ -33,3 +34,5 @@ yarn.lock
 
 # Local Netlify folder
 .netlify
+
+/scripts
