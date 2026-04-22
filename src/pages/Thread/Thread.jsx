@@ -159,9 +159,15 @@ const Thread = () => {
       const response = await api.post("threads", payload);
       if (response.data.status === "success") {
         const newThread = response.data.data.thread;
-        setThreads((prevThreads) => [...prevThreads, newThread]);
+        setThreads((prevThreads) => [
+          newThread,
+          ...prevThreads.filter((thread) => thread._id !== newThread._id),
+        ]);
         setIsLoading(false);
-        return Promise.resolve();
+        if (newThread?._id) {
+          navigate(`/threads/${newThread._id}`);
+        }
+        return Promise.resolve(newThread);
       }
     } catch (error) {
       setIsLoading(false);
