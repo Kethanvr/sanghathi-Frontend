@@ -1,11 +1,8 @@
 # example netlify.toml
 [build]
-  command = "bun run build"
+  command = "npm run build"
   functions = "netlify/functions"
   publish = "dist"
-
-[build.environment]
-  BUN_VERSION = "1.3.10"
 
   
 [[headers]]
