@@ -21,7 +21,7 @@ const ReleaseAnnouncementDialog = ({ open, onDismiss, onCheckUpdates }) => {
       onClose={onDismiss}
       fullWidth
       maxWidth="xs"
-      aria-labelledby="sangathi-release-dialog-title"
+      aria-labelledby="Sanghathi-release-dialog-title"
       PaperProps={{
         sx: {
           borderRadius: 3,
@@ -53,8 +53,8 @@ const ReleaseAnnouncementDialog = ({ open, onDismiss, onCheckUpdates }) => {
               size="small"
               color={theme.palette.mode === "light" ? "primary" : "info"}
             />
-            <Typography id="sangathi-release-dialog-title" variant="h5" sx={{ fontWeight: 800 }}>
-              Sangathi 2.0 is live
+            <Typography id="Sanghathi-release-dialog-title" variant="h5" sx={{ fontWeight: 800 }}>
+              Sanghathi 2.0 is live
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 320 }}>
               New dashboard polish, stronger mentoring workflows, better mobile UX,
