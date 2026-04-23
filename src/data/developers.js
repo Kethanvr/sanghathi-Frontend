@@ -2,77 +2,12 @@ export const developers = {
   kethanvr: {
     id: "kethanvr",
     name: "Kethan VR",
-    role: "Full-Stack AI & DevOps Engineer",
-    group: "newbie",
-    image: "/developers/kethanvr.jpeg",
+    role: "Full-StackEngineer",
+    group: "others",
     github: "https://github.com/Kethanvr",
-    linkedin: "https://www.linkedin.com/in/kethanvr/",
     email: "kethan.ise24@cmrit.ac.in",
     shortBio:
       "Architects, deploys, and scales production-grade full-stack AI systems end-to-end.",
-    fullProfile: {
-      intro: [
-        "I am Kethan VR, a Full-Stack AI and DevOps Engineer who architects, containerizes, deploys, and scales systems end-to-end.",
-        "I build production-ready applications on self-hosted infrastructure with reverse proxies, CI/CD, and AI integrations that solve real-world problems.",
-      ],
-      philosophy:
-        "Build with purpose, ship with confidence, and never stop learning. Debugging is part of the process.",
-      techStack: {
-        "Languages & Frameworks": ["JavaScript", "TypeScript", "Python", "C++", "C"],
-        "Frontend & Full-Stack": [
-          "Next.js",
-          "React",
-          "Node.js",
-          "Express.js",
-          "Tailwind CSS",
-        ],
-        "Databases & Backend Services": [
-          "MongoDB",
-          "Supabase",
-          "MySQL",
-          "PostgreSQL",
-        ],
-        "DevOps & Infrastructure": [
-          "Docker",
-          "Kubernetes",
-          "GitHub Actions",
-          "Traefik",
-          "Caddy",
-          "DigitalOcean",
-          "Vercel",
-          "Render",
-        ],
-        "AI & LLM Stack": [
-          "Gemini API",
-          "LangChain",
-          "OpenAI",
-          "Hugging Face",
-        ],
-      },
-      featuredWork: [
-        {
-          title: "CMRIT Events Hub",
-          description:
-            "A full-stack platform for campus engagement with verified student profiles, QR attendance, XP leaderboards, and club dashboards.",
-        },
-        {
-          title: "Academic Material Portal",
-          description:
-            "A centralized portal for lecture notes, syllabus, and question banks with smart previews and offline support.",
-        },
-        {
-          title: "MediScan",
-          description:
-            "A mobile-first AI app that identifies medicines from images and provides usage, dosage, side effects, and scan history.",
-        },
-      ],
-      currentFocus: [
-        "Building scalable full-stack platforms",
-        "Working with AI and LLM integrations",
-        "Developing intelligent agents",
-        "Improving DevOps workflows and automation",
-      ],
-    },
   },
   "shovan-mondal": {
     id: "shovan-mondal",
@@ -135,7 +70,6 @@ export const developers = {
 };
 
 export const developerGroups = {
-  newbie: ["kethanvr"],
   founders: ["shovan-mondal", "monu564100"],
-  others: ["SUJAY-HK", "Kulsum06", "Sai-Emani25", "vsuryacharan", "advitha24"],
+  others: ["SUJAY-HK", "Kulsum06", "Sai-Emani25", "vsuryacharan", "advitha24", "kethanvr"],
 };
