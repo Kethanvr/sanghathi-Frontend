@@ -76,6 +76,7 @@ The Sanghathi Frontend provides an organized, role-aware experience that reduces
 - monu564100
 - vsuryacharan
 - advitha24
+- Kethanvr
 
 See [contribute.md](contribute.md) for contribution standards.
 
