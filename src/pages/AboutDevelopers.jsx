@@ -28,7 +28,6 @@ import { buildCanonicalUrl, compactObject } from "../utils/seo";
 import { buildBrandedMailto } from "../utils/mailto";
 
 const orderedDeveloperIds = [
-  ...developerGroups.newbie,
   ...developerGroups.founders,
   ...developerGroups.others,
 ];
@@ -38,7 +37,7 @@ const aboutDevelopersStructuredData = compactObject({
   "@type": "CollectionPage",
   name: "About Developers | Sanghathi",
   description:
-    "Meet the Sanghathi development team including Kethan VR, with dedicated profile pages and contribution highlights.",
+    "Meet the Sanghathi development team with dedicated profile pages and contribution highlights.",
   url: buildCanonicalUrl("/about-developers"),
   mainEntity: {
     "@type": "ItemList",
@@ -246,10 +245,10 @@ const AboutDevelopers = () => {
   return (
     <Page
       title="About Developers"
-      description="Meet the developers behind Sanghathi, including Kethan VR. Explore team roles, social profiles, and dedicated developer pages."
+      description="Meet the developers behind Sanghathi. Explore team roles, social profiles, and dedicated developer pages."
       canonicalPath="/about-developers"
       image="/developers/kethanvr.jpeg"
-      keywords="Sanghathi developers, Kethan VR, Sanghathi team, CMRIT mentoring platform, full stack AI developer"
+      keywords="Sanghathi developers, Sanghathi team, CMRIT mentoring platform, full stack AI developer"
       structuredData={aboutDevelopersStructuredData}
     >
       <Box
@@ -304,11 +303,6 @@ const AboutDevelopers = () => {
           </Paper>
 
           <Stack spacing={3}>
-            <TeamSection
-              title="NewBiee in Team"
-              ids={developerGroups.newbie}
-              featuredFirst
-            />
             <TeamSection title="Founders" ids={developerGroups.founders} />
             <TeamSection title="Other Developers" ids={developerGroups.others} />
           </Stack>

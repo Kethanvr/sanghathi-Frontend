@@ -6,6 +6,7 @@
 .pnp.js
 *.md
 !README.md
+!pull_request_template.md
 
 # testing
 /coverage

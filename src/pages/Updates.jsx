@@ -154,9 +154,9 @@ const Updates = () => {
   return (
     <Page
       title="What's New"
-      description="Sangathi 2.0 release notes with highlights and detailed updates for all users."
+      description="Sanghathi 2.0 release notes with highlights and detailed updates for all users."
       canonicalPath="/updates"
-      keywords="Sangathi 2.0, Sangathi updates, release notes, what's new"
+      keywords="Sanghathi 2.0, Sanghathi updates, release notes, what's new"
     >
       <Box
         sx={{
@@ -200,7 +200,7 @@ const Updates = () => {
                 </Stack>
 
                 <Typography variant="h4" sx={{ fontWeight: 900 }}>
-                  Sangathi 2.0 is live
+                  Sanghathi 2.0 is live
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 900 }}>
                   This release focuses on smoother role-based experience, stronger
@@ -286,7 +286,7 @@ const Updates = () => {
                 Key highlights for all users
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                A quick overview of the major improvements rolled out in Sangathi 2.0.
+                A quick overview of the major improvements rolled out in Sanghathi 2.0.
               </Typography>
             </Stack>
 

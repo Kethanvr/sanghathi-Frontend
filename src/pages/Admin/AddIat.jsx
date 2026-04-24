@@ -34,29 +34,85 @@ const AddIat = () => {
   const [errors, setErrors] = useState([]);
   const [file, setFile] = useState(null);
 
-  const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
+  const normalizeHeader = (header = "") =>
+    header.toString().toLowerCase().replace(/[^a-z0-9]/g, "");
 
-  const restoreDraftState = useCallback((draftData = {}) => {
-    setSuccessCount(Number(draftData.successCount) || 0);
-    setErrorCount(Number(draftData.errorCount) || 0);
-    setErrors(Array.isArray(draftData.errors) ? draftData.errors : []);
-  }, []);
+  const parseScore = (value) => {
+    if (value === undefined || value === null || value === "") return undefined;
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  };
 
-  const persistedErrors = useMemo(() => errors.slice(0, 200), [errors]);
+  const getColumnIndex = (header) => {
+    const suffixMatch = header.match(/_(\d+)$/);
+    if (suffixMatch) return suffixMatch[1];
 
-  useDraftPersistence({
-    formType: "admin-iat-upload",
-    scopeId: draftScopeId,
-    values: {
-      successCount,
-      errorCount,
-      errors: persistedErrors,
-      hasSelectedFile: Boolean(file),
-      isProcessing: processing,
-    },
-    reset: restoreDraftState,
-    enableServerSync: false,
-  });
+    const normalized = normalizeHeader(header);
+    const indexedHeaderPatterns = [
+      /^(subjectcode|coursecode|subcode)(\d+)$/,
+      /^(subjectname|coursename)(\d+)$/,
+      /^(iat1|iat2|avg|average)(\d+)$/,
+    ];
+
+    for (const pattern of indexedHeaderPatterns) {
+      const match = normalized.match(pattern);
+      if (match) {
+        return match[2];
+      }
+    }
+
+    return "1";
+  };
+
+  const extractSubjectsFromRow = (row) => {
+    const subjectBuckets = {};
+
+    for (const [column, rawValue] of Object.entries(row)) {
+      if (rawValue === undefined || rawValue === null || rawValue === "") continue;
+
+      const normalized = normalizeHeader(column);
+      const bucketIndex = getColumnIndex(column);
+      if (!subjectBuckets[bucketIndex]) {
+        subjectBuckets[bucketIndex] = {};
+      }
+
+      if (normalized.includes("subjectcode") || normalized.includes("coursecode") || normalized.includes("subcode")) {
+        subjectBuckets[bucketIndex].subjectCode = String(rawValue).trim();
+      } else if (normalized.includes("subjectname") || normalized.includes("coursename")) {
+        subjectBuckets[bucketIndex].subjectName = String(rawValue).trim();
+      } else if (normalized.includes("iat1")) {
+        subjectBuckets[bucketIndex].iat1 = parseScore(rawValue);
+      } else if (normalized.includes("iat2")) {
+        subjectBuckets[bucketIndex].iat2 = parseScore(rawValue);
+      } else if (normalized === "avg" || normalized.includes("average")) {
+        subjectBuckets[bucketIndex].avg = parseScore(rawValue);
+      }
+    }
+
+    return Object.values(subjectBuckets).filter(
+      (subject) => subject.subjectCode && subject.subjectName
+    );
+  };
+
+  const getFieldValueFromRow = (row, aliases = []) => {
+    const normalizedAliases = aliases.map((alias) => normalizeHeader(alias));
+
+    for (const [column, rawValue] of Object.entries(row)) {
+      if (rawValue === undefined || rawValue === null || rawValue === "") continue;
+
+      const normalizedColumn = normalizeHeader(column);
+      const matched = normalizedAliases.some((alias) => {
+        const matcher = new RegExp(`^${alias}(\\d+)?$`);
+        return matcher.test(normalizedColumn);
+      });
+
+      if (matched) {
+        return typeof rawValue === "string" ? rawValue.trim() : rawValue;
+      }
+    }
+
+    return undefined;
+  };
 
   const downloadTemplate = () => {
     const headers = [
@@ -105,10 +161,17 @@ const AddIat = () => {
           return;
         }
       } else {
+        const headerTracker = {};
         const results = Papa.parse(content, {
           header: true,
           skipEmptyLines: true,
           transform: (value) => (value === "" ? undefined : value), //  Convert empty strings to undefined
+          transformHeader: (header) => {
+            const trimmed = header.trim();
+            const count = headerTracker[trimmed] || 0;
+            headerTracker[trimmed] = count + 1;
+            return count === 0 ? trimmed : `${trimmed}_${count + 1}`;
+          },
         });
         rows = results.data;
       }
@@ -126,27 +189,26 @@ const AddIat = () => {
     // Group rows by USN and Semester
     const groupedData = {};
     for (const row of rows) {
-      if (!row.USN || !row.Sem || !row.SubjectCode || !row.SubjectName) {
-        newErrors.push(`Row with missing USN, Sem, SubjectCode, or SubjectName: ${JSON.stringify(row)}`);
+      const usn = getFieldValueFromRow(row, ["USN"]);
+      const semValue = getFieldValueFromRow(row, ["Sem", "Semester"]);
+      const semester = semValue !== undefined ? parseInt(semValue, 10) : undefined;
+      const rowSubjects = extractSubjectsFromRow(row);
+
+      if (!usn || !semester || Number.isNaN(semester) || rowSubjects.length === 0) {
+        newErrors.push(`Row with missing USN, Sem, or valid subject data: ${JSON.stringify(row)}`);
         errors++;
         continue; // Skip to the next row
       }
 
-      const key = `${row.USN}-${row.Sem}`;
+      const key = `${usn}-${semester}`;
       if (!groupedData[key]) {
         groupedData[key] = {
-          usn: row.USN,
-          semester: parseInt(row.Sem, 10),
+          usn,
+          semester,
           subjects: [],
         };
       }
-      groupedData[key].subjects.push({
-        subjectCode: row.SubjectCode,
-        subjectName: row.SubjectName,
-        iat1: row.IAT1 !== undefined ? parseInt(row.IAT1, 10) : undefined, // Parse, handle undefined
-        iat2: row.IAT2 !== undefined ? parseInt(row.IAT2, 10) : undefined,
-        avg: row.Avg !== undefined ? parseInt(row.Avg, 10) : undefined,
-      });
+      groupedData[key].subjects.push(...rowSubjects);
     }
 
     // Process each group (USN and Semester combination)
