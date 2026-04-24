@@ -29,6 +29,21 @@ import { AuthContext } from "../../context/AuthContext";
 
 import logger from "../../utils/logger.js";
 
+const dedupeUsersById = (items = []) => {
+  const seen = new Set();
+
+  return items.filter((item) => {
+    const id = item?._id;
+    if (!id || seen.has(id)) {
+      return false;
+    }
+    seen.add(id);
+    return true;
+  });
+};
+
+const MAX_PAGES_TO_FETCH = 25;
+
 const LoadingSpinner = () => (
   <Box
     sx={{
@@ -105,28 +120,67 @@ const Thread = () => {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const shouldScopeToStudents = ["faculty", "hod", "director"].includes(
-        user?.roleName
-      );
+      const shouldScopeToStudents = ["faculty", "hod", "director"].includes(user?.roleName);
 
-      const response = await api.get("users", {
-        params: {
-          page: 1,
-          limit: 500,
-          role: shouldScopeToStudents ? "student" : undefined,
-          fields: "_id,name,roleName,avatar,photo",
-          includeProfiles: true,
-        },
-      });
+      if (user?.roleName === "faculty") {
+        const mentees = [];
+        let page = 1;
+        let totalPages = 1;
 
-      if (response.data.status === "success") {
-        const fetchedUsers = response.data.data.users;
-        setUsers(fetchedUsers);
+        while (page <= totalPages && page <= MAX_PAGES_TO_FETCH) {
+          const response = await api.get(`/mentorship/${user._id}/mentees-with-profiles`, {
+            params: {
+              page,
+              limit: 500,
+            },
+          });
+
+          const fetchedMentees = Array.isArray(response?.data?.mentees)
+            ? response.data.mentees
+            : [];
+
+          mentees.push(...fetchedMentees);
+          totalPages = Number(response?.data?.pagination?.totalPages) || 1;
+          page += 1;
+        }
+
+        setUsers(dedupeUsersById(mentees));
+        return;
       }
+
+      const fetchedUsers = [];
+      let page = 1;
+      let totalPages = 1;
+
+      while (page <= totalPages && page <= MAX_PAGES_TO_FETCH) {
+        const response = await api.get("users", {
+          params: {
+            page,
+            limit: 500,
+            role: shouldScopeToStudents ? "student" : undefined,
+            fields: "_id,name,email,roleName,avatar,photo",
+            includeProfiles: true,
+          },
+        });
+
+        if (response?.data?.status !== "success") {
+          break;
+        }
+
+        const currentPageUsers = Array.isArray(response?.data?.data?.users)
+          ? response.data.data.users
+          : [];
+
+        fetchedUsers.push(...currentPageUsers);
+        totalPages = Number(response?.data?.pagination?.totalPages) || 1;
+        page += 1;
+      }
+
+      setUsers(dedupeUsersById(fetchedUsers));
     } catch (error) {
       logger.error("Error fetching Users:", error);
     }
-  }, [user?.roleName]);
+  }, [user?._id, user?.roleName]);
 
   useEffect(() => {
     fetchThreads();
