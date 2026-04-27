@@ -4,8 +4,24 @@ import api from "../utils/axios";
 
 import logger from "../utils/logger.js";
 
+const safeParseStoredUser = () => {
+  const rawUser = localStorage.getItem("user");
+
+  if (!rawUser || rawUser === "undefined" || rawUser === "[object Object]") {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawUser);
+  } catch (error) {
+    localStorage.removeItem("user");
+    logger.warn("Invalid user payload found in localStorage. Cleared stale data.", error);
+    return null;
+  }
+};
+
 const INITIAL_STATE = {
-  user: JSON.parse(localStorage.getItem("user")) || null,
+  user: safeParseStoredUser(),
   isFetching: false,
   error: false,
 };
