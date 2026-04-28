@@ -58,6 +58,10 @@ api.interceptors.response.use(
         window.location.pathname.startsWith("/forgot-password") ||
         window.location.pathname.startsWith("/reset-password");
 
+      // Clear local storage to prevent infinite redirect loops
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
       if (!isAuthPage) {
         sessionStorage.setItem("postLoginRedirectPath", currentPath);
         window.location.assign(

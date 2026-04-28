@@ -24,6 +24,11 @@ const AuthReducer = (state, action) => {
         isFetching: false,
         error: false,
       };
+    case "UPDATE_USER_PROFILE":
+      return {
+        ...state,
+        user: action.payload,
+      };
 
     default:
       return state;

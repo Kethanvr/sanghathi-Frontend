@@ -33,7 +33,17 @@ export const AuthContextProvider = ({ children }) => {
 
   useEffect(() => {
     localStorage.setItem("user", JSON.stringify(state.user));
-  }, [state.user]);
+
+    if (state.user) {
+      const sessionTimeout = setTimeout(() => {
+        dispatch({ type: "LOGOUT" });
+      }, 30 * 60 * 1000); // 30 minutes
+
+      return () => {
+        clearTimeout(sessionTimeout);
+      };
+    }
+  }, [state.user, dispatch]);
 
   useEffect(() => {
     let isMounted = true;
@@ -69,8 +79,9 @@ export const AuthContextProvider = ({ children }) => {
           fetchedUser.cabin !== state.user?.cabin;
 
         if (shouldUpdate) {
+          console.log("User profile data is out of sync. Updating...");
           dispatch({
-            type: "LOGIN_SUCCESS",
+            type: "UPDATE_USER_PROFILE",
             payload: {
               ...state.user,
               ...fetchedUser,
