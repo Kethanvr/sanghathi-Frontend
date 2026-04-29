@@ -84,7 +84,7 @@ const Report = () => {
         const response = await api.get("threads", {
           params: {
             page: 1,
-            limit: 300,
+            limit: 10000,
           },
         });
         if (response.status === 200) {
@@ -969,7 +969,7 @@ const Report = () => {
                   rowsPerPage={rowsPerPage}
                   onPageChange={handleChangePage}
                   onRowsPerPageChange={handleChangeRowsPerPage}
-                  rowsPerPageOptions={isMobile ? [10, 25] : [10, 25, 50]}
+                  rowsPerPageOptions={isMobile ? [10, 25, 50] : [10, 25, 50, 100, 250, 500, 1000]}
                 />
               </>
             ) : (
