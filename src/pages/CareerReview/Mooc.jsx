@@ -61,9 +61,11 @@ export default function Mooc() {
         const existingLocalDraft = localStorage.getItem(
           `sanghathi:draft:career-mooc:${draftScopeId}`
         );
-        if (existingLocalDraft) {
-          setIsDataFetched(true);
-          return;
+        if (existingLocalDraft && existingLocalDraft !== "{}" && !menteeId) {
+          // If we have a local draft and are not viewing another mentee's profile, skip fetching to allow draft resume
+          // We can let the user discard drafts if they want to. But fetching right now blocks DB data if cache exists.
+          // setIsDataFetched(true);
+          // return;
         }
 
         let response;
@@ -74,11 +76,42 @@ export default function Mooc() {
         const { data } = response.data;
     
         if (data && Array.isArray(data.mooc)) {
-          const formattedMooc = data.mooc.map((mooc) => ({
-            ...mooc,
-            startDate: mooc.startDate ? new Date(mooc.startDate).toISOString().split("T")[0] : "",
-            completedDate: mooc.completedDate ? new Date(mooc.completedDate).toISOString().split("T")[0] : "",
-          }));
+          const formattedMooc = data.mooc.map((mooc) => {
+            let parsedStartDate = "";
+            let parsedCompletedDate = "";
+
+            try {
+              if (mooc.startDate) {
+                const sDate = new Date(mooc.startDate);
+                if (!Number.isNaN(sDate.getTime())) {
+                  parsedStartDate = sDate.toISOString().split("T")[0];
+                } else {
+                  parsedStartDate = mooc.startDate;
+                }
+              }
+            } catch (e) {
+              parsedStartDate = mooc.startDate || "";
+            }
+
+            try {
+              if (mooc.completedDate) {
+                const cDate = new Date(mooc.completedDate);
+                if (!Number.isNaN(cDate.getTime())) {
+                  parsedCompletedDate = cDate.toISOString().split("T")[0];
+                } else {
+                  parsedCompletedDate = mooc.completedDate;
+                }
+              }
+            } catch (e) {
+              parsedCompletedDate = mooc.completedDate || "";
+            }
+
+            return {
+              ...mooc,
+              startDate: parsedStartDate,
+              completedDate: parsedCompletedDate,
+            };
+          });
           reset({ mooc: formattedMooc });
         } else {
           logger.warn("No mooc data found for this user");
