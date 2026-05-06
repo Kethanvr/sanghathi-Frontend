@@ -50,8 +50,6 @@ const Settings = lazy(() => import("./pages/Settings/Settings"));
 const TYLScorecard = lazy(() => import("./pages/Student/TYLScorecard"));
 const MentorMenteeConversation = lazy(() => import("./pages/MentorMentee/MentorMenteeConversation"));
 const MyChatBot = lazy(() => import("./mychatbot"));
-const AboutDevelopers = lazy(() => import("./pages/AboutDevelopers"));
-const DeveloperProfile = lazy(() => import("./pages/DeveloperProfile"));
 const Updates = lazy(() => import("./pages/Updates"));
 
 function App() {
@@ -473,14 +471,6 @@ function App() {
                         <LazyLoadWrapper component={MentorMenteeConversation} />
                       </ProtectedRouteWrapper>
                     }
-                  />
-                  <Route
-                    path="/about-developers"
-                    element={<LazyLoadWrapper component={AboutDevelopers} />}
-                  />
-                  <Route
-                    path="/about-developers/:developerId"
-                    element={<LazyLoadWrapper component={DeveloperProfile} />}
                   />
                 </Route>
                 
