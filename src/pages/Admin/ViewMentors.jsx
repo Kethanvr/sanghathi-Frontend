@@ -17,7 +17,9 @@ import {
   CardContent,
   Stack,
   TablePagination,
+  Avatar,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import Page from "../../components/Page";
 import api from "../../utils/axios";
@@ -166,19 +168,37 @@ export default function ViewMentors() {
                   mentors.map((mentor) => (
                     <TableRow key={mentor._id} hover>
                       <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {mentor.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar 
+                            src={mentor.avatar || mentor.photo} 
+                            sx={{ width: 32, height: 32, mr: 1.5, bgcolor: 'primary.main' }}
+                          >
+                            {mentor.name.charAt(0)}
+                          </Avatar>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {mentor.name}
+                          </Typography>
+                        </Box>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2">{mentor.email}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {mentor.email}
+                        </Typography>
                       </TableCell>
                       <TableCell>
                         <Chip
                           label={mentor.department || "N/A"}
                           size="small"
-                          variant="outlined"
-                          color={mentor.department === userDepartment ? "primary" : "default"}
+                          variant="filled"
+                          sx={{ 
+                            borderRadius: 1,
+                            backgroundColor: mentor.department === userDepartment 
+                              ? (theme) => alpha(theme.palette.primary.main, 0.1) 
+                              : (theme) => alpha(theme.palette.grey[500], 0.1),
+                            color: mentor.department === userDepartment ? 'primary.main' : 'text.secondary',
+                            fontWeight: 600,
+                            border: 'none'
+                          }}
                         />
                       </TableCell>
                       <TableCell>
