@@ -95,10 +95,10 @@ export default function UserForm({ editingUser }) {
       phone: editingUser?.phone || "",
       password: "",
       passwordConfirm: "",
-      department: "",
-      sem: "",
-      role: editingUser?.role || "student",
-      usn: "",
+      department: editingUser?.department || "",
+      sem: editingUser?.sem || "",
+      role: editingUser?.roleName || "student",
+      usn: editingUser?.usn || "",
     },
   });
 
@@ -109,17 +109,32 @@ export default function UserForm({ editingUser }) {
     formState: { isSubmitting },
   } = methods;
 
+  // Sync default values when editingUser changes
+  useEffect(() => {
+    if (editingUser) {
+      reset({
+        name: editingUser.name || "",
+        email: editingUser.email || "",
+        phone: editingUser.phone || "",
+        department: editingUser.department || "",
+        sem: editingUser.sem || "",
+        role: editingUser.roleName || "student",
+        usn: editingUser.usn || "",
+      });
+    }
+  }, [editingUser, reset]);
+
   // Remove the role ID fetching effect
   useEffect(() => {
     const fetchRoleId = async () => {
+      const currentRole = methods.getValues("role");
+      if (!currentRole) return;
+      
       try {
-        const response = await api.get(`/roles/${methods.getValues("role")}`);
+        const response = await api.get(`/roles/${currentRole}`);
         setRoleId(response.data._id); // Store the ObjectId
       } catch (error) {
         logger.error("Failed to fetch role ID:", error);
-        enqueueSnackbar("Failed to fetch role information", {
-          variant: "error",
-        });
       }
     };
 
@@ -155,36 +170,41 @@ export default function UserForm({ editingUser }) {
         const lastName =
           nameParts.length > 1 ? nameParts.slice(1).join(" ") : "N/A";
 
-        //Create a user first
         const userData = {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          password: formData.password,
-          passwordConfirm: formData.passwordConfirm,
-          // avatar: avatar ? avatar.name || avatar : "",
           role: roleId,
-          roleName: formData.role, // Use roleName instead of role ID
+          roleName: formData.role,
           collegeCode: DEFAULT_COLLEGE_CODE,
+          department: formData.department,
         };
+
+        if (!editingUser) {
+          userData.password = formData.password;
+          userData.passwordConfirm = formData.passwordConfirm;
+        }
+
         if (avatar && (typeof avatar === "string" || avatar.name)) {
           userData.avatar = typeof avatar === "string" ? avatar : avatar.name;
         }
 
-        logger.info("Creating user with data:", userData);
-        const userResponse = await api.post("/users", {
-          ...userData,
-        });
-        logger.info("User Response to create User:", userResponse.data);
+        let userResponse;
+        if (editingUser) {
+          logger.info("Updating user with data:", userData);
+          userResponse = await api.patch(`/users/${editingUser._id}`, userData);
+        } else {
+          logger.info("Creating user with data:", userData);
+          userResponse = await api.post("/users", userData);
+        }
 
-        //Create a profile with userId
-        if (userData.roleName == "student") {
+        const userId = editingUser ? editingUser._id : userResponse.data._id;
+        const profileModel = formData.role === "student" ? "student" : "faculty";
+
+        if (formData.role === "student") {
           const profileData = {
-            userId: userResponse.data._id,
-            fullName: {
-              firstName,
-              lastName,
-            },
+            userId,
+            fullName: { firstName, lastName },
             department: formData.department,
             sem: formData.sem,
             usn: formData.usn,
@@ -193,84 +213,38 @@ export default function UserForm({ editingUser }) {
             collegeCode: DEFAULT_COLLEGE_CODE,
           };
 
-          logger.info("Creating profile with data:", profileData);
-
-          const profileResponse = await api.post(
-            "/students/profile",
-            profileData
-          );
-          logger.info("Profile response:", profileResponse.data);
-
-          if (!profileResponse.data?.data?.studentProfile?._id) {
-            throw new Error("Profile creation failed");
-          }
-
-          const profileId = profileResponse.data.data.studentProfile._id;
-          logger.info("Profile ID", profileId);
-          if (profileId) {
-            // Update User with Profile ID
-            await api.patch(`/users/${userResponse.data._id}`, {
-              profileId: profileId,
-            });
-
-            // Fetch the newly created student profile to verify it's there
-            try {
-              const fetchResponse = await api.get(
-                `/student-profiles/${userResponse.data._id}`
-              );
-              logger.info("Fetched student profile:", fetchResponse.data);
-
-              if (!fetchResponse.data) {
-                logger.warn("Student profile response is empty");
-                enqueueSnackbar(
-                  "User created, but profile may not be accessible immediately. Please refresh.",
-                  { variant: "warning" }
-                );
-              }
-            } catch (fetchError) {
-              logger.error("Error fetching new student profile:", fetchError);
-              enqueueSnackbar(
-                "User created, but profile may not be accessible immediately. Please refresh.",
-                { variant: "warning" }
-              );
+          if (editingUser && editingUser.profile) {
+            await api.patch(`/students/profile/${userId}`, profileData);
+          } else {
+            const profileResponse = await api.post("/students/profile", profileData);
+            const profileId = profileResponse.data?.data?.studentProfile?._id;
+            if (profileId) {
+              await api.patch(`/users/${userId}`, { profile: profileId });
             }
           }
         } else {
           const profileData = {
-            userId: userResponse.data._id,
-            fullName: {
-              firstName,
-              lastName,
-            },
+            userId,
+            fullName: { firstName, lastName },
             department: formData.department,
             email: formData.email,
             mobileNumber: formData.phone,
             collegeCode: DEFAULT_COLLEGE_CODE,
           };
 
-          logger.info("Creating profile with data:", profileData);
-
-          const profileResponse = await api.post(
-            "/faculty/profile",
-            profileData
-          );
-          logger.info("Faculty Profile response:", profileResponse.data);
-
-          if (!profileResponse.data?.data?.facultyProfile?._id) {
-            throw new Error("Faculty Profile creation failed");
-          }
-
-          const profileId = profileResponse.data.data.facultyProfile._id;
-          logger.info("Faculty Profile ID", profileId);
-          if (profileId) {
-            // Update User with Profile ID
-            await api.patch(`/users/${userResponse.data._id}`, {
-              profileId: profileId,
-            });
+          if (editingUser && editingUser.profile) {
+            await api.patch(`/faculty/profile/${userId}`, profileData);
+          } else {
+            const profileResponse = await api.post("/faculty/profile", profileData);
+            const profileId = profileResponse.data?.data?.facultyProfile?._id;
+            if (profileId) {
+              await api.patch(`/users/${userId}`, { profile: profileId });
+            }
           }
         }
-        enqueueSnackbar("User created successfully!", { variant: "success" });
-        reset();
+        
+        enqueueSnackbar(`User ${editingUser ? "updated" : "created"} successfully!`, { variant: "success" });
+        if (!editingUser) reset();
       } catch (error) {
         logger.error("Detailed error:", error.response?.data);
         enqueueSnackbar(
@@ -281,7 +255,7 @@ export default function UserForm({ editingUser }) {
         );
       }
     },
-    [methods, avatar, reset, enqueueSnackbar]
+    [methods, avatar, reset, enqueueSnackbar, editingUser, roleId]
   );
 
   // Handle avatar drop

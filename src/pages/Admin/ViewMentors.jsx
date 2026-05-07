@@ -18,11 +18,22 @@ import {
   Stack,
   TablePagination,
   Avatar,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ConfirmationDialog from "../Users/ConfirmationDialog";
+import UserFormDialog from "../Users/UserFormDialog"; // I will create this or use UserForm in a Dialog
 import Page from "../../components/Page";
 import api from "../../utils/axios";
+import { useSnackbar } from "notistack";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import logger from "../../utils/logger.js";
@@ -51,6 +62,11 @@ export default function ViewMentors() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [total, setTotal] = useState(0);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedMentor, setSelectedMentor] = useState(null);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     fetchMentors();
@@ -102,6 +118,42 @@ export default function ViewMentors() {
     setPage(0);
   };
 
+  const handleClick = (event, mentor) => {
+    setSelectedMentor(mentor);
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleEdit = () => {
+    setOpenEdit(true);
+    handleClose();
+  };
+
+  const handleDelete = () => {
+    setOpenConfirm(true);
+    handleClose();
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await api.delete(`/users/${selectedMentor._id}`);
+      // Also delete faculty profile
+      await api.delete(`/faculty/profile/${selectedMentor._id}`).catch(() => {});
+      
+      enqueueSnackbar(`Successfully deleted mentor ${selectedMentor.name}`, { variant: "success" });
+      setMentors((prev) => prev.filter((m) => m._id !== selectedMentor._id));
+      setTotal((prev) => prev - 1);
+    } catch (error) {
+      logger.error("Failed to delete mentor:", error);
+      enqueueSnackbar("Failed to delete mentor", { variant: "error" });
+    } finally {
+      setOpenConfirm(false);
+    }
+  };
+
   return (
     <Page title="View Mentors">
       <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
@@ -149,12 +201,13 @@ export default function ViewMentors() {
                   <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Department</TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Phone</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                       <Typography>Loading mentors...</Typography>
                     </TableCell>
                   </TableRow>
@@ -204,6 +257,11 @@ export default function ViewMentors() {
                       <TableCell>
                         <Typography variant="body2">{mentor.phone || "N/A"}</Typography>
                       </TableCell>
+                      <TableCell align="right">
+                        <IconButton onClick={(e) => handleClick(e, mentor)}>
+                          <MoreVertIcon />
+                        </IconButton>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -224,6 +282,45 @@ export default function ViewMentors() {
           </TableContainer>
         </Stack>
       </Container>
+
+      {/* Action Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem onClick={handleEdit}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Edit</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" color="error" />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={openConfirm}
+        title="Delete Mentor"
+        message={`Are you sure you want to delete ${selectedMentor?.name}? This action cannot be undone.`}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setOpenConfirm(false)}
+      />
+
+      {/* Edit Dialog */}
+      <UserFormDialog
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        editingUser={selectedMentor}
+        onSuccess={fetchMentors}
+      />
     </Page>
   );
 }

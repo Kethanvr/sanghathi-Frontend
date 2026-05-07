@@ -8,6 +8,9 @@ import {
   Checkbox,
   Tooltip,
   Chip,
+  Avatar,
+  Box,
+  Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import PersonIcon from "@mui/icons-material/Person";
@@ -84,7 +87,7 @@ const StudentTable = ({ students, selectedStudents, onSelectStudent, theme, isLi
           </TableCell>
           <TableCell>Name</TableCell>
           <TableCell>USN</TableCell>
-          <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Branch</TableCell>
+          <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Department</TableCell>
           <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>Sem</TableCell>
           <TableCell>Current Mentor</TableCell>
         </TableRow>
@@ -94,7 +97,17 @@ const StudentTable = ({ students, selectedStudents, onSelectStudent, theme, isLi
           const mentorName = getMentorInfo(student);
           
           return (
-            <TableRow key={student._id}>
+            <TableRow 
+              key={student._id}
+              hover
+              sx={{ 
+                '&:hover': {
+                  backgroundColor: isLight 
+                    ? alpha(theme.palette.primary.main, 0.05)
+                    : alpha(theme.palette.info.main, 0.05)
+                }
+              }}
+            >
               <TableCell padding="checkbox">
                 <Checkbox
                   checked={selectedStudents.includes(student._id)}
@@ -107,10 +120,31 @@ const StudentTable = ({ students, selectedStudents, onSelectStudent, theme, isLi
                   }}
                 />
               </TableCell>
-              <TableCell>{student.name || 'Unknown'}</TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar 
+                    sx={{ width: 36, height: 36, bgcolor: 'info.main' }}
+                  >
+                    {student.name.charAt(0)}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      {student.name || 'Unknown'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {getProfileData(student, 'usn')}
+                    </Typography>
+                  </Box>
+                </Box>
+              </TableCell>
               <TableCell>
                 <Tooltip title={getProfileData(student, 'usn') === 'N/A' ? 'USN not available' : ''}>
-                  <span>{getProfileData(student, 'usn')}</span>
+                  <Chip 
+                    label={getProfileData(student, 'usn')} 
+                    size="small" 
+                    variant="outlined"
+                    sx={{ borderRadius: 1, fontSize: '0.75rem' }}
+                  />
                 </Tooltip>
               </TableCell>
               <TableCell sx={{ display: { xs: "none", sm: "table-cell" } }}>
