@@ -208,7 +208,6 @@ const Login = () => {
                       alt="Login illustration"
                       fit="cover"
                       duration={0}
-                      shift="none"
                       style={{
                         width: "100%",
                         height: "clamp(130px, 24vh, 180px)",

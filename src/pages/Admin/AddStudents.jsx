@@ -15,7 +15,13 @@ import {
   Alert,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  IconButton
 } from "@mui/material";
 import { 
   CloudUpload as CloudUploadIcon,
@@ -27,6 +33,7 @@ import {
 } from '@mui/icons-material';
 import api from "../../utils/axios";
 import { alpha, useTheme } from "@mui/material/styles";
+import ClearIcon from "@mui/icons-material/Clear";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 import { resolveDraftScopeId } from "../../utils/draftScope";
 import { recordAdminUploadSession } from "../../utils/uploadHistory";
@@ -105,8 +112,9 @@ const AddStudents = () => {
   const [processing, setProcessing] = useState(false);
   const [successCount, setSuccessCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
-  const [errors, setErrors] = useState([]);
   const [file, setFile] = useState(null);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [tempRows, setTempRows] = useState([]);
 
   const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
 
@@ -150,8 +158,15 @@ const AddStudents = () => {
     setFile(null);
     setErrors([]);
     setSuccessCount(0);
+    const fileInput = document.getElementById("upload-file");
+    if (fileInput) fileInput.value = "";
+  };
+
+  const handleClearResults = () => {
+    setSuccessCount(0);
     setErrorCount(0);
-    // Reset file input
+    setErrors([]);
+    setFile(null);
     const fileInput = document.getElementById("upload-file");
     if (fileInput) fileInput.value = "";
   };
@@ -181,22 +196,15 @@ const AddStudents = () => {
     if (!file) return;
     
     setFile(file);
-    setProcessing(true);
-    setErrors([]);
-    setSuccessCount(0);
-    setErrorCount(0);
-
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       const content = e.target.result;
       let rows = [];
       if (file.type === "application/json") {
         try {
           rows = JSON.parse(content);
         } catch (error) {
-          setErrors(["Invalid JSON format."]);
-          setErrorCount(1);
-          setProcessing(false);
+          enqueueSnackbar("Invalid JSON format", { variant: "error" });
           return;
         }
       } else {
@@ -206,9 +214,27 @@ const AddStudents = () => {
         });
         rows = results.data;
       }
-      await processRows(rows);
+      
+      if (rows.length === 0) {
+        enqueueSnackbar("The file is empty", { variant: "warning" });
+        return;
+      }
+
+      setTempRows(rows);
+      setOpenConfirm(true);
     };
     reader.readAsText(file);
+    // Reset input so same file can be selected again
+    event.target.value = "";
+  };
+
+  const handleConfirmUpload = async () => {
+    setOpenConfirm(false);
+    setProcessing(true);
+    setErrors([]);
+    setSuccessCount(0);
+    setErrorCount(0);
+    await processRows(tempRows);
   };
 
   const processRows = async (rows) => {
@@ -567,6 +593,18 @@ const AddStudents = () => {
                 Errors encountered: {errorCount} record(s)
               </Alert>
             )}
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Button 
+                size="small" 
+                onClick={handleClearResults}
+                startIcon={<ClearIcon />}
+                color="inherit"
+                sx={{ opacity: 0.7 }}
+              >
+                Clear Results
+              </Button>
+            </Box>
             
             {errors.length > 0 && (
               <Box 
@@ -627,6 +665,35 @@ const AddStudents = () => {
           </Typography>
         </Paper>
       </Paper>
+
+      <Dialog
+        open={openConfirm}
+        onClose={() => setOpenConfirm(false)}
+        PaperProps={{
+          sx: { borderRadius: 2, p: 1 }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Confirm Upload</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You have selected <strong>{file?.name}</strong> with <strong>{tempRows.length}</strong> records. 
+            Are you sure you want to proceed with the bulk upload for <strong>{currentRole.label}</strong>?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOpenConfirm(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmUpload} 
+            variant="contained" 
+            autoFocus
+            sx={{ bgcolor: activeColor, '&:hover': { bgcolor: activeColor } }}
+          >
+            Start Upload
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

@@ -60,7 +60,7 @@ export default function ViewMentors() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [total, setTotal] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedMentor, setSelectedMentor] = useState(null);
