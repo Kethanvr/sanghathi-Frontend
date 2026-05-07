@@ -166,9 +166,6 @@ const Footer = () => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={2}>
-            <FooterLinkGroup title="Contact" links={contactLinks} />
-          </Grid>
 
           <Grid item xs={12} sm={6} md={2}>
             <FooterLinkGroup
