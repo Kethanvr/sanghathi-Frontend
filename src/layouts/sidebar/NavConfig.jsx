@@ -55,6 +55,11 @@ const adminNavConfig = [
     icon: <SchoolIcon />, 
     link: "/admin/mentors" },
   {
+    text: "Mentor Assignment",
+    icon: <PersonOutlinedIcon />,
+    link: "/admin/mentor-assignment",
+  },
+  {
     text: "Upload History",
     icon: <HistoryOutlinedIcon />,
     link: "/admin/upload-history",

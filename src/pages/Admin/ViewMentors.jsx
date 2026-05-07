@@ -66,14 +66,19 @@ export default function ViewMentors() {
       };
 
       if (searchQuery.trim()) {
-        params.search = searchQuery;
+        // backend expects `q` for free-text search
+        params.q = searchQuery.trim();
       }
 
       const response = await api.get("/users", { params });
-      const { data } = response.data;
 
-      setMentors(data.users || []);
-      setTotal(data.totalRecords || 0);
+      // Response shape can be { status, results, pagination, data: { users } }
+      const payload = response.data?.data || response.data;
+      const users = (payload && payload.users) || [];
+      const totalCount = response.data?.pagination?.total || payload?.total || 0;
+
+      setMentors(users);
+      setTotal(totalCount);
     } catch (error) {
       logger.error("Failed to fetch mentors:", error);
     } finally {

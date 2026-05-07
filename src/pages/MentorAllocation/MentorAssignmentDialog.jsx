@@ -51,18 +51,25 @@ const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
       
       setLoading(true);
       try {
-        const response = await api.get("/users", {
-          params: {
-            role: "faculty",
-            page: 1,
-            limit: 500,
-            fields: "_id,name,email,department",
-            includeProfiles: false,
-          },
-        });
+        const params = {
+          role: "faculty",
+          page: 1,
+          limit: 500,
+          fields: "_id,name,email,department",
+          includeProfiles: true,
+        };
+
+        if (userDepartment) params.department = userDepartment;
+
+        const response = await api.get("/users", { params });
         const { data } = response.data;
-        setMentors(data.users || []);
-        logger.info(`Loaded ${data.users?.length || 0} mentors for department: ${userDepartment}`);
+        const loadedMentors = data.users || [];
+        setMentors(loadedMentors);
+        setSuggestions(loadedMentors);
+        if (!loadedMentors.length && userDepartment) {
+          enqueueSnackbar(`No ${userDepartment} mentors found. Showing all faculty if available.`, { variant: "info" });
+        }
+        logger.info(`Loaded ${loadedMentors.length || 0} mentors for department: ${userDepartment}`);
       } catch (error) {
         logger.error("Failed to fetch mentors:", error);
         enqueueSnackbar("Failed to load mentors", { variant: "error" });
@@ -86,7 +93,7 @@ const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
         )
       );
     } else {
-      setSuggestions([]);
+      setSuggestions(mentors);
     }
   };
 
