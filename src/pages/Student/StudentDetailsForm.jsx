@@ -23,7 +23,7 @@ const yesNoOptions = [
   { value: "no", label: "No" },
 ];
 
-const departmentOptions = [
+const DEFAULT_DEPARTMENT_OPTIONS = [
   "CSE",
   "ISE",
   "AIML",
@@ -41,6 +41,7 @@ const nationalityOptions = [
   "Indian",
   "Foreigner"
 ];
+const DEFAULT_COLLEGE_CODE = "CMRIT";
 
 const isCloudinaryUrl = (url) => {
   return typeof url === 'string' && url.includes('cloudinary.com');
@@ -67,6 +68,7 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
   const [isDataFetched, setIsDataFetched] = useState(false);
+  const [departments, setDepartments] = useState(DEFAULT_DEPARTMENT_OPTIONS);
 
   const methods = useForm({
     defaultValues: {
@@ -77,6 +79,7 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
           middleName: '',
           lastName: ''
         },
+        collegeCode: DEFAULT_COLLEGE_CODE,
         department: '',
         sem: '',
         personalEmail: '',
@@ -211,6 +214,24 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
     fetchStudentData();
   }, [fetchStudentData]);
 
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await api.get("/departments", {
+          params: { collegeCode: DEFAULT_COLLEGE_CODE, status: "active" },
+        });
+        const options = response.data?.data?.departments || [];
+        if (options.length) {
+          setDepartments(options.map((dept) => dept.name));
+        }
+      } catch (error) {
+        logger.warn("Failed to load departments, using defaults", error);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
   const handleReset = () => {
     reset();
     setIsDataFetched(false);
@@ -293,6 +314,9 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
 
   const onSubmit = async (data) => {
     try {
+      if (!data.studentProfile.collegeCode) {
+        data.studentProfile.collegeCode = DEFAULT_COLLEGE_CODE;
+      }
       const currentPhoto = watch('studentProfile.photo');
       let photoUrl = currentPhoto;
   
@@ -451,7 +475,7 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                   shrink: shouldShrink("studentProfile.department"),
                 }}
               >
-                {departmentOptions.map((dept) => (
+                {departments.map((dept) => (
                   <option key={dept} value={dept}>
                     {dept}
                   </option>

@@ -61,7 +61,7 @@ export const AuthContextProvider = ({ children }) => {
           params: {
             includeProfiles: true,
             fields:
-              "_id,name,email,phone,avatar,photo,role,roleName,department,sem,usn,cabin",
+              "_id,name,email,phone,avatar,photo,role,roleName,department,sem,usn,cabin,collegeCode",
           },
         });
 
@@ -73,6 +73,7 @@ export const AuthContextProvider = ({ children }) => {
         const shouldUpdate =
           fetchedUser.avatar !== state.user?.avatar ||
           fetchedUser.photo !== state.user?.photo ||
+          fetchedUser.collegeCode !== state.user?.collegeCode ||
           fetchedUser.department !== state.user?.department ||
           fetchedUser.sem !== state.user?.sem ||
           fetchedUser.usn !== state.user?.usn ||

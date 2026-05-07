@@ -64,7 +64,7 @@ const options = [
   // { label: "HOD", value: "hod" },
 ];
 
-const departmentOptions = [
+const DEFAULT_DEPARTMENT_OPTIONS = [
   "CSE",
   "ISE",
   "AIML",
@@ -77,12 +77,14 @@ const departmentOptions = [
 ];
 
 const semesterOptions = Array.from({ length: 8 }, (_, i) => i + 1);
+const DEFAULT_COLLEGE_CODE = "CMRIT";
 
 export default function UserForm({ editingUser }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const [avatar, setAvatar] = useState(null);
   const [roleId, setRoleId] = useState("");
+  const [departments, setDepartments] = useState(DEFAULT_DEPARTMENT_OPTIONS);
 
   // Form initialization
   const methods = useForm({
@@ -124,6 +126,24 @@ export default function UserForm({ editingUser }) {
     fetchRoleId();
   }, [methods.watch("role")]);
 
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await api.get("/departments", {
+          params: { collegeCode: DEFAULT_COLLEGE_CODE, status: "active" },
+        });
+        const options = response.data?.data?.departments || [];
+        if (options.length) {
+          setDepartments(options.map((dept) => dept.name));
+        }
+      } catch (error) {
+        logger.warn("Failed to load departments, using defaults", error);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
   //handle form submission
   const onSubmit = useCallback(
     async (formData) => {
@@ -145,6 +165,7 @@ export default function UserForm({ editingUser }) {
           // avatar: avatar ? avatar.name || avatar : "",
           role: roleId,
           roleName: formData.role, // Use roleName instead of role ID
+          collegeCode: DEFAULT_COLLEGE_CODE,
         };
         if (avatar && (typeof avatar === "string" || avatar.name)) {
           userData.avatar = typeof avatar === "string" ? avatar : avatar.name;
@@ -169,6 +190,7 @@ export default function UserForm({ editingUser }) {
             usn: formData.usn,
             email: formData.email,
             mobileNumber: formData.phone,
+            collegeCode: DEFAULT_COLLEGE_CODE,
           };
 
           logger.info("Creating profile with data:", profileData);
@@ -223,6 +245,7 @@ export default function UserForm({ editingUser }) {
             department: formData.department,
             email: formData.email,
             mobileNumber: formData.phone,
+            collegeCode: DEFAULT_COLLEGE_CODE,
           };
 
           logger.info("Creating profile with data:", profileData);
@@ -389,7 +412,7 @@ export default function UserForm({ editingUser }) {
                   fullWidth
                 >
                   <option value="">Select Department</option>
-                  {departmentOptions.map((dept) => (
+                  {departments.map((dept) => (
                     <option key={dept} value={dept}>
                       {dept}
                     </option>

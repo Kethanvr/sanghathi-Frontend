@@ -16,6 +16,7 @@ const DEPARTMENT_OPTIONS = [
   "Mechanical Engineering",
   "Physics",
   "MBA",
+  "MCA",
   "AI&DS",
   "AI&ML",
 ];
