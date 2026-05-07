@@ -15,7 +15,10 @@ import {
   Avatar,
   Link,
   useTheme,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useContext, useRef, useState } from "react";
 import { loginCall } from "../apiCalls";
 import { AuthContext } from "../context/AuthContext";
@@ -43,6 +46,7 @@ const Login = () => {
   const [isAdminDemoChecked, setIsAdminDemoChecked] = useState(false);
   const [isFacultyDemoChecked, setIsFacultyDemoChecked] = useState(false);
   const [isStudentDemoChecked, setIsStudentDemoChecked] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleAdminDemoChange = (event) => {
     setIsAdminDemoChecked(event.target.checked);
@@ -75,6 +79,10 @@ const Login = () => {
       email.current.value = "";
       password.current.value = "";
     }
+  };
+
+  const handleShowPasswordToggle = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleLogin = async (e) => {
@@ -219,10 +227,24 @@ const Login = () => {
                   <TextField
                     label="Password"
                     variant="outlined"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     fullWidth
                     inputRef={password}
                     autoComplete="current-password"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={handleShowPasswordToggle}
+                            edge="end"
+                            aria-label="toggle password visibility"
+                            size="small"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
 
                   <Box display="flex" justifyContent="flex-end">
