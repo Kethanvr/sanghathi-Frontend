@@ -92,7 +92,6 @@ const Login = () => {
         { email: email.current.value, password: password.current.value },
         dispatch
       );
-      sessionStorage.setItem(RELEASE_ANNOUNCEMENT_SESSION_KEY, "true");
       const savedRedirectPath = sessionStorage.getItem("postLoginRedirectPath");
       const redirectPath =
         redirectParam ||
