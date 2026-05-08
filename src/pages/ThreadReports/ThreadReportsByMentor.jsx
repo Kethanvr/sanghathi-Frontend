@@ -201,7 +201,7 @@ const ThreadReportsByMentor = () => {
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="Search mentee name, email, or reg number..."
+                    placeholder="Search mentee name, email, or USN..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     InputProps={{

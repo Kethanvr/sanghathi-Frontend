@@ -24,10 +24,6 @@ import {
   alpha,
   Breadcrumbs,
   Link as MuiLink,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  DialogTitle,
   Grid,
 } from "@mui/material";
 import {
@@ -35,7 +31,6 @@ import {
   ArrowBack as ArrowBackIcon,
   MessageRounded as MessageRoundedIcon,
   CalendarToday as CalendarTodayIcon,
-  Close as CloseIcon,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import Page from "../../components/Page";
@@ -62,9 +57,6 @@ const ThreadReportsByStudent = () => {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [dateFromFilter, setDateFromFilter] = useState("");
   const [dateToFilter, setDateToFilter] = useState("");
-  const [openThreadDialog, setOpenThreadDialog] = useState(false);
-  const [selectedThreadMessages, setSelectedThreadMessages] = useState([]);
-  const [selectedThreadData, setSelectedThreadData] = useState(null);
 
   // Fetch mentor and student info
   useEffect(() => {
@@ -140,23 +132,8 @@ const ThreadReportsByStudent = () => {
     ...new Set(threads.map((t) => t?.topic).filter(Boolean)),
   ];
 
-  const handleViewThread = async (thread) => {
-    try {
-      const response = await api.get(`/threads/${thread._id}`);
-      const threadData = response.data.data.thread;
-      setSelectedThreadData(threadData);
-      setSelectedThreadMessages(threadData.messages || []);
-      setOpenThreadDialog(true);
-    } catch (error) {
-      console.error("Error fetching thread details:", error);
-      enqueueSnackbar("Failed to load thread details", { variant: "error" });
-    }
-  };
-
-  const handleCloseThreadDialog = () => {
-    setOpenThreadDialog(false);
-    setSelectedThreadMessages([]);
-    setSelectedThreadData(null);
+  const handleViewThread = (thread) => {
+    navigate(`/threads/${thread._id}`);
   };
 
   const getStatusColor = (status) => {
@@ -270,10 +247,10 @@ const ThreadReportsByStudent = () => {
                           color: theme.palette.text.primary,
                         }}
                       >
-                        Threads Between Mentor & Mentee
+                        Threads Between Mentor &amp; Mentee
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {mentorInfo?.name} & {studentInfo?.name} {studentInfo?.profile?.usn ? `(${studentInfo.profile.usn})` : studentInfo?.registrationNumber ? `(${studentInfo.registrationNumber})` : ""}
+                        {mentorInfo?.name} &amp; {studentInfo?.name} {studentInfo?.profile?.usn ? `(${studentInfo.profile.usn})` : studentInfo?.registrationNumber ? `(${studentInfo.registrationNumber})` : ""}
                       </Typography>
                     </Box>
                   </Stack>
@@ -537,53 +514,7 @@ const ThreadReportsByStudent = () => {
             </Paper>
           )}
 
-          {/* Thread Details Dialog */}
-          <Dialog
-            open={openThreadDialog}
-            onClose={handleCloseThreadDialog}
-            maxWidth="md"
-            fullWidth
-            PaperProps={{
-              sx: {
-                height: "80vh",
-                display: "flex",
-                flexDirection: "column"
-              }
-            }}
-          >
-            <DialogTitle
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderBottom: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-              }}
-            >
-              <Box>
-                <Typography variant="h6">
-                  {selectedThreadData?.title}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {selectedThreadData?.topic}
-                </Typography>
-              </Box>
-              <Button
-                startIcon={<CloseIcon />}
-                onClick={handleCloseThreadDialog}
-                variant="text"
-              >
-                Close
-              </Button>
-            </DialogTitle>
-            <DialogContent sx={{ p: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-              {selectedThreadData && (
-                <MessageList 
-                  conversation={selectedThreadData} 
-                  messages={selectedThreadMessages} 
-                />
-              )}
-            </DialogContent>
-          </Dialog>
+
         </Container>
       </Box>
     </Page>
