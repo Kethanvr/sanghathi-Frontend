@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useMemo } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useSnackbar } from "notistack";
 import api from "../../utils/axios";
@@ -17,6 +17,10 @@ import {
   Radio,
   RadioGroup,
   TextField,
+  Button,
+  Container,
+  Paper,
+  IconButton,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
@@ -26,7 +30,9 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import AssignmentLateIcon from "@mui/icons-material/AssignmentLate";
 import LockIcon from "@mui/icons-material/Lock";
-import { Button } from "@mui/material";
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import StarsIcon from "@mui/icons-material/Stars";
 
 import logger from "../../utils/logger.js";
 
@@ -149,9 +155,8 @@ export default function FeedbackForm() {
   }, [watchedRatings]);
 
   useEffect(() => {
-    // Generate semester options based on department
     const dept = user?.department || "";
-    const maxSem = DEPT_SEMESTER_MAP[dept] || 0;
+    const maxSem = DEPT_SEMESTER_MAP[dept] || 8;
     const options = [];
     for (let i = 1; i <= maxSem; i++) {
       options.push(i.toString());
@@ -169,20 +174,16 @@ export default function FeedbackForm() {
         const windowResponse = await api.get("/feedback/window");
         const windowData = windowResponse.data?.data?.window || null;
 
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
 
         setFeedbackWindow(windowData);
 
-        // Update isEditable based on selected round
         if (selectedRound) {
           setIsEditable(Boolean(windowData?.isEnabled && windowData?.feedbackRound?.toString() === selectedRound));
         } else {
           setIsEditable(false);
         }
 
-        // Set default semester if available
         if (windowData?.semester && semesterOptions.length > 0) {
           const semester = windowData.semester.toString();
           if (semesterOptions.includes(semester)) {
@@ -190,13 +191,11 @@ export default function FeedbackForm() {
           }
         }
 
-        // Fetch existing feedback if applicable
-        if (targetUserId && windowData?.semester) {
+        if (targetUserId) {
           try {
             const feedbackResponse = await api.get(`/feedback/student/${targetUserId}`, {
               params: {
-                semester: windowData.semester,
-                // If no round selected, we don't pass round to get all submissions status
+                semester: windowData?.semester || undefined,
               },
             });
             
@@ -211,7 +210,7 @@ export default function FeedbackForm() {
 
               if (feedbackData) {
                 reset({
-                  semester: feedbackData.semester,
+                  semester: feedbackData.semester?.toString() || "",
                   mentorAccessibility: feedbackData.mentorAccessibility?.toString() || "",
                   mentorInteraction: feedbackData.mentorInteraction?.toString() || "",
                   academicHelp: feedbackData.academicHelp?.toString() || "",
@@ -226,7 +225,7 @@ export default function FeedbackForm() {
                   remarks: feedbackData.remarks || "",
                 });
               } else {
-                reset({ ...DEFAULT_VALUES, semester: windowData.semester });
+                reset({ ...DEFAULT_VALUES, semester: windowData?.semester?.toString() || "" });
               }
             }
           } catch (err) {
@@ -234,29 +233,20 @@ export default function FeedbackForm() {
               logger.error("Error fetching feedback:", err);
             }
             if (selectedRound) {
-              reset({ ...DEFAULT_VALUES, semester: windowData.semester });
+              reset({ ...DEFAULT_VALUES, semester: windowData?.semester?.toString() || "" });
             }
-          }
-        } else {
-          if (selectedRound) {
-            reset(DEFAULT_VALUES);
           }
         }
       } catch (err) {
         logger.error("Error fetching feedback window:", err);
         enqueueSnackbar("Unable to load feedback window", { variant: "error" });
       } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
+        if (mounted) setIsLoading(false);
       }
     };
 
     fetchFeedbackData();
-
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [targetUserId, enqueueSnackbar, reset, semesterOptions, methods, selectedRound]);
 
   const onSubmit = async (formData) => {
@@ -271,7 +261,6 @@ export default function FeedbackForm() {
         return;
       }
 
-      // Validate all rating fields
       for (const question of FEEDBACK_QUESTIONS) {
         if (!formData[question.field]) {
           enqueueSnackbar(`Please rate: ${question.label}`, { variant: "warning" });
@@ -281,6 +270,8 @@ export default function FeedbackForm() {
 
       const requestData = {
         userId: targetUserId,
+        semester: Number(formData.semester),
+        feedbackRound: Number(selectedRound),
         mentorAccessibility: Number(formData.mentorAccessibility),
         mentorInteraction: Number(formData.mentorInteraction),
         academicHelp: Number(formData.academicHelp),
@@ -300,7 +291,7 @@ export default function FeedbackForm() {
 
       if (savedFeedback) {
         reset({
-          semester: savedFeedback.semester,
+          semester: savedFeedback.semester?.toString(),
           mentorAccessibility: savedFeedback.mentorAccessibility?.toString() || "",
           mentorInteraction: savedFeedback.mentorInteraction?.toString() || "",
           academicHelp: savedFeedback.academicHelp?.toString() || "",
@@ -316,22 +307,24 @@ export default function FeedbackForm() {
         });
       }
 
-      enqueueSnackbar(`Feedback saved successfully! Average: ${savedFeedback?.averageScore || "N/A"}/5.0`, {
+      enqueueSnackbar(`Feedback saved successfully! Average: ${savedFeedback?.averageScore?.toFixed(2) || "N/A"}/5.0`, {
         variant: "success",
       });
+      
+      // Update submission status
+      setSubmissionsStatus(prev => ({ ...prev, [selectedRound]: true }));
+      setIsEditable(false);
     } catch (error) {
       logger.error("Error saving feedback:", error);
-      const errorMessage =
-        error.response?.data?.message || error.message || "An error occurred while saving feedback";
-      enqueueSnackbar(errorMessage, { variant: "error" });
+      enqueueSnackbar(error.response?.data?.message || "An error occurred while saving feedback", { variant: "error" });
     }
   };
 
-  const statusLabel = feedbackWindow?.isEnabled ? "Open" : "Closed";
-  const statusSeverity = feedbackWindow?.isEnabled ? "success" : "warning";
-  const windowLabel = roundLabel(feedbackWindow?.feedbackRound);
-
-  const handleSelectRound = (round) => {
+  const handleSelectRound = (round, isAvailable) => {
+    if (!isAvailable) {
+      enqueueSnackbar("This feedback round is not active for submission.", { variant: "info" });
+      return;
+    }
     const params = new URLSearchParams(searchParams);
     params.set("round", round);
     setSearchParams(params);
@@ -341,6 +334,7 @@ export default function FeedbackForm() {
     const params = new URLSearchParams(searchParams);
     params.delete("round");
     setSearchParams(params);
+    setAverageScore(null);
   };
 
   if (!selectedRound) {
@@ -348,20 +342,17 @@ export default function FeedbackForm() {
       <Box
         sx={{
           minHeight: "100vh",
-          backgroundColor: isLight
-            ? alpha(theme.palette.primary.lighter, 0.35)
-            : alpha(theme.palette.grey[900], 0.22),
-          py: 8,
-          px: 2,
+          backgroundColor: isLight ? alpha(theme.palette.primary.lighter, 0.2) : theme.palette.background.default,
+          py: { xs: 6, md: 10 },
         }}
       >
-        <Box sx={{ maxWidth: 800, mx: "auto" }}>
-          <Box sx={{ mb: 6, textAlign: "center" }}>
-            <Typography variant="h2" sx={{ fontWeight: 900, mb: 2 }}>
-              Mentoring Feedback
+        <Container maxWidth="md">
+          <Box sx={{ mb: 8, textAlign: "center" }}>
+            <Typography variant="h2" sx={{ fontWeight: 900, mb: 2, letterSpacing: -1 }}>
+              Student Mentoring Feedback
             </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 500 }}>
-              Select a feedback round to continue
+            <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 500, maxWidth: 600, mx: "auto" }}>
+              Please select the appropriate feedback round to submit your response or view previous submissions.
             </Typography>
           </Box>
 
@@ -370,109 +361,97 @@ export default function FeedbackForm() {
               const isCurrent = feedbackWindow?.feedbackRound === round;
               const isSubmitted = submissionsStatus[round];
               const isSubmissionOpen = isCurrent && feedbackWindow?.isEnabled;
+              const isAvailable = isSubmissionOpen || isSubmitted;
 
               return (
                 <Grid item xs={12} sm={6} key={round}>
                   <Card
-                    onClick={() => handleSelectRound(round)}
+                    onClick={() => handleSelectRound(round, isAvailable)}
                     sx={{
-                      p: 4,
-                      cursor: "pointer",
+                      p: 5,
+                      cursor: isAvailable ? "pointer" : "default",
                       textAlign: "center",
                       borderRadius: 4,
                       transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                       position: "relative",
                       overflow: "hidden",
-                      border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-                      "&:hover": {
+                      border: `1px solid ${theme.palette.divider}`,
+                      backgroundColor: isAvailable 
+                        ? (isLight ? "#fff" : alpha(theme.palette.grey[800], 0.5))
+                        : alpha(theme.palette.grey[500], 0.05),
+                      "&:hover": isAvailable ? {
                         transform: "translateY(-12px)",
-                        boxShadow: (theme) => theme.customShadows?.z24 || 24,
+                        boxShadow: theme.customShadows?.z24,
                         borderColor: theme.palette.primary.main,
-                        "& .icon-wrapper": {
+                        "& .icon-box": {
                           backgroundColor: theme.palette.primary.main,
                           color: "#fff",
-                          transform: "scale(1.1) rotate(5deg)",
+                          transform: "scale(1.1) rotate(8deg)",
                         },
-                      },
+                      } : {},
                     }}
                   >
-                    {isCurrent && (
+                    {isCurrent && feedbackWindow?.isEnabled && (
                       <Box
                         sx={{
                           position: "absolute",
-                          top: 15,
-                          right: -30,
+                          top: 18,
+                          right: -35,
                           backgroundColor: theme.palette.success.main,
                           color: "#fff",
-                          px: 5,
-                          py: 0.5,
+                          px: 6,
+                          py: 0.75,
                           transform: "rotate(45deg)",
                           fontSize: "0.75rem",
-                          fontWeight: 800,
-                          zIndex: 1,
+                          fontWeight: 900,
+                          zIndex: 2,
+                          boxShadow: theme.customShadows?.success,
                         }}
                       >
-                        ACTIVE
+                        LIVE NOW
                       </Box>
                     )}
 
                     <Box
-                      className="icon-wrapper"
+                      className="icon-box"
                       sx={{
-                        width: 80,
-                        height: 80,
-                        borderRadius: "24px",
-                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                        color: theme.palette.primary.main,
+                        width: 90,
+                        height: 90,
+                        borderRadius: 3,
+                        backgroundColor: isAvailable ? alpha(theme.palette.primary.main, 0.1) : alpha(theme.palette.grey[500], 0.1),
+                        color: isAvailable ? theme.palette.primary.main : theme.palette.text.disabled,
                         display: "grid",
                         placeItems: "center",
                         mx: "auto",
-                        mb: 3,
+                        mb: 4,
                         transition: "all 0.4s ease",
                       }}
                     >
                       {isSubmitted ? (
-                        <AssignmentTurnedInIcon sx={{ fontSize: 40 }} />
+                        <AssignmentTurnedInIcon sx={{ fontSize: 48 }} />
+                      ) : !isAvailable ? (
+                        <LockIcon sx={{ fontSize: 48 }} />
                       ) : (
-                        <FeedbackOutlinedIcon sx={{ fontSize: 40 }} />
+                        <FeedbackOutlinedIcon sx={{ fontSize: 48 }} />
                       )}
                     </Box>
 
-                    <Typography variant="h4" sx={{ fontWeight: 900, mb: 1 }}>
-                      Feedback {round}
+                    <Typography variant="h3" sx={{ fontWeight: 900, mb: 1.5, color: isAvailable ? "text.primary" : "text.disabled" }}>
+                      Round {round}
                     </Typography>
 
-                    <Stack spacing={1} alignItems="center">
-                      {isSubmitted ? (
-                        <Chip
-                          icon={<AssignmentTurnedInIcon />}
-                          label="Submitted"
-                          color="success"
-                          size="small"
-                          sx={{ fontWeight: 700 }}
-                        />
-                      ) : (
-                        <Chip
-                          icon={<AssignmentLateIcon />}
-                          label="Not Submitted"
-                          color="warning"
-                          size="small"
-                          variant="outlined"
-                          sx={{ fontWeight: 700 }}
-                        />
-                      )}
-
-                      {!isSubmissionOpen && (
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: theme.palette.text.disabled,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          <LockIcon sx={{ fontSize: 14 }} /> Submission Closed
+                    <Stack spacing={1.5} alignItems="center">
+                      <Chip
+                        icon={isSubmitted ? <AssignmentTurnedInIcon /> : isSubmissionOpen ? <FeedbackOutlinedIcon /> : <LockIcon />}
+                        label={isSubmitted ? "Submitted" : isSubmissionOpen ? "Open for Response" : "Closed"}
+                        color={isSubmitted ? "success" : isSubmissionOpen ? "primary" : "default"}
+                        variant={isAvailable ? "filled" : "outlined"}
+                        sx={{ fontWeight: 800, height: 32 }}
+                      />
+                      
+                      {!isAvailable && (
+                        <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 700 }}>
+                          This window is not yet active
                         </Typography>
                       )}
                     </Stack>
@@ -481,310 +460,216 @@ export default function FeedbackForm() {
               );
             })}
           </Grid>
-        </Box>
+        </Container>
       </Box>
     );
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        backgroundColor: isLight
-          ? alpha(theme.palette.primary.lighter, 0.35)
-          : alpha(theme.palette.grey[900], 0.22),
-        py: 3,
-      }}
-    >
-      <Box sx={{ maxWidth: 1040, mx: "auto", px: { xs: 1.5, sm: 2.5 } }}>
-        <Box sx={{ mb: 3 }}>
+    <Box sx={{ minHeight: "100vh", backgroundColor: isLight ? alpha(theme.palette.primary.lighter, 0.1) : theme.palette.background.default, py: 4 }}>
+      <Container maxWidth="lg">
+        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Button
             startIcon={<ArrowBackIcon />}
             onClick={handleBackToSelection}
-            sx={{ fontWeight: 700 }}
+            sx={{ fontWeight: 800, borderRadius: 2 }}
           >
-            Back to Selection
+            Back to Rounds
           </Button>
+          <Chip
+            icon={<StarsIcon />}
+            label={`Semester ${methods.watch("semester") || feedbackWindow?.semester}`}
+            variant="outlined"
+            color="primary"
+            sx={{ fontWeight: 800 }}
+          />
         </Box>
 
         <Card
           sx={{
-            mb: 3,
-            p: { xs: 2, sm: 3 },
+            p: { xs: 3, md: 5 },
+            mb: 4,
             borderRadius: 4,
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
-            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.info.main, 0.06)} 100%)`,
+            position: 'relative',
+            overflow: 'hidden',
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+            background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
           }}
         >
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-            <Box
-              sx={{
-                width: 54,
-                height: 54,
-                borderRadius: 2,
-                display: "grid",
-                placeItems: "center",
-                backgroundColor: alpha(theme.palette.primary.main, 0.12),
-                color: theme.palette.primary.main,
-              }}
-            >
-              <FeedbackOutlinedIcon />
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 240 }}>
-              <Typography variant="overline" sx={{ fontWeight: 800, letterSpacing: 1.4 }}>
+          <Box sx={{ position: 'absolute', top: -20, right: -20, opacity: 0.03 }}>
+            <FeedbackOutlinedIcon sx={{ fontSize: 200 }} />
+          </Box>
+
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} alignItems="center">
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="overline" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: 2 }}>
                 Mentoring Feedback - Round {selectedRound}
               </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 900, lineHeight: 1.15 }}>
-                {isEditable ? "Submit your feedback" : `View Feedback ${selectedRound}`}
+              <Typography variant="h3" sx={{ fontWeight: 900, mb: 1 }}>
+                {isEditable ? "Help us Improve" : "Feedback Summary"}
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mt: 0.75 }}>
+              <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', maxWidth: 600 }}>
                 {isEditable
-                  ? "Your feedback helps us understand and improve the mentoring experience."
-                  : "You are viewing a previously submitted feedback or a closed round."}
+                  ? "Your honest input is vital for enhancing our mentoring ecosystem. All responses are kept confidential."
+                  : "You have already completed this feedback cycle. Your responses are recorded for quality assurance."}
               </Typography>
             </Box>
-            <Chip
-              label={isEditable ? "Submission Open" : "Read Only"}
-              color={isEditable ? "success" : "default"}
-              variant="filled"
-              sx={{ fontWeight: 800 }}
-            />
+
+            {averageScore !== null && (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  borderRadius: 3,
+                  textAlign: 'center',
+                  minWidth: 160,
+                  border: `2px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                  backgroundColor: alpha(theme.palette.success.main, 0.05),
+                }}
+              >
+                <Typography variant="caption" sx={{ fontWeight: 800, color: 'success.main', display: 'block', mb: 0.5 }}>
+                  AVERAGE SCORE
+                </Typography>
+                <Typography variant="h2" sx={{ fontWeight: 900, color: 'success.main', lineHeight: 1 }}>
+                  {averageScore.toFixed(2)}
+                </Typography>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary' }}>
+                  OUT OF 5.0
+                </Typography>
+              </Paper>
+            )}
           </Stack>
         </Card>
 
-        <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={2.5}>
-            {/* Current Window & Semester Selector */}
-            <Grid item xs={12}>
-              <Card sx={{ p: { xs: 2, sm: 3 }, borderRadius: 4 }}>
-                <Stack spacing={2}>
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="flex-start">
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
-                        Current Window
+        {isLoading ? (
+          <Box sx={{ textAlign: "center", py: 10 }}>
+            <Typography variant="h6" color="text.secondary">Loading form data...</Typography>
+          </Box>
+        ) : (
+          <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
+            <Stack spacing={4}>
+              {/* Main Questions Section */}
+              <Card sx={{ p: { xs: 3, md: 5 }, borderRadius: 4, border: `1px solid ${theme.palette.divider}` }}>
+                <Typography variant="h5" sx={{ fontWeight: 800, mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <AssessmentIcon color="primary" /> Mentoring Assessment
+                </Typography>
+                
+                <Stack spacing={5}>
+                  {FEEDBACK_QUESTIONS.map((question, idx) => (
+                    <Box key={question.field}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2, display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                        <Box sx={{ color: 'primary.main', opacity: 0.5 }}>{idx + 1}.</Box>
+                        {question.label}
                       </Typography>
-                      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2} flexWrap="wrap">
-                        <Chip label={windowLabel} variant="outlined" />
-                        <Chip
-                          label={feedbackWindow?.isEnabled ? "Submission enabled" : "Submission disabled"}
-                          color={statusSeverity}
-                          variant="outlined"
-                        />
-                      </Stack>
+                      
+                      <Controller
+                        name={question.field}
+                        control={methods.control}
+                        render={({ field }) => (
+                          <RadioGroup {...field} row sx={{ ml: 3.5, gap: { xs: 1, sm: 3 } }}>
+                            {RATING_OPTIONS.map((option) => (
+                              <FormControlLabel
+                                key={option.value}
+                                value={option.value.toString()}
+                                control={<Radio size="small" disabled={!isEditable} color="primary" />}
+                                label={
+                                  <Box>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1 }}>{option.value}</Typography>
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>{option.label}</Typography>
+                                  </Box>
+                                }
+                                sx={{ 
+                                  mr: 0,
+                                  p: 1.5,
+                                  borderRadius: 2,
+                                  border: `1px solid ${field.value === option.value.toString() ? theme.palette.primary.main : 'transparent'}`,
+                                  backgroundColor: field.value === option.value.toString() ? alpha(theme.palette.primary.main, 0.05) : 'transparent',
+                                  transition: 'all 0.2s',
+                                  '&:hover': isEditable ? { backgroundColor: alpha(theme.palette.primary.main, 0.05) } : {}
+                                }}
+                              />
+                            ))}
+                          </RadioGroup>
+                        )}
+                      />
                     </Box>
-                    <Box sx={{ minWidth: 200 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                        Select Semester (Optional)
-                      </Typography>
-                      <select
-                        {...methods.register("semester")}
-                        style={{
-                          width: "100%",
-                          padding: "10px 8px",
-                          borderRadius: "4px",
-                          border: `1px solid ${theme.palette.divider}`,
-                          fontSize: "14px",
-                          backgroundColor: theme.palette.background.paper,
-                        }}
-                      >
-                        <option value="">-- Auto-detect --</option>
-                        {semesterOptions.map((sem) => (
-                          <option key={sem} value={sem}>
-                            Semester {sem}
-                          </option>
-                        ))}
-                      </select>
-                    </Box>
-                  </Stack>
-                  <Alert severity={feedbackWindow?.isEnabled ? "success" : "warning"}>
-                    {feedbackWindow?.isEnabled
-                      ? "Feedback submission is open. Please provide honest feedback on your mentoring experience."
-                      : "Feedback submission is currently closed. The form is visible for reference, but saving is disabled."}
-                  </Alert>
+                  ))}
                 </Stack>
               </Card>
-            </Grid>
 
-            {/* Average Score Display */}
-            {averageScore !== null && (
-              <Grid item xs={12}>
-                <Card sx={{ p: { xs: 2, sm: 3 }, borderRadius: 4, backgroundColor: alpha(theme.palette.success.main, 0.08) }}>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Current Average Score
-                      </Typography>
-                      <Typography variant="h3" sx={{ fontWeight: 900, color: theme.palette.success.main }}>
-                        {averageScore.toFixed(2)}/5.0
-                      </Typography>
-                    </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Based on all 9 rating questions
-                    </Typography>
-                  </Stack>
-                </Card>
-              </Grid>
-            )}
-
-            {/* Rating Questions */}
-            <Grid item xs={12}>
-              <Card sx={{ p: { xs: 2, sm: 3 }, borderRadius: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 800, mb: 2 }}>
-                  Rate Your Mentoring Experience
+              {/* Awareness Section */}
+              <Card sx={{ p: { xs: 3, md: 5 }, borderRadius: 4, border: `1px solid ${theme.palette.divider}` }}>
+                <Typography variant="h5" sx={{ fontWeight: 800, mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <HelpOutlineIcon color="primary" /> Class Awareness
                 </Typography>
-                <Divider sx={{ mb: 3 }} />
 
-                {isLoading ? (
-                  <Box sx={{ textAlign: "center", py: 4 }}>
-                    <Typography>Loading feedback...</Typography>
-                  </Box>
-                ) : (
-                  <Stack spacing={3}>
-                    {FEEDBACK_QUESTIONS.map((question, idx) => (
-                      <Box key={question.field}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5 }}>
-                          Q{idx + 1}. {question.label}
-                        </Typography>
+                <Grid container spacing={4}>
+                  {[
+                    { field: "awareOfPST", label: "Are you aware of PST (Peer Support Team) members of your class?" },
+                    { field: "awareOfPLT", label: "Are you aware of PLT (Peer Learning Team) members of your class?" }
+                  ].map((item) => (
+                    <Grid item xs={12} md={6} key={item.field}>
+                      <Box sx={{ p: 3, borderRadius: 3, backgroundColor: alpha(theme.palette.grey[500], 0.03), border: `1px solid ${theme.palette.divider}` }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 2 }}>{item.label}</Typography>
                         <Controller
-                          name={question.field}
+                          name={item.field}
                           control={methods.control}
                           render={({ field }) => (
-                            <RadioGroup
-                              {...field}
-                              row
-                              sx={{ gap: 2 }}
-                            >
-                              {RATING_OPTIONS.map((option) => (
-                                <FormControlLabel
-                                  key={option.value}
-                                  value={option.value.toString()}
-                                  control={<Radio size="small" disabled={!isEditable} />}
-                                  label={
-                                    <Typography variant="caption" sx={{ fontSize: "0.85rem" }}>
-                                      {option.value} - {option.label}
-                                    </Typography>
-                                  }
-                                  sx={{ mr: 2, mb: 0.5 }}
-                                />
-                              ))}
+                            <RadioGroup {...field} row sx={{ gap: 4 }}>
+                              <FormControlLabel value="yes" control={<Radio disabled={!isEditable} />} label="Yes" />
+                              <FormControlLabel value="no" control={<Radio disabled={!isEditable} />} label="No" />
                             </RadioGroup>
                           )}
                         />
                       </Box>
-                    ))}
-                  </Stack>
-                )}
-              </Card>
-            </Grid>
-
-            {/* Yes/No Questions */}
-            <Grid item xs={12}>
-              <Card sx={{ p: { xs: 2, sm: 3 }, borderRadius: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 800, mb: 2 }}>
-                  Additional Information
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5 }}>
-                        Are you aware of PST Members of your class?
-                      </Typography>
-                      <Controller
-                        name="awareOfPST"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <RadioGroup {...field} row sx={{ gap: 3 }}>
-                            <FormControlLabel
-                              value="yes"
-                              control={<Radio size="small" disabled={!isEditable} />}
-                              label="Yes"
-                            />
-                            <FormControlLabel
-                              value="no"
-                              control={<Radio size="small" disabled={!isEditable} />}
-                              label="No"
-                            />
-                          </RadioGroup>
-                        )}
-                      />
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5 }}>
-                        Are you aware of PLT Members of your class?
-                      </Typography>
-                      <Controller
-                        name="awareOfPLT"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <RadioGroup {...field} row sx={{ gap: 3 }}>
-                            <FormControlLabel
-                              value="yes"
-                              control={<Radio size="small" disabled={!isEditable} />}
-                              label="Yes"
-                            />
-                            <FormControlLabel
-                              value="no"
-                              control={<Radio size="small" disabled={!isEditable} />}
-                              label="No"
-                            />
-                          </RadioGroup>
-                        )}
-                      />
-                    </Box>
-                  </Grid>
+                    </Grid>
+                  ))}
                 </Grid>
               </Card>
-            </Grid>
 
-            {/* Remarks */}
-            <Grid item xs={12}>
-              <Card sx={{ p: { xs: 2, sm: 3 }, borderRadius: 4 }}>
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 800, mb: 2 }}>
-                  Additional Remarks
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-
+              {/* Remarks Section */}
+              <Card sx={{ p: { xs: 3, md: 5 }, borderRadius: 4, border: `1px solid ${theme.palette.divider}` }}>
+                <Typography variant="h5" sx={{ fontWeight: 800, mb: 3 }}>Final Thoughts</Typography>
                 <RHFTextField
                   name="remarks"
-                  label="Any other remarks or suggestions"
+                  label="Suggestions or Additional Remarks"
                   fullWidth
                   disabled={!isEditable}
                   multiline
                   minRows={4}
-                  placeholder="Optional: Share any additional feedback or suggestions..."
+                  placeholder="Is there anything else you'd like to share regarding the mentoring system?"
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
               </Card>
-            </Grid>
 
-            {/* Submit Button */}
-            <Grid item xs={12}>
-              <Card sx={{ p: { xs: 2, sm: 3 }, borderRadius: 4 }}>
-                <Stack spacing={2} alignItems="flex-start">
+              {/* Actions */}
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', pb: 8 }}>
+                {isEditable ? (
                   <LoadingButton
                     type="submit"
                     variant="contained"
                     size="large"
                     loading={isSubmitting}
-                    disabled={!isEditable || !feedbackWindow?.isEnabled}
+                    disabled={!feedbackWindow?.isEnabled}
+                    sx={{ px: 8, py: 1.5, borderRadius: 2, fontWeight: 800, fontSize: '1.1rem', boxShadow: theme.customShadows?.primary }}
                   >
-                    {feedbackWindow?.isEnabled ? "Submit Feedback" : "Feedback Closed"}
+                    Submit Feedback
                   </LoadingButton>
-                  {!isEditable && (
-                    <Typography variant="caption" color="text.secondary">
-                      Feedback submission is currently disabled. Please check back when the feedback window is open.
-                    </Typography>
-                  )}
-                </Stack>
-              </Card>
-            </Grid>
-          </Grid>
-        </FormProvider>
-      </Box>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    onClick={handleBackToSelection}
+                    sx={{ px: 6, py: 1.5, borderRadius: 2, fontWeight: 800 }}
+                  >
+                    Return to Overview
+                  </Button>
+                )}
+              </Box>
+            </Stack>
+          </FormProvider>
+        )}
+      </Container>
     </Box>
   );
 }
