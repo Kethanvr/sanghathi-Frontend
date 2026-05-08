@@ -373,12 +373,12 @@ const FeedbackManagement = () => {
                         {user?.department === "MCA"
                           ? [1, 2, 3, 4].map((sem) => (
                               <MenuItem key={sem} value={`${sem}-2026`}>
-                                Semester {sem} - 2026
+                                Semester {sem}
                               </MenuItem>
                             ))
                           : [1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
                               <MenuItem key={sem} value={`${sem}-2026`}>
-                                Semester {sem} - 2026
+                                Semester {sem}
                               </MenuItem>
                             ))}
                       </Select>
