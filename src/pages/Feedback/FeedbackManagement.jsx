@@ -17,14 +17,14 @@ import {
   Select,
   Stack,
   Switch,
-  Tab,
-  Tabs,
   TextField,
   Typography,
   Drawer,
   FormControlLabel,
   Radio,
   RadioGroup,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { alpha, useTheme } from "@mui/material/styles";
@@ -80,13 +80,14 @@ const FeedbackManagement = () => {
   const canEditWindow = user?.roleName === "admin";
   const isHodOrDirector = user?.roleName === "hod" || user?.roleName === "director";
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [feedbackWindow, setFeedbackWindow] = useState(null);
   const [stats, setStats] = useState(null);
   const [feedbacks, setFeedbacks] = useState([]);
   const [semesterFilter, setSemesterFilter] = useState("");
-  const [roundFilter, setRoundFilter] = useState("all");
+  const [selectedFeedbackRound, setSelectedFeedbackRound] = useState(1);
+  const [mentorFilter, setMentorFilter] = useState("");
   const [semesterDraft, setSemesterDraft] = useState("");
   const [roundDraft, setRoundDraft] = useState(1);
   const [enabledDraft, setEnabledDraft] = useState(false);
@@ -135,7 +136,7 @@ const FeedbackManagement = () => {
       setFeedbacks(overviewData.feedbacks || []);
 
       const activeSem = query.semester || windowData?.semester || "";
-      const activeRound = query.feedbackRound || windowData?.feedbackRound || 1;
+      const activeRound = query.feedbackRound || selectedFeedbackRound || 1;
 
       if (activeSem) {
         try {
@@ -160,14 +161,6 @@ const FeedbackManagement = () => {
         }
       }
 
-      if (!query.semester && windowData?.semester) {
-        setSemesterFilter(windowData.semester);
-      }
-
-      if (!query.feedbackRound && windowData?.feedbackRound) {
-        setRoundFilter(String(windowData.feedbackRound));
-      }
-
       setSemesterDraft(windowData?.semester || "");
       setRoundDraft(windowData?.feedbackRound || 1);
       setEnabledDraft(Boolean(windowData?.isEnabled));
@@ -181,7 +174,6 @@ const FeedbackManagement = () => {
 
   useEffect(() => {
     loadFeedbackData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSaveWindow = async () => {
@@ -202,7 +194,7 @@ const FeedbackManagement = () => {
       enqueueSnackbar("Feedback window updated", { variant: "success" });
       await loadFeedbackData({
         semester: semesterFilter.trim() || undefined,
-        feedbackRound: roundFilter === "all" ? "all" : roundFilter || undefined,
+        feedbackRound: selectedFeedbackRound,
       });
     } catch (error) {
       logger.error("Error updating feedback window:", error);
@@ -215,9 +207,13 @@ const FeedbackManagement = () => {
   };
 
   const handleApplyFilters = async () => {
+    if (!semesterFilter.trim()) {
+      enqueueSnackbar("Please select a semester first", { variant: "warning" });
+      return;
+    }
     await loadFeedbackData({
-      semester: semesterFilter.trim() || undefined,
-      feedbackRound: roundFilter === "all" ? "all" : roundFilter || undefined,
+      semester: semesterFilter.trim(),
+      feedbackRound: selectedFeedbackRound,
     });
   };
 
@@ -291,8 +287,8 @@ const FeedbackManagement = () => {
       }
       handleCloseSidebar();
       await loadFeedbackData({
-        semester: semesterFilter.trim() || undefined,
-        feedbackRound: roundFilter === "all" ? "all" : roundFilter || undefined,
+        semester: semesterFilter.trim(),
+        feedbackRound: selectedFeedbackRound,
       });
     } catch (error) {
       logger.error("Error saving feedback:", error);
@@ -329,91 +325,162 @@ const FeedbackManagement = () => {
         }}
       >
         <Box sx={{ maxWidth: 1280, mx: "auto", px: { xs: 1.5, sm: 2.5 } }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2.5, sm: 3 },
-            borderRadius: 4,
-            mb: 3,
-            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.08)} 100%)`,
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
-          }}
-        >
-          <Stack spacing={2}>
-            <Stack direction="row" spacing={1.25} alignItems="center" flexWrap="wrap">
-              <Box>
-                <Typography variant="overline" sx={{ fontWeight: 800, letterSpacing: 1.4 }}>
-                  Feedback Control Center
-                </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 900, lineHeight: 1.15 }}>
-                  Semester feedback windows and response review
-                </Typography>
-              </Box>
-              <Chip
-                label={canEditWindow ? "Admin control enabled" : "Read-only review"}
-                color={canEditWindow ? "primary" : "default"}
-                sx={{ fontWeight: 800, ml: "auto" }}
-              />
-            </Stack>
+          {/* Header */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2.5, sm: 3 },
+              borderRadius: 4,
+              mb: 3,
+              background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.08)} 100%)`,
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
+            }}
+          >
+            <Stack spacing={2.5}>
+              <Stack direction="row" spacing={1.25} alignItems="center" flexWrap="wrap">
+                <Box>
+                  <Typography variant="overline" sx={{ fontWeight: 800, letterSpacing: 1.4 }}>
+                    Feedback Control Center
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 900, lineHeight: 1.15 }}>
+                    Semester feedback windows and response review
+                  </Typography>
+                </Box>
+                <Chip
+                  label={canEditWindow ? "Admin control enabled" : "Read-only review"}
+                  color={canEditWindow ? "primary" : "default"}
+                  sx={{ fontWeight: 800, ml: "auto" }}
+                />
+              </Stack>
 
-            {/* Semester & Stats Summary Row */}
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center" sx={{ mt: 2 }}>
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                  Active Semester
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                  {feedbackWindow?.semester || "Not set"}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                  Round
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                  Feedback {feedbackWindow?.feedbackRound || 1}
-                </Typography>
-              </Box>
-              <Divider orientation="vertical" flexItem sx={{ my: 1 }} />
-              {stats && (
-                <>
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                      Responses
-                    </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 900, color: theme.palette.success.main }}>
-                      {stats.responded}/{stats.totalEnrolled}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                      Response Rate
-                    </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 900, color: theme.palette.info.main }}>
-                      {stats.responseRate}%
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                      Avg Score
-                    </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 900, color: theme.palette.primary.main }}>
-                      {stats.averageScoreOverall.toFixed(2)}/5.0
-                    </Typography>
-                  </Box>
-                </>
+              {/* Semester Selection (Required) */}
+              <Card sx={{ p: 2, borderRadius: 3, backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
+                <Stack spacing={2}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                    Select Semester to View Feedback *
+                  </Typography>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="flex-end">
+                    <FormControl required sx={{ flex: 1, minWidth: 200 }}>
+                      <InputLabel>Semester</InputLabel>
+                      <Select
+                        label="Semester"
+                        value={semesterFilter}
+                        onChange={(event) => setSemesterFilter(event.target.value)}
+                      >
+                        <MenuItem value="">
+                          <em>Select a semester</em>
+                        </MenuItem>
+                        {user?.department === "MCA"
+                          ? [1, 2, 3, 4].map((sem) => (
+                              <MenuItem key={sem} value={`${sem}-2026`}>
+                                Semester {sem} - 2026
+                              </MenuItem>
+                            ))
+                          : [1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                              <MenuItem key={sem} value={`${sem}-2026`}>
+                                Semester {sem} - 2026
+                              </MenuItem>
+                            ))}
+                      </Select>
+                    </FormControl>
+                    <LoadingButton
+                      variant="contained"
+                      onClick={handleApplyFilters}
+                      loading={loading}
+                      sx={{ px: 4 }}
+                    >
+                      Load Data
+                    </LoadingButton>
+                  </Stack>
+                </Stack>
+              </Card>
+
+              {/* Feedback Round Selection Buttons */}
+              {semesterFilter && (
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 700, mb: 1.5 }}>
+                    Select Feedback Round
+                  </Typography>
+                  <Stack direction="row" spacing={2}>
+                    {[1, 2].map((round) => (
+                      <Button
+                        key={round}
+                        variant={selectedFeedbackRound === round ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedFeedbackRound(round);
+                        }}
+                        sx={{
+                          px: 4,
+                          py: 1.5,
+                          fontWeight: 700,
+                          minWidth: 140,
+                        }}
+                      >
+                        Feedback {round}
+                      </Button>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+
+              {/* Stats Display */}
+              {stats && semesterFilter && (
+                <Card sx={{ p: 2.5, borderRadius: 3, backgroundColor: alpha(theme.palette.success.main, 0.08), border: `2px solid ${theme.palette.success.main}` }}>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Stack spacing={0.5}>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          Total Enrolled
+                        </Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 900, color: theme.palette.primary.main }}>
+                          {stats.totalEnrolled}
+                        </Typography>
+                      </Stack>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Stack spacing={0.5}>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          Responded
+                        </Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 900, color: theme.palette.success.main }}>
+                          {stats.responded}
+                        </Typography>
+                      </Stack>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Stack spacing={0.5}>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          Response Rate
+                        </Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 900, color: theme.palette.info.main }}>
+                          {stats.responseRate}%
+                        </Typography>
+                      </Stack>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <Stack spacing={0.5}>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          Average Score
+                        </Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 900, color: theme.palette.warning.main }}>
+                          {stats.averageScoreOverall.toFixed(2)}/5.0
+                        </Typography>
+                      </Stack>
+                    </Grid>
+                  </Grid>
+                </Card>
               )}
             </Stack>
-          </Stack>
-        </Paper>
+          </Paper>
 
           <Grid container spacing={3}>
+            {/* Admin Control Panel (Left) */}
             {canEditWindow && (
               <Grid item xs={12} md={4}>
                 <Card sx={{ p: 3, borderRadius: 4, height: "100%" }}>
                   <Stack spacing={2}>
                     <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                      Active Window
+                      Active Window Control
                     </Typography>
                     <Divider />
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -460,176 +527,159 @@ const FeedbackManagement = () => {
               </Grid>
             )}
 
+            {/* Main Content (Right) */}
             <Grid item xs={12} md={canEditWindow ? 8 : 12}>
               <Stack spacing={3}>
-                {stats && (
-                  <Card sx={{ p: 3, borderRadius: 4, backgroundColor: alpha(theme.palette.success.main, 0.08) }}>
-                    <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Response Rate
-                        </Typography>
-                        <Stack direction="row" alignItems="baseline" spacing={1}>
-                          <Typography variant="h3" sx={{ fontWeight: 900, color: theme.palette.success.main }}>
-                            {stats.responded}
-                          </Typography>
-                          <Typography variant="h6" color="text.secondary">
-                            / {stats.totalEnrolled}
-                          </Typography>
-                          <Chip
-                            label={`${stats.responseRate}%`}
-                            color="success"
-                            sx={{ fontWeight: 800 }}
+                {/* Filters Section */}
+                {semesterFilter && (
+                  <Card sx={{ p: 3, borderRadius: 4 }}>
+                    <Stack spacing={2}>
+                      <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                        Filters & Search
+                      </Typography>
+                      <Divider />
+                      <Grid container spacing={2}>
+                        {/* Mentor Filter (for HOD/Director) */}
+                        {isHodOrDirector && mentorGroups.length > 0 && (
+                          <Grid item xs={12} md={4}>
+                            <FormControl fullWidth>
+                              <InputLabel>Filter by Mentor</InputLabel>
+                              <Select
+                                label="Filter by Mentor"
+                                value={mentorFilter}
+                                onChange={(event) => setMentorFilter(event.target.value)}
+                              >
+                                <MenuItem value="">All Mentors</MenuItem>
+                                {mentorGroups.map((group) => (
+                                  <MenuItem key={group.mentorId} value={group.mentorId}>
+                                    {group.mentorName}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </Grid>
+                        )}
+                        {/* Search */}
+                        <Grid item xs={12} md={isHodOrDirector ? 8 : 12}>
+                          <TextField
+                            fullWidth
+                            label="Search by student name"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Type student name..."
                           />
-                        </Stack>
-                      </Box>
-                      <Divider orientation="vertical" flexItem />
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Average Score
-                        </Typography>
-                        <Typography variant="h3" sx={{ fontWeight: 900, color: theme.palette.info.main }}>
-                          {stats.averageScoreOverall.toFixed(2)}/5.0
-                        </Typography>
-                      </Box>
+                        </Grid>
+                      </Grid>
                     </Stack>
                   </Card>
                 )}
 
-                <Card sx={{ p: 3, borderRadius: 4 }}>
-                  <Stack spacing={3}>
-                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                      Semester & Filters
-                    </Typography>
-                    <Grid container spacing={2} alignItems="flex-end">
-                      <Grid item xs={12} md={4}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                          Select Semester *
-                        </Typography>
-                        <TextField
-                          fullWidth
-                          label="Semester"
-                          value={semesterFilter}
-                          onChange={(event) => setSemesterFilter(event.target.value)}
-                          placeholder="e.g. 2-2026"
-                          required
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={3}>
-                        <FormControl fullWidth>
-                          <InputLabel>Round</InputLabel>
-                          <Select
-                            label="Round"
-                            value={roundFilter}
-                            onChange={(event) => setRoundFilter(event.target.value)}
-                          >
-                            <MenuItem value="all">All rounds</MenuItem>
-                            {roundOptions.map((option) => (
-                              <MenuItem key={option.value} value={String(option.value)}>
-                                {option.label}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} md={3}>
-                        <TextField
-                          fullWidth
-                          label="Search by name"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={2}>
-                        <LoadingButton
-                          fullWidth
-                          variant="contained"
-                          onClick={handleApplyFilters}
-                          loading={loading}
-                        >
-                          Load Data
-                        </LoadingButton>
-                      </Grid>
-                    </Grid>
-                  </Stack>
-                </Card>
-
+                {/* Student List Section */}
                 <Card sx={{ p: 3, borderRadius: 4 }}>
                   <Stack spacing={2}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                        {isHodOrDirector ? "Students by Mentor" : "Student Responses"}
-                      </Typography>
-                    </Stack>
+                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                      {isHodOrDirector ? "Students by Mentor" : "Student Responses"}
+                    </Typography>
                     <Divider />
 
-                    {loading ? (
+                    {!semesterFilter ? (
+                      <Alert severity="info">Please select a semester above to view feedback.</Alert>
+                    ) : loading ? (
                       <Typography color="text.secondary">Loading feedback data...</Typography>
                     ) : isHodOrDirector && filteredMentorGroups.length > 0 ? (
                       <Stack spacing={2}>
-                        {filteredMentorGroups.map((group) => (
-                          <Card key={group.mentorId} variant="outlined" sx={{ borderRadius: 2 }}>
-                            <Box
-                              sx={{
-                                p: 2,
-                                cursor: "pointer",
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                "&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.05) },
-                              }}
-                              onClick={() =>
-                                setExpandedMentors({
-                                  ...expandedMentors,
-                                  [group.mentorId]: !expandedMentors[group.mentorId],
-                                })
-                              }
-                            >
-                              <Stack>
-                                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                                  {group.mentorName}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {group.menteeCount} mentees
-                                </Typography>
-                              </Stack>
-                              {expandedMentors[group.mentorId] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                            </Box>
+                        {filteredMentorGroups
+                          .filter((group) => !mentorFilter || group.mentorId === mentorFilter)
+                          .map((group) => (
+                            <Card key={group.mentorId} variant="outlined" sx={{ borderRadius: 2 }}>
+                              <Box
+                                sx={{
+                                  p: 2,
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  "&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.05) },
+                                }}
+                                onClick={() =>
+                                  setExpandedMentors({
+                                    ...expandedMentors,
+                                    [group.mentorId]: !expandedMentors[group.mentorId],
+                                  })
+                                }
+                              >
+                                <Stack>
+                                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                    {group.mentorName}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {group.menteeCount} mentees
+                                  </Typography>
+                                </Stack>
+                                {expandedMentors[group.mentorId] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                              </Box>
 
-                            {expandedMentors[group.mentorId] && (
-                              <Stack sx={{ p: 2, backgroundColor: alpha(theme.palette.primary.main, 0.02), borderTop: `1px solid ${theme.palette.divider}` }} spacing={1.5}>
-                                {group.mentees.map((mentee) => (
-                                  <Paper key={mentee.studentId} variant="outlined" sx={{ p: 1.5, borderRadius: 1 }}>
-                                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                      <Stack sx={{ flex: 1 }}>
-                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                          {mentee.studentName}
-                                        </Typography>
-                                        <Stack direction="row" spacing={1}>
-                                          {mentee.feedbacks?.map((fb, idx) => (
-                                            <Chip
-                                              key={idx}
+                              {expandedMentors[group.mentorId] && (
+                                <Stack
+                                  sx={{
+                                    p: 2,
+                                    backgroundColor: alpha(theme.palette.primary.main, 0.02),
+                                    borderTop: `1px solid ${theme.palette.divider}`,
+                                  }}
+                                  spacing={1.5}
+                                >
+                                  {group.mentees
+                                    .filter((m) =>
+                                      searchTerm ? m.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) : true
+                                    )
+                                    .map((mentee) => (
+                                      <Paper key={mentee.studentId} variant="outlined" sx={{ p: 1.5, borderRadius: 1 }}>
+                                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                          <Stack sx={{ flex: 1 }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                              {mentee.studentName}
+                                            </Typography>
+                                            <Stack direction="row" spacing={1}>
+                                              {mentee.feedbacks?.map((fb, idx) => (
+                                                <Chip
+                                                  key={idx}
+                                                  size="small"
+                                                  label={`Feedback ${fb.feedbackRound}: ${fb.averageScore?.toFixed(2) || "N/A"}`}
+                                                  color={fb.averageScore ? "primary" : "default"}
+                                                  variant="outlined"
+                                                />
+                                              ))}
+                                            </Stack>
+                                          </Stack>
+                                          <Stack direction="row" spacing={1}>
+                                            <Button
                                               size="small"
-                                              label={`Feedback ${fb.feedbackRound}: ${fb.averageScore?.toFixed(2) || "N/A"}`}
-                                              color={fb.averageScore ? "primary" : "default"}
-                                              variant="outlined"
-                                            />
-                                          ))}
+                                              onClick={() => handleOpenDrillDown(mentee)}
+                                            >
+                                              Details
+                                            </Button>
+                                            {canEditWindow && (
+                                              <Button
+                                                size="small"
+                                                variant="outlined"
+                                                onClick={() => {
+                                                  const feedback = mentee.feedbacks?.find(
+                                                    (f) => f.feedbackRound === selectedFeedbackRound
+                                                  );
+                                                  if (feedback) handleOpenSidebarEditor(feedback);
+                                                }}
+                                              >
+                                                Edit
+                                              </Button>
+                                            )}
+                                          </Stack>
                                         </Stack>
-                                      </Stack>
-                                      <Button
-                                        size="small"
-                                        onClick={() => handleOpenDrillDown(mentee)}
-                                      >
-                                        View
-                                      </Button>
-                                    </Stack>
-                                  </Paper>
-                                ))}
-                              </Stack>
-                            )}
-                          </Card>
-                        ))}
+                                      </Paper>
+                                    ))}
+                                </Stack>
+                              )}
+                            </Card>
+                          ))}
                       </Stack>
                     ) : filteredStudents.length === 0 ? (
                       <Alert severity="info">No feedback found for the selected filters.</Alert>
@@ -672,7 +722,12 @@ const FeedbackManagement = () => {
                               <Stack direction="row" spacing={1}>
                                 <Button
                                   size="small"
-                                  onClick={() => handleOpenDrillDown({ studentId: entry.userId._id, studentName: entry.userId.name })}
+                                  onClick={() =>
+                                    handleOpenDrillDown({
+                                      studentId: entry.userId._id,
+                                      studentName: entry.userId.name,
+                                    })
+                                  }
                                 >
                                   Details
                                 </Button>
@@ -697,204 +752,218 @@ const FeedbackManagement = () => {
             </Grid>
           </Grid>
         </Box>
-      </Box>
 
-      <Dialog open={drillDownOpen} onClose={handleCloseDrillDown} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {selectedStudent?.studentName} - Feedback Details
-          <Chip
-            label={`Sem: ${semesterFilter}`}
-            size="small"
-            sx={{ ml: 2 }}
-          />
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
-          {Object.keys(studentFeedbacks).length === 0 ? (
-            <Alert severity="info">No feedback found for this student.</Alert>
-          ) : (
-            <Tabs value={selectedRound} onChange={(_, val) => setSelectedRound(val)}>
-              {[1, 2].map((round) => (
-                <Tab
-                  key={round}
-                  label={`Feedback ${round}`}
-                  disabled={!studentFeedbacks[round]}
-                />
-              ))}
-            </Tabs>
-          )}
+        {/* Drill-Down Modal */}
+        <Dialog open={drillDownOpen} onClose={handleCloseDrillDown} maxWidth="md" fullWidth>
+          <DialogTitle>
+            {selectedStudent?.studentName} - Feedback Details
+            <Chip label={`Sem: ${semesterFilter}`} size="small" sx={{ ml: 2 }} />
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
+            {Object.keys(studentFeedbacks).length === 0 ? (
+              <Alert severity="info">No feedback found for this student.</Alert>
+            ) : (
+              <Tabs value={selectedRound} onChange={(_, val) => setSelectedRound(val)}>
+                {[1, 2].map((round) => (
+                  <Tab
+                    key={round}
+                    label={`Feedback ${round}`}
+                    disabled={!studentFeedbacks[round]}
+                  />
+                ))}
+              </Tabs>
+            )}
 
-          {Object.keys(studentFeedbacks).map((round) => (
-            <TabPanel key={round} value={selectedRound} index={Number(round) - 1}>
-              {studentFeedbacks[round] && (
-                <Stack spacing={3}>
-                  <Typography variant="h6" sx={{ fontWeight: 800, mt: 2 }}>
-                    Ratings
-                  </Typography>
-                  <Stack spacing={2}>
-                    {FEEDBACK_QUESTIONS.map((q) => (
-                      <Box key={q.field}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                          <Typography variant="body2">{q.label}</Typography>
-                          <Chip
-                            label={studentFeedbacks[round][q.field] || "N/A"}
-                            color="primary"
-                            sx={{ fontWeight: 600 }}
-                          />
-                        </Stack>
-                      </Box>
-                    ))}
-                  </Stack>
-
-                  <Divider />
-
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-                      Additional Information
+            {Object.keys(studentFeedbacks).map((round) => (
+              <TabPanel key={round} value={selectedRound} index={Number(round) - 1}>
+                {studentFeedbacks[round] && (
+                  <Stack spacing={3}>
+                    <Typography variant="h6" sx={{ fontWeight: 800, mt: 2 }}>
+                      Ratings
                     </Typography>
-                    <Stack spacing={1}>
-                      <Typography variant="body2">
-                        <strong>PST Awareness:</strong> {studentFeedbacks[round].awareOfPST ? "Yes" : "No"}
-                      </Typography>
-                      <Typography variant="body2">
-                        <strong>PLT Awareness:</strong> {studentFeedbacks[round].awareOfPLT ? "Yes" : "No"}
-                      </Typography>
+                    <Stack spacing={2}>
+                      {FEEDBACK_QUESTIONS.map((q) => (
+                        <Box key={q.field}>
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            sx={{ mb: 1 }}
+                          >
+                            <Typography variant="body2">{q.label}</Typography>
+                            <Chip
+                              label={studentFeedbacks[round][q.field] || "N/A"}
+                              color="primary"
+                              sx={{ fontWeight: 600 }}
+                            />
+                          </Stack>
+                        </Box>
+                      ))}
                     </Stack>
-                  </Box>
 
-                  {studentFeedbacks[round].remarks && (
+                    <Divider />
+
                     <Box>
-                      <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
-                        Remarks
+                      <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
+                        Additional Information
                       </Typography>
-                      <Typography variant="body2" sx={{ p: 2, backgroundColor: alpha(theme.palette.grey[500], 0.12), borderRadius: 1 }}>
-                        {studentFeedbacks[round].remarks}
-                      </Typography>
+                      <Stack spacing={1}>
+                        <Typography variant="body2">
+                          <strong>PST Awareness:</strong> {studentFeedbacks[round].awareOfPST ? "Yes" : "No"}
+                        </Typography>
+                        <Typography variant="body2">
+                          <strong>PLT Awareness:</strong> {studentFeedbacks[round].awareOfPLT ? "Yes" : "No"}
+                        </Typography>
+                      </Stack>
                     </Box>
-                  )}
 
-                  <Card sx={{ p: 2, backgroundColor: alpha(theme.palette.success.main, 0.08) }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Average Score
+                    {studentFeedbacks[round].remarks && (
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
+                          Remarks
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            p: 2,
+                            backgroundColor: alpha(theme.palette.grey[500], 0.12),
+                            borderRadius: 1,
+                          }}
+                        >
+                          {studentFeedbacks[round].remarks}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    <Card sx={{ p: 2, backgroundColor: alpha(theme.palette.success.main, 0.08) }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Average Score
+                      </Typography>
+                      <Typography
+                        variant="h4"
+                        sx={{ fontWeight: 900, color: theme.palette.success.main }}
+                      >
+                        {studentFeedbacks[round].averageScore?.toFixed(2) || "N/A"}/5.0
+                      </Typography>
+                    </Card>
+
+                    {canEditWindow && (
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          handleOpenSidebarEditor(studentFeedbacks[round]);
+                          handleCloseDrillDown();
+                        }}
+                      >
+                        Edit This Feedback
+                      </Button>
+                    )}
+                  </Stack>
+                )}
+              </TabPanel>
+            ))}
+          </DialogContent>
+        </Dialog>
+
+        {/* Sidebar Editor */}
+        <Drawer
+          anchor="right"
+          open={sidebarOpen}
+          onClose={handleCloseSidebar}
+          sx={{ "& .MuiDrawer-paper": { width: { xs: "100%", md: 450 } } }}
+        >
+          <Box sx={{ p: 3, height: "100%", overflow: "auto" }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
+              {editingFeedback ? "Edit Feedback" : "Add New Feedback"}
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+
+            <FormProvider methods={editorMethods} onSubmit={editorMethods.handleSubmit(handleSidebarSubmit)}>
+              <Stack spacing={2.5}>
+                {FEEDBACK_QUESTIONS.map((question, idx) => (
+                  <Box key={question.field}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                      Q{idx + 1}. {question.label}
                     </Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 900, color: theme.palette.success.main }}>
-                      {studentFeedbacks[round].averageScore?.toFixed(2) || "N/A"}/5.0
-                    </Typography>
-                  </Card>
+                    <Controller
+                      name={question.field}
+                      control={editorMethods.control}
+                      render={({ field }) => (
+                        <RadioGroup {...field} row sx={{ gap: 1.5 }}>
+                          {RATING_OPTIONS.map((option) => (
+                            <FormControlLabel
+                              key={option.value}
+                              value={option.value.toString()}
+                              control={<Radio size="small" />}
+                              label={`${option.value}`}
+                            />
+                          ))}
+                        </RadioGroup>
+                      )}
+                    />
+                  </Box>
+                ))}
 
-                  {canEditWindow && (
-                    <Button
-                      variant="outlined"
-                      onClick={() => {
-                        handleOpenSidebarEditor(studentFeedbacks[round]);
-                        handleCloseDrillDown();
-                      }}
-                    >
-                      Edit This Feedback
-                    </Button>
-                  )}
-                </Stack>
-              )}
-            </TabPanel>
-          ))}
-        </DialogContent>
-      </Dialog>
+                <Divider />
 
-      <Drawer anchor="right" open={sidebarOpen} onClose={handleCloseSidebar} sx={{ "& .MuiDrawer-paper": { width: { xs: "100%", md: 450 } } }}>
-        <Box sx={{ p: 3, height: "100%", overflow: "auto" }}>
-          <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-            {editingFeedback ? "Edit Feedback" : "Add New Feedback"}
-          </Typography>
-          <Divider sx={{ mb: 3 }} />
-
-          <FormProvider methods={editorMethods} onSubmit={editorMethods.handleSubmit(handleSidebarSubmit)}>
-            <Stack spacing={2.5}>
-              {FEEDBACK_QUESTIONS.map((question, idx) => (
-                <Box key={question.field}>
+                <Box>
                   <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                    Q{idx + 1}. {question.label}
+                    PST Awareness
                   </Typography>
                   <Controller
-                    name={question.field}
+                    name="awareOfPST"
                     control={editorMethods.control}
                     render={({ field }) => (
-                      <RadioGroup {...field} row sx={{ gap: 1.5 }}>
-                        {RATING_OPTIONS.map((option) => (
-                          <FormControlLabel
-                            key={option.value}
-                            value={option.value.toString()}
-                            control={<Radio size="small" />}
-                            label={`${option.value}`}
-                          />
-                        ))}
+                      <RadioGroup {...field} row sx={{ gap: 2 }}>
+                        <FormControlLabel value="yes" control={<Radio size="small" />} label="Yes" />
+                        <FormControlLabel value="no" control={<Radio size="small" />} label="No" />
                       </RadioGroup>
                     )}
                   />
                 </Box>
-              ))}
 
-              <Divider />
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                    PLT Awareness
+                  </Typography>
+                  <Controller
+                    name="awareOfPLT"
+                    control={editorMethods.control}
+                    render={({ field }) => (
+                      <RadioGroup {...field} row sx={{ gap: 2 }}>
+                        <FormControlLabel value="yes" control={<Radio size="small" />} label="Yes" />
+                        <FormControlLabel value="no" control={<Radio size="small" />} label="No" />
+                      </RadioGroup>
+                    )}
+                  />
+                </Box>
 
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                  PST Awareness
-                </Typography>
-                <Controller
-                  name="awareOfPST"
-                  control={editorMethods.control}
-                  render={({ field }) => (
-                    <RadioGroup {...field} row sx={{ gap: 2 }}>
-                      <FormControlLabel value="yes" control={<Radio size="small" />} label="Yes" />
-                      <FormControlLabel value="no" control={<Radio size="small" />} label="No" />
-                    </RadioGroup>
-                  )}
+                <RHFTextField
+                  name="remarks"
+                  label="Remarks"
+                  multiline
+                  minRows={3}
+                  placeholder="Additional remarks..."
                 />
-              </Box>
 
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                  PLT Awareness
-                </Typography>
-                <Controller
-                  name="awareOfPLT"
-                  control={editorMethods.control}
-                  render={({ field }) => (
-                    <RadioGroup {...field} row sx={{ gap: 2 }}>
-                      <FormControlLabel value="yes" control={<Radio size="small" />} label="Yes" />
-                      <FormControlLabel value="no" control={<Radio size="small" />} label="No" />
-                    </RadioGroup>
-                  )}
-                />
-              </Box>
-
-              <RHFTextField
-                name="remarks"
-                label="Remarks"
-                multiline
-                minRows={3}
-                placeholder="Additional remarks..."
-              />
-
-              <Stack direction="row" spacing={2} sx={{ pt: 2 }}>
-                <LoadingButton
-                  type="submit"
-                  variant="contained"
-                  loading={editorMethods.formState.isSubmitting}
-                  fullWidth
-                >
-                  {editingFeedback ? "Update" : "Create"}
-                </LoadingButton>
-                <Button
-                  variant="outlined"
-                  onClick={handleCloseSidebar}
-                  fullWidth
-                >
-                  Cancel
-                </Button>
+                <Stack direction="row" spacing={2} sx={{ pt: 2 }}>
+                  <LoadingButton
+                    type="submit"
+                    variant="contained"
+                    loading={editorMethods.formState.isSubmitting}
+                    fullWidth
+                  >
+                    {editingFeedback ? "Update" : "Create"}
+                  </LoadingButton>
+                  <Button variant="outlined" onClick={handleCloseSidebar} fullWidth>
+                    Cancel
+                  </Button>
+                </Stack>
               </Stack>
-            </Stack>
-          </FormProvider>
-        </Box>
-      </Drawer>
+            </FormProvider>
+          </Box>
+        </Drawer>
+      </Box>
     </Page>
   );
 };
