@@ -56,6 +56,8 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 import GroupIcon from "@mui/icons-material/Group";
 import UpdateIcon from "@mui/icons-material/Update";
 import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 
 const roundOptions = [
   { value: 1, label: "Feedback 1" },
@@ -121,6 +123,8 @@ const FeedbackManagement = () => {
   const [selectedRound, setSelectedRound] = useState(0);
   const [drillDownOpen, setDrillDownOpen] = useState(false);
   const [isEditingInDialog, setIsEditingInDialog] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [feedbackToDelete, setFeedbackToDelete] = useState(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editingFeedback, setEditingFeedback] = useState(null);
@@ -246,6 +250,20 @@ const FeedbackManagement = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Auto-apply filters when semester or round changes
+  useEffect(() => {
+    if (semesterFilter.trim()) {
+      localStorage.setItem("feedback_sem_filter", semesterFilter);
+      localStorage.setItem("feedback_round_filter", selectedFeedbackRound);
+
+      loadFeedbackData({
+        semester: semesterFilter.trim(),
+        feedbackRound: selectedFeedbackRound,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [semesterFilter, selectedFeedbackRound]);
+
   const handleSaveWindow = async () => {
     try {
       if (enabledDraft && !semesterDraft.trim()) {
@@ -363,7 +381,8 @@ const FeedbackManagement = () => {
           params: { semester: semesterFilter },
         });
         setStudentFeedbacks(response.data?.data?.feedbackByRound || {});
-        setIsEditMode(false);
+        setIsEditingInDialog(false);
+        setEditingFeedback(null);
         
         // Refresh main list
         await loadFeedbackData({
@@ -374,6 +393,31 @@ const FeedbackManagement = () => {
     } catch (error) {
       logger.error("Error saving feedback:", error);
       enqueueSnackbar(error.response?.data?.message || "Error saving feedback", { variant: "error" });
+    }
+  };
+
+  const handleDeleteFeedback = async (feedbackId) => {
+    try {
+      await api.delete(`/feedback/${feedbackId}`);
+      enqueueSnackbar("Feedback deleted successfully", { variant: "success" });
+      
+      // Refresh data
+      const response = await api.get(`/feedback/student/${selectedStudent.studentId}`, {
+        params: { semester: semesterFilter },
+      });
+      setStudentFeedbacks(response.data?.data?.feedbackByRound || {});
+      
+      // Refresh main list
+      await loadFeedbackData({
+        semester: semesterFilter.trim(),
+        feedbackRound: selectedFeedbackRound,
+      });
+      
+      setDeleteConfirmOpen(false);
+      setFeedbackToDelete(null);
+    } catch (error) {
+      logger.error("Error deleting feedback:", error);
+      enqueueSnackbar(error.response?.data?.message || "Error deleting feedback", { variant: "error" });
     }
   };
 
@@ -648,8 +692,8 @@ const FeedbackManagement = () => {
                   <Grid container spacing={2}>
                     {[
                       { label: "Responded", value: stats.responded || 0, color: "success", icon: <GroupIcon /> },
-                      { label: "Enrolled", value: stats.totalEnrolled || 0, color: "primary", icon: <GroupIcon /> },
-                      { label: "Pending", value: (stats.totalEnrolled || 0) - (stats.responded || 0), color: "warning", icon: <UpdateIcon /> },
+                      { label: "Enrolled", value: stats.totalEnrolled || allStudents.length || 0, color: "primary", icon: <GroupIcon /> },
+                      { label: "Pending", value: Math.max(0, (stats.totalEnrolled || allStudents.length || 0) - (stats.responded || 0)), color: "warning", icon: <UpdateIcon /> },
                       { label: "Response Rate", value: `${stats.responseRate || 0}%`, color: "info", icon: <AssessmentIcon /> },
                       { label: "Avg. Score", value: `${(stats.averageScoreOverall || 0).toFixed(2)}/5.0`, color: "secondary", icon: <AssessmentIcon /> },
                     ].map((s) => (
@@ -712,17 +756,6 @@ const FeedbackManagement = () => {
                               <MenuItem value={2}>Feedback 2</MenuItem>
                             </Select>
                           </FormControl>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                          <LoadingButton
-                            fullWidth
-                            variant="contained"
-                            loading={loading}
-                            onClick={handleApplyFilters}
-                            sx={{ height: 40, fontWeight: 700 }}
-                          >
-                            Search
-                          </LoadingButton>
                         </Grid>
                       </Grid>
                     </Box>
@@ -920,9 +953,23 @@ const FeedbackManagement = () => {
                                 <Stack direction="row" spacing={1} justifyContent="flex-end">
                                   <Button size="small" variant="text" onClick={() => handleOpenDrillDown({ studentId: student._id, studentName: student.name })}>Details</Button>
                                   {canEditWindow && student.hasResponded && (
-                                    <IconButton size="small" onClick={() => handleOpenEditInDialog(student.feedback)}>
-                                      <SettingsIcon fontSize="small" />
-                                    </IconButton>
+                                    <>
+                                      <IconButton 
+                                        size="small" 
+                                        onClick={() => handleOpenEditInDialog(student.feedback)}
+                                        title="Edit feedback"
+                                      >
+                                        <EditIcon fontSize="small" />
+                                      </IconButton>
+                                      <IconButton 
+                                        size="small" 
+                                        color="error"
+                                        onClick={() => { setFeedbackToDelete(student.feedback); setDeleteConfirmOpen(true); }}
+                                        title="Delete feedback"
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
+                                    </>
                                   )}
                                 </Stack>
                               </TableCell>
@@ -1163,23 +1210,34 @@ const FeedbackManagement = () => {
                         )}
 
                         {canEditWindow && (
-                          <Button
-                            variant="outlined"
-                            startIcon={<SettingsIcon />}
-                            onClick={() => {
-                              setEditingFeedback(studentFeedbacks[round]);
-                              setIsEditingInDialog(true);
-                              editorMethods.reset({
-                                ...studentFeedbacks[round],
-                                awareOfPST: studentFeedbacks[round].awareOfPST ? 'yes' : 'no',
-                                awareOfPLT: studentFeedbacks[round].awareOfPLT ? 'yes' : 'no'
-                              });
-                            }}
-                            fullWidth
-                            sx={{ py: 1.5, borderRadius: 2, fontWeight: 700 }}
-                          >
-                            Modify This Feedback Entry
-                          </Button>
+                          <Stack direction="row" spacing={2}>
+                            <Button
+                              variant="outlined"
+                              startIcon={<EditIcon />}
+                              onClick={() => {
+                                setEditingFeedback(studentFeedbacks[round]);
+                                setIsEditingInDialog(true);
+                                editorMethods.reset({
+                                  ...studentFeedbacks[round],
+                                  awareOfPST: studentFeedbacks[round].awareOfPST ? 'yes' : 'no',
+                                  awareOfPLT: studentFeedbacks[round].awareOfPLT ? 'yes' : 'no'
+                                });
+                              }}
+                              fullWidth
+                              sx={{ py: 1.5, borderRadius: 2, fontWeight: 700 }}
+                            >
+                              Modify This Feedback Entry
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              color="error"
+                              startIcon={<DeleteIcon />}
+                              onClick={() => { setFeedbackToDelete(studentFeedbacks[round]); setDeleteConfirmOpen(true); }}
+                              sx={{ py: 1.5, borderRadius: 2, fontWeight: 700, minWidth: 'fit-content' }}
+                            >
+                              Delete
+                            </Button>
+                          </Stack>
                         )}
                       </Stack>
                     )}
@@ -1314,6 +1372,42 @@ const FeedbackManagement = () => {
             </Box>
           </Box>
         </Drawer>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteConfirmOpen}
+          onClose={() => setDeleteConfirmOpen(false)}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 800, pb: 1 }}>Confirm Delete</DialogTitle>
+          <DialogContent>
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+              Are you sure you want to delete this feedback entry? This action cannot be undone.
+            </Typography>
+          </DialogContent>
+          <Box sx={{ p: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+            <Button 
+              variant="outlined" 
+              onClick={() => setDeleteConfirmOpen(false)}
+            >
+              Cancel
+            </Button>
+            <LoadingButton 
+              variant="contained" 
+              color="error"
+              loading={saving}
+              onClick={() => {
+                if (feedbackToDelete?._id) {
+                  setSaving(true);
+                  handleDeleteFeedback(feedbackToDelete._id).finally(() => setSaving(false));
+                }
+              }}
+            >
+              Delete
+            </LoadingButton>
+          </Box>
+        </Dialog>
       </Container>
     </Page>
   );
