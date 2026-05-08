@@ -36,6 +36,7 @@ import api from "../../utils/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { getAvatarSrc, getAvatarFallbackText } from "../../utils/avatarResolver";
 import { Link } from "react-router-dom";
+import { Grid } from "@mui/material";
 
 const ThreadReportsByMentor = () => {
   const theme = useTheme();
@@ -72,29 +73,10 @@ const ThreadReportsByMentor = () => {
     const fetchMentees = async () => {
       try {
         setIsLoading(true);
-        const response = await api.get(`/mentees`, {
-          params: { mentorId },
-        });
+        const response = await api.get(`/mentors/${mentorId}/mentees-with-profiles`);
         
-        const menteesData = response.data.data.mentees || response.data.data || [];
+        const menteesData = response.data.mentees || response.data.data?.mentees || [];
         setMentees(Array.isArray(menteesData) ? menteesData : []);
-
-        // Fetch thread count for each mentee
-        const threadCounts = {};
-        for (const mentee of menteesData) {
-          try {
-            const threadRes = await api.get(`/threads`, {
-              params: {
-                participantIds: [mentorId, mentee._id],
-              },
-            });
-            threadCounts[mentee._id] =
-              threadRes.data.data?.threads?.length || 0;
-          } catch {
-            threadCounts[mentee._id] = 0;
-          }
-        }
-        setThreadCountMap(threadCounts);
       } catch (error) {
         console.error("Error fetching mentees:", error);
         enqueueSnackbar("Failed to load mentees", { variant: "error" });
@@ -216,11 +198,11 @@ const ThreadReportsByMentor = () => {
 
               {/* Filters */}
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={6}>
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="Search mentee name or email..."
+                    placeholder="Search mentee name, email, or reg number..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     InputProps={{
@@ -233,7 +215,7 @@ const ThreadReportsByMentor = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={6}>
                   <TextField
                     select
                     fullWidth
@@ -370,7 +352,7 @@ const ThreadReportsByMentor = () => {
                       <TableCell align="center">
                         <Chip
                           icon={<MessageRoundedIcon />}
-                          label={threadCountMap[mentee._id] || 0}
+                          label={mentee.threadCount || 0}
                           variant="outlined"
                           size="small"
                         />
@@ -427,7 +409,6 @@ const ThreadReportsByMentor = () => {
   );
 };
 
-// Add Grid import if not already imported
-import { Grid } from "@mui/material";
+// No additional imports needed
 
 export default ThreadReportsByMentor;

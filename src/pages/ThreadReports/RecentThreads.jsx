@@ -61,10 +61,11 @@ const RecentThreads = () => {
           params: {
             limit: 100,
             sort: "-createdAt",
-          },
+            includeMessages: true,
+          }
         });
-
-        const threadsData = response.data.data?.threads || [];
+        
+        const threadsData = response.data?.data?.threads || [];
         setThreads(Array.isArray(threadsData) ? threadsData : []);
 
         // Extract unique categories
@@ -399,7 +400,7 @@ const RecentThreads = () => {
                       <TableCell align="center">
                         <Chip
                           icon={<MessageRoundedIcon />}
-                          label={thread?.messages?.length || 0}
+                          label={thread?.messageCount || 0}
                           variant="outlined"
                           size="small"
                         />

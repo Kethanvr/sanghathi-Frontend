@@ -50,14 +50,14 @@ const ThreadReports = () => {
       try {
         setIsLoading(true);
         
-        // Get all mentors or department mentors based on user role
+        // For HOD, use the /hod/mentors endpoint
         let endpoint = "/users?role=faculty";
         if (user?.roleName === "hod") {
-          endpoint = `/hod/mentors`; // Assuming this endpoint exists for HOD's department
+          endpoint = `/hod/mentors`;
         }
         
         const response = await api.get(endpoint);
-        const mentorsData = response.data.data.users || response.data.data;
+        const mentorsData = response.data.data.mentors || response.data.data.users || response.data.data;
         
         setMentors(Array.isArray(mentorsData) ? mentorsData : []);
         
@@ -223,11 +223,11 @@ const ThreadReports = () => {
 
               {/* Filters */}
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="Search mentor name or email..."
+                    placeholder="Search mentor, email, or mentee..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     InputProps={{
@@ -241,7 +241,7 @@ const ThreadReports = () => {
                 </Grid>
 
                 {departments.length > 0 && (
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <TextField
                       select
                       fullWidth

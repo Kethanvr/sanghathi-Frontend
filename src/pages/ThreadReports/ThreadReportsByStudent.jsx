@@ -28,6 +28,7 @@ import {
   DialogContent,
   DialogActions,
   DialogTitle,
+  Grid,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -42,7 +43,6 @@ import api from "../../utils/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { getAvatarSrc, getAvatarFallbackText } from "../../utils/avatarResolver";
 import { Link } from "react-router-dom";
-import { Grid } from "@mui/material";
 
 const ThreadReportsByStudent = () => {
   const theme = useTheme();
@@ -480,7 +480,7 @@ const ThreadReportsByStudent = () => {
                       <TableCell align="center">
                         <Chip
                           icon={<MessageRoundedIcon />}
-                          label={thread?.messages?.length || 0}
+                          label={thread?.messageCount || 0}
                           variant="outlined"
                           size="small"
                         />
@@ -574,54 +574,86 @@ const ThreadReportsByStudent = () => {
             <DialogContent sx={{ pt: 3 }}>
               {/* Messages */}
               <Stack spacing={2}>
-                {selectedThreadMessages.map((msg, idx) => (
-                  <Paper
-                    key={idx}
-                    elevation={0}
-                    sx={{
-                      p: 2,
-                      backgroundColor: isLight
-                        ? alpha(theme.palette.primary.main, 0.05)
-                        : alpha(theme.palette.info.main, 0.1),
-                      borderLeft: `3px solid ${
-                        isLight
-                          ? theme.palette.primary.main
-                          : theme.palette.info.main
-                      }`,
-                    }}
-                  >
-                    <Stack direction="row" spacing={1} alignItems="flex-start">
-                      <Avatar
-                        src={getAvatarSrc(msg?.senderId) || undefined}
+                {selectedThreadMessages.map((msg, idx) => {
+                  const msgSenderId = msg?.senderId?._id || msg?.senderId;
+                  const isUserMessage = String(msgSenderId) === String(user?._id);
+                  const senderAvatar = getAvatarSrc(msg?.senderId);
+                  const senderName = msg?.senderId?.name || "Unknown";
+                  const senderInitials = getAvatarFallbackText(senderName);
+
+                  return (
+                    <Box
+                      key={idx}
+                      sx={{
+                        display: "flex",
+                        justifyContent: isUserMessage ? "flex-end" : "flex-start",
+                        mb: 2,
+                      }}
+                    >
+                      <Box
                         sx={{
-                          width: 32,
-                          height: 32,
-                          bgcolor: isLight
-                            ? theme.palette.primary.main
-                            : theme.palette.info.main,
-                          fontSize: "0.75rem",
+                          display: "flex",
+                          flexDirection: isUserMessage ? "row-reverse" : "row",
+                          alignItems: "flex-end",
+                          gap: 1,
+                          maxWidth: "70%",
                         }}
                       >
-                        {!getAvatarSrc(msg?.senderId)
-                          ? getAvatarFallbackText(msg?.senderId?.name)
-                          : null}
-                      </Avatar>
-                      <Box sx={{ flex: 1 }}>
-                        <Stack direction="row" justifyContent="space-between">
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                            {msg?.senderId?.name || "Unknown"}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                        <Avatar
+                          src={senderAvatar || undefined}
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            bgcolor: isUserMessage
+                              ? isLight
+                                ? theme.palette.primary.main
+                                : theme.palette.info.main
+                              : isLight
+                              ? theme.palette.grey[400]
+                              : theme.palette.grey[600],
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {!senderAvatar ? senderInitials : null}
+                        </Avatar>
+                        <Box>
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              p: 1.5,
+                              backgroundColor: isUserMessage
+                                ? isLight
+                                  ? theme.palette.primary.main
+                                  : theme.palette.info.main
+                                : isLight
+                                ? alpha(theme.palette.primary.main, 0.08)
+                                : alpha(theme.palette.info.main, 0.12),
+                              color: isUserMessage
+                                ? "primary.contrastText"
+                                : theme.palette.text.primary,
+                              borderRadius: 2,
+                            }}
+                          >
+                            <Typography variant="body2">
+                              {msg?.body}
+                            </Typography>
+                          </Paper>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              mt: 0.5,
+                              display: "block",
+                              textAlign: isUserMessage ? "right" : "left",
+                              color: "text.secondary",
+                            }}
+                          >
                             {new Date(msg?.createdAt).toLocaleString()}
                           </Typography>
-                        </Stack>
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                          {msg?.body}
-                        </Typography>
+                        </Box>
                       </Box>
-                    </Stack>
-                  </Paper>
-                ))}
+                    </Box>
+                  );
+                })}
               </Stack>
             </DialogContent>
           </Dialog>
