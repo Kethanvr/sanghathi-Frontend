@@ -133,30 +133,42 @@ const FeedbackManagement = () => {
     setLoading(true);
 
     try {
-      const [windowResponse, overviewResponse] = await Promise.all([
-        api.get("/feedback/window"),
-        api.get("/feedback/overview", { params: query }),
-      ]);
-
+      // 1. Always get the latest window status
+      const windowResponse = await api.get("/feedback/window");
       const windowData = windowResponse.data?.data?.window || null;
-      const overviewData = overviewResponse.data?.data || {};
-
       setFeedbackWindow(windowData);
+
+      // 2. Prepare active parameters (provided query OR existing filter OR window default)
+      const activeSem = query.semester || semesterFilter || windowData?.semester || "";
+      const activeRound = query.feedbackRound || selectedFeedbackRound || windowData?.feedbackRound || 1;
+
+      // 3. Update the filter UI state if it's the first load or if we want to sync with window
+      if (!semesterFilter && activeSem) setSemesterFilter(activeSem.toString());
+      if (!query.feedbackRound && windowData?.feedbackRound) setSelectedFeedbackRound(windowData.feedbackRound);
+
+      // 4. Fetch the data based on active parameters
+      const overviewResponse = await api.get("/feedback/overview", { 
+        params: { 
+          semester: activeSem || undefined, 
+          feedbackRound: activeRound 
+        } 
+      });
+      const overviewData = overviewResponse.data?.data || {};
       setFeedbacks(overviewData.feedbacks || []);
 
-      const activeSem = query.semester || windowData?.semester || "";
-      const activeRound = query.feedbackRound || selectedFeedbackRound || 1;
-
+      // 5. Fetch stats if semester is available
       if (activeSem) {
         try {
           const statsResponse = await api.get(`/feedback/stats/${activeSem}/${activeRound}`);
           setStats(statsResponse.data?.data || null);
         } catch (err) {
           logger.error("Error fetching stats:", err);
+          setStats(null);
         }
       }
 
-      if (isHodOrDirector) {
+      // 6. Fetch mentor groups for HOD/Director
+      if (isHodOrDirector && activeSem) {
         try {
           const mentorResponse = await api.get(`/feedback/by-mentor/${user._id}`, {
             params: {
@@ -170,6 +182,7 @@ const FeedbackManagement = () => {
         }
       }
 
+      // Sync window editor drafts
       setSemesterDraft(windowData?.semester || "");
       setRoundDraft(windowData?.feedbackRound || 1);
       setEnabledDraft(Boolean(windowData?.isEnabled));
@@ -183,6 +196,7 @@ const FeedbackManagement = () => {
 
   useEffect(() => {
     loadFeedbackData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSaveWindow = async () => {
@@ -540,7 +554,7 @@ const FeedbackManagement = () => {
                             onClick={handleApplyFilters}
                             sx={{ height: 40, fontWeight: 700 }}
                           >
-                            Update Results
+                            Search
                           </LoadingButton>
                         </Grid>
                       </Grid>
@@ -603,7 +617,11 @@ const FeedbackManagement = () => {
 
             {!semesterFilter ? (
               <Paper sx={{ p: 8, textAlign: "center", borderRadius: 4, backgroundColor: alpha(theme.palette.grey[500], 0.05), border: `2px dashed ${theme.palette.divider}` }}>
-                <Typography variant="h6" color="text.secondary">Please select a semester and click "Update Results" to view feedback data.</Typography>
+                <Typography variant="h6" color="text.secondary">Please select a semester and click "Search" to view feedback data.</Typography>
+              </Paper>
+            ) : !loading && ((isHodOrDirector && filteredMentorGroups.length === 0) || (!isHodOrDirector && filteredStudents.length === 0)) ? (
+              <Paper sx={{ p: 8, textAlign: "center", borderRadius: 4, backgroundColor: alpha(theme.palette.grey[500], 0.05), border: `2px dashed ${theme.palette.divider}` }}>
+                <Typography variant="h6" color="text.secondary">No responses found for Semester {semesterFilter}, Feedback {selectedFeedbackRound}.</Typography>
               </Paper>
             ) : loading ? (
               <Stack spacing={2}>
