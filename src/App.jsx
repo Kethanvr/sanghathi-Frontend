@@ -28,7 +28,7 @@ const Ptm = lazy(() => import("./pages/ParentsTeacherMeeting/Ptm"));
 const Attendance = lazy(() => import("./pages/Student/Attendance"));
 const Thread = lazy(() => import("./pages/Thread/Thread"));
 const ThreadWindow = lazy(() => import("./pages/Thread/ThreadWindow"));
-const Report = lazy(() => import("./pages/Report/Report"));
+const Report = lazy(() => import("./pages/Report/ReportUpgradeNotice"));
 const AdminDashboard = lazy(() => import("./pages/Admin/AdminDashboard"));
 const DirectorDashboard = lazy(() => import("./pages/Director/DirectorDashboard"));
 const DirectorViewMentors = lazy(() => import("./pages/Director/DirectorViewMentors"));

@@ -1,579 +1,90 @@
-import { useState, useEffect, React } from "react";
-import ExcelJS from 'exceljs';
+  import { Box, Container, Paper, Stack, Typography } from "@mui/material";
+  import UpgradeOutlinedIcon from "@mui/icons-material/UpgradeOutlined";
+  import Page from "../../components/Page";
 
-import {
-  Avatar,
-  Box,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Paper,
-  Container,
-  Tooltip,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  InputAdornment,
-  Grid,
-  IconButton,
-  MenuItem,
-  Button,
-  TextField,
-  Chip,
-  Stack,
-  Badge,
-  Divider,
-  Card,
-  AvatarGroup
-} from "@mui/material";
-import { 
-  Search as SearchIcon, 
-  GetApp as GetAppIcon,
-  FilterList as FilterListIcon,
-  CalendarMonth as CalendarIcon,
-  Category as CategoryIcon,
-  MoreHoriz as MoreHorizIcon,
-  Close as CloseIcon,
-  Chat as ChatIcon
-} from "@mui/icons-material";
-import { alpha, useTheme } from "@mui/material/styles";
-
-import Page from "../../components/Page";
-import api from "../../utils/axios"; // replace with your actual API path
-import { useSnackbar } from "notistack";
-import { MessageList } from "../Thread/Message/Message";
-import {
-  getAvatarSrc,
-  getAvatarFallbackText,
-} from "../../utils/avatarResolver";
-import useResponsive from "../../hooks/useResponsive";
-
-const baseURL = import.meta.env.VITE_PYTHON_API;
-
-import logger from "../../utils/logger.js";
-const Report = () => {
-  const theme = useTheme();
-  const isLight = theme.palette.mode === 'light';
-  const isMobile = useResponsive("down", "sm");
-  const [threads, setThreads] = useState([]);
-  const [openDialogThreadId, setOpenDialogThreadId] = useState(null);
-  const [openChatDialogThreadId, setOpenChatDialogThreadId] = useState(null);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [selectedSemester, setSelectedSemester] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const { enqueueSnackbar } = useSnackbar();
-
-  // Get the color based on the current theme mode
-  const activeColor = isLight ? theme.palette.primary.main : theme.palette.info.main;
-
-  useEffect(() => {
-    const fetchThreads = async () => {
-      try {
-        const response = await api.get("threads", {
-          params: {
-            page: 1,
-            limit: 10000,
-          },
-        });
-        if (response.status === 200) {
-          const { data } = response.data;
-          logger.info("All threads:", data.threads);
-          logger.info("Thread statuses:", data.threads.map(t => t.status));
-          setThreads(data.threads);
-        }
-      } catch (error) {
-        logger.error(error);
-      }
-    };
-
-    fetchThreads();
-  }, []);
-
-  const handleFromDateChange = (event) => {
-    setFromDate(event.target.value);
-  };
-
-  const handleToDateChange = (event) => {
-    setToDate(event.target.value);
-  };
-
-  const handleCategoryChange = (event) => {
-    setSelectedCategory(event.target.value);
-  };
-
-  const handleStatusChange = (event) => {
-    setSelectedStatus(event.target.value);
-  };
-
-  const handleSemesterChange = (event) => {
-    setSelectedSemester(event.target.value);
-  };
-
-  const getThreadSemesters = (thread) => {
-    const participants = Array.isArray(thread?.participants)
-      ? thread.participants
-      : [];
-
-    return participants
-      .map(
-        (participant) =>
-          participant?.profile?.sem ||
-          participant?.sem ||
-          participant?.semester ||
-          participant?.studentProfile?.sem
-      )
-      .filter(Boolean)
-      .map((semValue) => String(semValue).trim());
-  };
-
-  const semesterOptions = Array.from(
-    new Set(
-      threads.flatMap((thread) => getThreadSemesters(thread))
-    )
-  ).sort((a, b) => {
-    const semA = Number(a);
-    const semB = Number(b);
-    if (Number.isNaN(semA) || Number.isNaN(semB)) {
-      return String(a).localeCompare(String(b));
-    }
-    return semA - semB;
-  });
-
-  const toggleFilters = () => {
-    setShowFilters(!showFilters);
-  };
-
-  const filteredThreads = threads.filter((thread) => {
-    // Get properly normalized values for comparison
-    const normalizedStatus = thread.status ? thread.status.toLowerCase().trim() : '';
-    
-    // Only filter out threads that are explicitly "open" or "in progress" AND have no topic/category
-    if ((normalizedStatus === 'open' || normalizedStatus === 'in progress') && !thread.topic) {
-      return false;
-    }
-
-    // Rest of filtering logic continues...
-    const hasMatchingParticipant = thread.participants?.some((participant) =>
-      participant.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const hasMatchingTitle = thread.title
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase());
-
-    const fromDateObj = fromDate ? new Date(fromDate) : null;
-    const toDateObj = toDate ? new Date(toDate) : null;
-
-    const threadOpenDate = thread.createdAt ? new Date(thread.createdAt) : null;
-
-    let dateMatches = true;
-
-    if (fromDateObj && toDateObj) {
-      dateMatches =
-        threadOpenDate &&
-        threadOpenDate >= fromDateObj &&
-        threadOpenDate <= toDateObj;
-    } else if (fromDateObj) {
-      dateMatches =
-        threadOpenDate &&
-        threadOpenDate.toDateString() === fromDateObj.toDateString();
-    } else if (toDateObj) {
-      dateMatches = threadOpenDate && threadOpenDate <= toDateObj;
-    }
-
-    const categoryMatches =
-      !selectedCategory || thread.topic === selectedCategory;
-
-    const threadSemesters = getThreadSemesters(thread);
-    const semesterMatches =
-      !selectedSemester || threadSemesters.includes(String(selectedSemester));
-    
-    // Normalize the selected status for comparison
-    const normalizedSelectedStatus = selectedStatus ? selectedStatus.toLowerCase().trim() : '';
-    let statusMatches = true;
-    
-    if (normalizedSelectedStatus === 'open') {
-      // If "Open" is selected, show both "open" and "in progress" threads
-      statusMatches = normalizedStatus === 'open' || normalizedStatus === 'in progress';
-    } else if (normalizedSelectedStatus === 'in progress') {
-      statusMatches = normalizedStatus === 'in progress';
-    } else if (normalizedSelectedStatus === 'closed') {
-      statusMatches = normalizedStatus === 'closed';
-    }
-    
-    // If no status filter is selected, show all statuses
-    if (!normalizedSelectedStatus) {
-      statusMatches = true;
-    }
-
-    // If search term is empty, show all matching threads
-    if (!searchTerm) {
-      return dateMatches && categoryMatches && semesterMatches && statusMatches;
-    }
-
-    // If search term exists, check for matches
+  const Report = () => {
     return (
-      (hasMatchingParticipant || hasMatchingTitle) &&
-      dateMatches &&
-      categoryMatches &&
-      semesterMatches &&
-      statusMatches
-    );
-  });
-
-  useEffect(() => {
-    setPage(0);
-  }, [searchTerm, fromDate, toDate, selectedCategory, selectedStatus, selectedSemester]);
-
-  const paginatedThreads = filteredThreads.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
-
-  const handleChangePage = (_event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
-  const handleOpenDialog = (threadId) => {
-    setOpenDialogThreadId(threadId);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialogThreadId(null);
-  };
-
-  const handleOpenChatDialog = async (threadId) => {
-    setOpenChatDialogThreadId(threadId);
-    try {
-      const response = await api.get(`/threads/${threadId}`, {
-        params: {
-          messagePage: 1,
-          messageLimit: 150,
-        },
-      });
-      if (response.status === 200) {
-        const { data } = response.data;
-        setChatMessages(data.thread.messages);
-      }
-    } catch (error) {
-      logger.error(error);
-      enqueueSnackbar("Error loading chat messages", { variant: "error" });
-    }
-  };
-
-  const handleCloseChatDialog = () => {
-    setOpenChatDialogThreadId(null);
-    setChatMessages([]);
-  };
-
-  const statusColors = {
-    open: "#4caf50",
-    "In Progress": "#ff9800",
-    closed: "#f44336",
-  };
-
-  const getStatusBgColor = (status) => {
-    const statusLower = status.toLowerCase();
-    if (statusLower === "open" || statusLower === "in progress") {
-      return isLight ? alpha('#4caf50', 0.15) : alpha('#4caf50', 0.25);
-    } else if (statusLower === "closed") {
-      return isLight ? alpha('#f44336', 0.15) : alpha('#f44336', 0.25);
-    }
-    return isLight ? alpha('#9e9e9e', 0.15) : alpha('#9e9e9e', 0.25);
-  };
-  
-  const getStatusColor = (status) => {
-    const statusLower = status.toLowerCase();
-    if (statusLower === "open" || statusLower === "in progress") {
-      return '#4caf50';
-    } else if (statusLower === "closed") {
-      return '#f44336';
-    }
-    return '#9e9e9e';
-  };
-
-  const handleExportToExcel = async () => {
-    try {
-      // Create a new workbook and worksheet
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Threads Report');
-
-      // Define columns with headers and widths
-      worksheet.columns = [
-        { header: 'Title', key: 'title', width: 30 },
-        { header: 'Summary', key: 'summary', width: 50 },
-        { header: 'Status', key: 'status', width: 15 },
-        { header: 'Category', key: 'category', width: 20 },
-        { header: 'Opened Date', key: 'openedDate', width: 20 },
-        { header: 'Closed Date', key: 'closedDate', width: 20 },
-        { header: 'Author', key: 'author', width: 20 },
-        { header: 'Members', key: 'members', width: 40 }
-      ];
-
-      // Add data rows
-      filteredThreads.forEach(thread => {
-        worksheet.addRow({
-          title: thread.title || 'N/A',
-          summary: thread.description || 'N/A',
-          status: thread.status || 'N/A',
-          category: thread.topic || 'Uncategorized',
-          openedDate: thread.createdAt ? new Date(thread.createdAt).toLocaleDateString() : 'N/A',
-          closedDate: thread.closedAt ? new Date(thread.closedAt).toLocaleDateString() : 'N/A',
-          author: thread.author?.name || 'N/A',
-          members: thread.participants?.map(p => p.name).join(', ') || 'N/A'
-        });
-      });
-
-      // Style the header row
-      worksheet.getRow(1).font = { bold: true };
-      worksheet.getRow(1).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FFE0E0E0' }
-      };
-
-      // Generate Excel file
-      const buffer = await workbook.xlsx.writeBuffer();
-      const data = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-      // Create download link
-      const url = window.URL.createObjectURL(data);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Threads_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-
-      // Cleanup
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      // Show success message
-      enqueueSnackbar("Report exported successfully!", { 
-        variant: "success",
-        anchorOrigin: {
-          vertical: 'top',
-          horizontal: 'right'
-        }
-      });
-    } catch (error) {
-      logger.error("Error exporting to Excel:", error);
-      enqueueSnackbar("Error exporting report", { 
-        variant: "error",
-        anchorOrigin: {
-          vertical: 'top',
-          horizontal: 'right'
-        }
-      });
-    }
-  };
-
-  const clearFilters = () => {
-    setSearchTerm("");
-    setFromDate("");
-    setToDate("");
-    setSelectedCategory("");
-    setSelectedStatus("");
-    setSelectedSemester("");
-  };
-
-  return (
-    <Page title="Thread">
-      <Container
-        maxWidth="xl"
-        sx={{ px: { xs: 1.5, sm: 3 }, overflowX: "hidden", overflowY: "auto" }}
-      >
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2, sm: 3 },
-            mt: 2,
-            mb: 4,
-            borderRadius: 2,
-            backgroundColor: isLight 
-              ? 'rgba(255, 255, 255, 0.8)'
-              : alpha(theme.palette.background.paper, 0.8),
-            backdropFilter: 'blur(8px)',
-            boxShadow: isLight
-              ? '0 8px 32px 0 rgba(31, 38, 135, 0.15)'
-              : '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
-          }}
-        >
-          <Box 
-            sx={{ 
-              textAlign: 'center',
-              mb: 3
+      <Page title="Thread Reports">
+        <Container maxWidth="lg" sx={{ py: { xs: 4, md: 8 } }}>
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 4,
+              border: (theme) => `1px solid ${theme.palette.divider}`,
+              overflow: "hidden",
+              background: (theme) =>
+                theme.palette.mode === "light"
+                  ? "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(246,248,252,0.98) 100%)"
+                  : "linear-gradient(180deg, rgba(17,24,39,0.98) 0%, rgba(15,23,42,0.98) 100%)",
             }}
           >
-            <Typography 
-              variant="h4"
+            <Box
               sx={{
-                fontSize: { xs: "1.65rem", sm: "2.125rem" },
-                fontWeight: 'bold',
-                background: isLight 
-                  ? `-webkit-linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`
-                  : `-webkit-linear-gradient(45deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                mb: 1,
-              }}
-            >
-              Threads Report
-            </Typography>
-            
-            <Typography 
-              variant="body1" 
-              color="text.secondary"
-              sx={{ maxWidth: 600, mx: 'auto' }}
-            >
-              View and export thread data from your system
-            </Typography>
-          </Box>
-
-          <Stack 
-            direction={{ xs: 'column', sm: 'row' }} 
-            spacing={2} 
-            sx={{ mb: 3 }}
-            justifyContent="space-between"
-            alignItems={{ xs: 'stretch', sm: 'center' }}
-          >
-            <TextField
-              placeholder="Search by title or participant..."
-              fullWidth
-              size="small"
-              sx={{
-                maxWidth: { sm: 300, md: 400 },
-                backgroundColor: isLight 
-                  ? alpha(theme.palette.common.white, 0.5)
-                  : alpha(theme.palette.background.paper, 0.5),
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: activeColor,
-                  },
-                }
-              }}
-              value={searchTerm}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: 'text.secondary' }} />
-                  </InputAdornment>
-                ),
+                height: 8,
+                background: (theme) =>
+                  `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.info.main})`,
               }}
             />
+            <Box sx={{ p: { xs: 3, sm: 4, md: 6 } }}>
+              <Stack spacing={3} alignItems="center" textAlign="center">
+                <Box
+                  sx={{
+                    width: 88,
+                    height: 88,
+                    borderRadius: 4,
+                    display: "grid",
+                    placeItems: "center",
+                    color: "primary.main",
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "light"
+                        ? "rgba(25, 118, 210, 0.08)"
+                        : "rgba(125, 173, 255, 0.14)",
+                  }}
+                >
+                  <UpgradeOutlinedIcon sx={{ fontSize: 42 }} />
+                </Box>
 
-            <Stack 
-              direction="row" 
-              spacing={1}
-              sx={{ 
-                flexWrap: 'wrap',
-                rowGap: 1,
-                justifyContent: { xs: 'space-between', sm: 'flex-end' }
-              }}
-            >
-              <Button
-                variant="outlined"
-                color={isLight ? "primary" : "info"}
-                onClick={toggleFilters}
-                startIcon={<FilterListIcon />}
-                size="small"
-                sx={{
-                  borderRadius: 2,
-                  whiteSpace: 'nowrap',
-                  width: { xs: 'calc(50% - 4px)', sm: 'auto' },
-                }}
-              >
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </Button>
-
-              <Button
-                variant="contained"
-                color={isLight ? "primary" : "info"}
-                onClick={handleExportToExcel}
-                startIcon={<GetAppIcon />}
-                size="small"
-                sx={{
-                  borderRadius: 2,
-                  whiteSpace: 'nowrap',
-                  width: { xs: 'calc(50% - 4px)', sm: 'auto' },
-                }}
-              >
-                Export to Excel
-              </Button>
-            </Stack>
-          </Stack>
-
-          {showFilters && (
-            <Card
-              elevation={0}
-              sx={{
-                p: 2,
-                mb: 3,
-                backgroundColor: isLight 
-                  ? alpha(theme.palette.primary.main, 0.04)
-                  : alpha(theme.palette.info.main, 0.08),
-                borderRadius: 2,
-              }}
-            >
-              <Stack 
-                direction="row" 
-                sx={{ 
-                  mb: 2,
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                <Typography variant="subtitle1" fontWeight="medium">
-                  Filter Options
-                </Typography>
-                {(selectedCategory || selectedStatus || selectedSemester || fromDate || toDate) && (
-                  <Button 
-                    variant="text" 
-                    color="error" 
-                    size="small" 
-                    onClick={clearFilters}
-                    startIcon={<CloseIcon fontSize="small" />}
+                <Stack spacing={1.2} alignItems="center">
+                  <Typography variant="h3" sx={{ fontWeight: 800 }}>
+                    Thread Reports are under upgrade
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{ maxWidth: 760, lineHeight: 1.8 }}
                   >
-                    Clear Filters
-                  </Button>
-                )}
+                    This section is temporarily unavailable while we upgrade the report system.
+                    It will be back soon for all users and departments.
+                  </Typography>
+                </Stack>
+
+                <Box
+                  sx={{
+                    px: 2.5,
+                    py: 1.5,
+                    borderRadius: 999,
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "light"
+                        ? "rgba(15, 23, 42, 0.04)"
+                        : "rgba(255, 255, 255, 0.06)",
+                    border: (theme) => `1px solid ${theme.palette.divider}`,
+                  }}
+                >
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                    Coming soon for students, faculty, HOD, admin, and director users.
+                  </Typography>
+                </Box>
               </Stack>
-              
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={3}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Status"
-                    value={selectedStatus}
-                    onChange={handleStatusChange}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
+            </Box>
+          </Paper>
+        </Container>
+      </Page>
+    );
+  };
+
+export default Report;
+
+
                           <Box sx={{ 
                             width: 8, 
                             height: 8, 
