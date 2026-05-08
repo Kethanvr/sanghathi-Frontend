@@ -45,12 +45,7 @@ const Iat = () => {
     const semesterData = iatData.find((s) => s.semester === selectedSemester);
     if (!semesterData || !Array.isArray(semesterData.subjects)) return [];
 
-    const subjectsMap = new Map();
-    semesterData.subjects.forEach((subject) => {
-      subjectsMap.set(subject.subjectCode, subject);
-    });
-
-    return Array.from(subjectsMap.values());
+    return semesterData.subjects;
   }, [iatData, selectedSemester]);
 
   const formatAverage = (subject) => {
@@ -134,18 +129,20 @@ const Iat = () => {
     return getSelectedSemesterSubjects();
   };
 
-  //  Get IAT marks for a specific subject and IAT number
-    const getIatMarks = (subjectCode, iatNumber) => {
-        const subject = getSelectedSemesterSubjects().find((s) => s.subjectCode === subjectCode);
-        if (!subject) return "";
+  const getIatMarks = (subject, iatNumber) => {
+    if (!subject) return "";
 
-        switch (iatNumber) {
-            case 1: return subject.iat1 || "";
-            case 2: return subject.iat2 || "";
-          case 3: return formatAverage(subject);
-            default: return "";
-        }
-    };
+    switch (iatNumber) {
+      case 1:
+        return subject.iat1 || "";
+      case 2:
+        return subject.iat2 || "";
+      case 3:
+        return formatAverage(subject);
+      default:
+        return "";
+    }
+  };
 
 
 
@@ -218,8 +215,8 @@ const Iat = () => {
                 </TableCell>
               </TableRow>
             ) : (
-            getSubjectsForSemester().map((subject) => (
-              <TableRow key={subject.subjectCode}>
+            getSubjectsForSemester().map((subject, index) => (
+              <TableRow key={`${subject.subjectCode}-${index}`}>
                 <TableCell sx={{ border: "1px solid gray", display: { xs: "none", sm: "table-cell" } }}>
                   {subject.subjectCode}
                 </TableCell>
@@ -227,13 +224,13 @@ const Iat = () => {
                   {subject.subjectName}
                 </TableCell>
                 <TableCell sx={{ border: "1px solid gray" }}>
-                    {getIatMarks(subject.subjectCode, 1)}
+                  {getIatMarks(subject, 1)}
                 </TableCell>
                 <TableCell sx={{ border: "1px solid gray" }}>
-                    {getIatMarks(subject.subjectCode, 2)}
+                  {getIatMarks(subject, 2)}
                 </TableCell>
                 <TableCell sx={{ border: "1px solid gray" }}>
-                    {getIatMarks(subject.subjectCode, 3)}
+                  {getIatMarks(subject, 3)}
                 </TableCell>
               </TableRow>
             ))
