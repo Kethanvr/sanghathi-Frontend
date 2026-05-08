@@ -20,7 +20,7 @@ export default function MiniProject() {
     
     const methods = useForm({
       defaultValues: {
-        miniproject: [{ title: "",manHours: "",startDate: null,completedDate: null, }],
+        miniproject: [{ title: "", semester: "", manHours: "", startDate: null, completedDate: null }],
       },
     });
 
@@ -43,14 +43,15 @@ export default function MiniProject() {
         if (data && Array.isArray(data.miniproject)) {
           const formattedMiniProject = data.miniproject.map((miniproject) => ({
             ...miniproject,
+            semester: miniproject.semester || "",
             startDate: miniproject.startDate ? new Date(miniproject.startDate).toISOString().split("T")[0] : "",
             completedDate: miniproject.completedDate ? new Date(miniproject.completedDate).toISOString().split("T")[0] : "",
           }));
-          logger.info("Formatted miniproject:", formattedMiniProject); 
+          logger.info("Formatted miniproject:", formattedMiniProject);
           reset({ miniproject: formattedMiniProject });
         } else {
           logger.warn("No miniproject data found for this user");
-          reset({ miniproject: [{ title: "",manHours: "",startDate: null,completedDate: null,  }] });
+          reset({ miniproject: [{ title: "", semester: "", manHours: "", startDate: null, completedDate: null }] });
         }
       } catch (error) {
         logger.info("Error fetching miniproject data:", error);
@@ -87,61 +88,50 @@ export default function MiniProject() {
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
     <Card sx={{ p: 3 }}>
       <Grid container spacing={2}>
-        {fields.map((item, index) => (
-          <Grid 
-            container 
-            spacing={2} 
-            key={item.id} 
-            alignItems="center" 
-            sx={{ mb: 1, mt: 1 }}
-            >
-            <Grid item xs={1}>
-              <TextField 
-              disabled 
-              value={index + 1} 
-              label="Sl. No." 
-              variant="outlined" 
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <RHFTextField
-                name={`miniproject[${index}].title`} 
-                label="Miniproject Title"
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <RHFTextField
-                name={`miniproject[${index}].manHours`} 
-                label="Man Hours"
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={2}>
-            <RHFTextField
-              name={`miniproject[${index}].startDate`}
-              label="Start Date"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-            />
-            </Grid>
-            <Grid item xs={2}>
-            <RHFTextField
-              name={`miniproject[${index}].completedDate`}
-              label="Completed Date"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-            />
-            </Grid>
-             <Grid item xs={1}>
-              <IconButton color="error" onClick={() => remove(index)} sx={{ mt: 1 }}>
-                <DeleteIcon />
-              </IconButton>
-            </Grid>
-          </Grid>
-        ))}        
+        {(() => {
+          const groups = {};
+          fields.forEach((item, idx) => {
+            const sem = item.semester || "Unspecified";
+            if (!groups[sem]) groups[sem] = [];
+            groups[sem].push({ item, idx });
+          });
+
+          return Object.keys(groups).map((sem) => (
+            <Box key={sem} sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>{sem === "" || sem === "Unspecified" ? "Unspecified Semester" : `Semester: ${sem}`}</Typography>
+              {groups[sem].map(({ item, idx }) => (
+                <Grid container spacing={2} key={item.id} alignItems="center" sx={{ mb: 1, mt: 1 }}>
+                  <Grid item xs={1}>
+                    <TextField disabled value={idx + 1} label="Sl. No." variant="outlined" />
+                  </Grid>
+                  <Grid item xs={2}>
+                    <RHFTextField name={`miniproject[${idx}].semester`} label="Semester" fullWidth />
+                  </Grid>
+                  <Grid item xs={3}>
+                    <RHFTextField name={`miniproject[${idx}].title`} label="Miniproject Title" fullWidth />
+                  </Grid>
+                  <Grid item xs={3}>
+                    <RHFTextField name={`miniproject[${idx}].manHours`} label="Man Hours" fullWidth />
+                  </Grid>
+                  <Grid item xs={2}>
+                    <RHFTextField name={`miniproject[${idx}].startDate`} label="Start Date" type="date" InputLabelProps={{ shrink: true }} fullWidth />
+                  </Grid>
+                  <Grid item xs={2}>
+                    <RHFTextField name={`miniproject[${idx}].completedDate`} label="Completed Date" type="date" InputLabelProps={{ shrink: true }} fullWidth />
+                  </Grid>
+                  <Grid item xs={1}>
+                    <IconButton color="error" onClick={() => remove(idx)} sx={{ mt: 1 }}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Grid>
+                </Grid>
+              ))}
+              <Box sx={{ textAlign: 'right', mb: 2 }}>
+                <Button size="small" variant="outlined" onClick={() => append({ title: "", semester: sem === 'Unspecified' ? '' : sem, manHours: "", startDate: null, completedDate: null })}>Add Row to this semester</Button>
+              </Box>
+            </Box>
+          ));
+        })()}
           <Grid item xs={12}>
             <Button 
               variant="contained" 

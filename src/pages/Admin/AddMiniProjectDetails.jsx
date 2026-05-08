@@ -75,6 +75,7 @@ const AddMiniProjectDetails = () => {
       "USN",
       "Name",
       "Title",
+      "Semester",
       "Man Hours",
       "Start Date",
       "End Date"
@@ -84,7 +85,8 @@ const AddMiniProjectDetails = () => {
       1,
       "1CR23IS001",
       "AAMITH PRAMOD",
-      "AI Based Smart Traffic Optimization System"
+      "AI Based Smart Traffic Optimization System",
+      "4"
     ];
 
     const csvContent = Papa.unparse([headers, exampleRow], { quotes: true });
@@ -199,6 +201,7 @@ const AddMiniProjectDetails = () => {
           miniproject: [
             {
               title: row.Title,
+              semester: row.Semester || null,
               manHours: row["Man Hours"] ? Number(row["Man Hours"]) : null,
               startDate: row["Start Date"] || null,
               completedDate: row["End Date"] || null

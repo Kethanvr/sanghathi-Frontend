@@ -70,6 +70,7 @@ const AddMoocDetails = () => {
       "USN",
       "StudentName",
       "CourseName",
+      "Semester",
       "Platform",
       "CertificateLink",
       "Man Hours",
@@ -82,6 +83,7 @@ const AddMoocDetails = () => {
       "1CR23IS001",
       "AAMITH PRAMOD",
       "Foundation of Python",
+      "4",
       "Infosys Springboard",
       "https://certificate-link.com"
     ];
@@ -202,6 +204,7 @@ const AddMoocDetails = () => {
             {
               portal: row.Platform,
               title: row.CourseName,
+              semester: row.Semester || null,
               startDate: row["Start Date"] || null,
               completedDate: row["End Date"] || null,
               certificateLink: row.CertificateLink

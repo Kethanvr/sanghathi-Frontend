@@ -28,7 +28,7 @@ export default function Mooc() {
 
     const methods = useForm({
       defaultValues: {
-        mooc: [{ portal: "", title: "", startDate: null, completedDate: null, score: null, certificateLink: "" }],
+        mooc: [{ portal: "", title: "", semester: "", startDate: null, completedDate: null, score: null, certificateLink: "" }],
       },
     });
 
@@ -108,6 +108,7 @@ export default function Mooc() {
 
             return {
               ...mooc,
+              semester: mooc.semester || "",
               startDate: parsedStartDate,
               completedDate: parsedCompletedDate,
             };
@@ -115,7 +116,7 @@ export default function Mooc() {
           reset({ mooc: formattedMooc });
         } else {
           logger.warn("No mooc data found for this user");
-          reset({ mooc: [{ portal: "", title: "", startDate: null, completedDate: null, score: null, certificateLink: "" }] });
+          reset({ mooc: [{ portal: "", title: "", semester: "", startDate: null, completedDate: null, score: null, certificateLink: "" }] });
         }
       } catch (error) {
         logger.info("Error fetching mooc data:", error);
@@ -165,75 +166,57 @@ export default function Mooc() {
             </Stack>
 
             <Grid container spacing={2}>
-              {fields.map((item, index) => (
-                <Grid 
-                  container 
-                  spacing={2} 
-                  key={item.id} 
-                  alignItems="center" 
-                  sx={{ mb: 1, mt: 1 }}
-                  >
-                  <Grid item xs={1}>
-                    <TextField 
-                    disabled 
-                    value={index + 1} 
-                    label="Sl. No." 
-                    variant="outlined" 
-                    />
-                  </Grid>
-                  <Grid item xs={3}>
-                  <RHFTextField
-                    name={`mooc[${index}].portal`} 
-                    label="Course Portal"
-                    fullWidth
-                  />
-                  </Grid>
-                  <Grid item xs={3}>
-                  <RHFTextField
-                    name={`mooc[${index}].title`} 
-                    label="Mooc Title"
-                    fullWidth
-                  />
-                  </Grid>
-                  <Grid item xs={2}>
-                  <RHFTextField
-                    name={`mooc[${index}].startDate`}
-                    label="Start Date"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    fullWidth
-                  />
-                  </Grid>
-                  <Grid item xs={2}>
-                  <RHFTextField
-                    name={`mooc[${index}].completedDate`}
-                    label="Completed Date"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    fullWidth
-                  />
-                  </Grid>
-                  <Grid item xs={2}>
-                  <RHFTextField
-                    name={`mooc[${index}].score`} 
-                    label="Score"
-                    fullWidth
-                  />
-                  </Grid>
-                  <Grid item xs={5}>
-                  <RHFTextField
-                    name={`mooc[${index}].certificateLink`} 
-                    label="Certificate Link"
-                    fullWidth
-                  />
-                  </Grid>
-                  <Grid item xs={1}>
-                    <IconButton color="error" onClick={() => remove(index)} sx={{ mt: 1 }}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </Grid>
-                </Grid>
-              ))}        
+              {/** Group entries by semester for display */}
+              {(() => {
+                const groups = {};
+                fields.forEach((item, idx) => {
+                  const sem = item.semester || "Unspecified";
+                  if (!groups[sem]) groups[sem] = [];
+                  groups[sem].push({ item, idx });
+                });
+
+                return Object.keys(groups).map((sem) => (
+                  <Box key={sem} sx={{ mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>{sem === "" || sem === "Unspecified" ? "Unspecified Semester" : `Semester: ${sem}`}</Typography>
+                    {groups[sem].map(({ item, idx }) => (
+                      <Grid container spacing={2} key={item.id} alignItems="center" sx={{ mb: 1, mt: 1 }}>
+                        <Grid item xs={1}>
+                          <TextField disabled value={idx + 1} label="Sl. No." variant="outlined" />
+                        </Grid>
+                        <Grid item xs={2}>
+                          <RHFTextField name={`mooc[${idx}].semester`} label="Semester" fullWidth />
+                        </Grid>
+                        <Grid item xs={3}>
+                          <RHFTextField name={`mooc[${idx}].portal`} label="Course Portal" fullWidth />
+                        </Grid>
+                        <Grid item xs={3}>
+                          <RHFTextField name={`mooc[${idx}].title`} label="Mooc Title" fullWidth />
+                        </Grid>
+                        <Grid item xs={2}>
+                          <RHFTextField name={`mooc[${idx}].startDate`} label="Start Date" type="date" InputLabelProps={{ shrink: true }} fullWidth />
+                        </Grid>
+                        <Grid item xs={2}>
+                          <RHFTextField name={`mooc[${idx}].completedDate`} label="Completed Date" type="date" InputLabelProps={{ shrink: true }} fullWidth />
+                        </Grid>
+                        <Grid item xs={2}>
+                          <RHFTextField name={`mooc[${idx}].score`} label="Score" fullWidth />
+                        </Grid>
+                        <Grid item xs={4}>
+                          <RHFTextField name={`mooc[${idx}].certificateLink`} label="Certificate Link" fullWidth />
+                        </Grid>
+                        <Grid item xs={1}>
+                          <IconButton color="error" onClick={() => remove(idx)} sx={{ mt: 1 }}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </Grid>
+                      </Grid>
+                    ))}
+                    <Box sx={{ textAlign: 'right', mb: 2 }}>
+                      <Button size="small" variant="outlined" onClick={() => append({ portal: "", title: "", semester: sem === 'Unspecified' ? '' : sem, startDate: null, completedDate: null, score: null, certificateLink: "" })}>Add Row to this semester</Button>
+                    </Box>
+                  </Box>
+                ));
+              })()}
                 <Grid item xs={12}>
                   <Button 
                     variant="contained" 
