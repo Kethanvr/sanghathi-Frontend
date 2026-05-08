@@ -13,6 +13,14 @@ import {
   Grid,
   InputLabel,
   MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  Avatar,
   Paper,
   Select,
   Stack,
@@ -28,6 +36,7 @@ import {
   IconButton,
   InputAdornment,
   Container,
+  Tooltip,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { alpha, useTheme } from "@mui/material/styles";
@@ -94,8 +103,11 @@ const FeedbackManagement = () => {
   const [feedbackWindow, setFeedbackWindow] = useState(null);
   const [stats, setStats] = useState(null);
   const [feedbacks, setFeedbacks] = useState([]);
-  const [semesterFilter, setSemesterFilter] = useState("");
-  const [selectedFeedbackRound, setSelectedFeedbackRound] = useState(1);
+
+  // Use localStorage for persistence
+  const [semesterFilter, setSemesterFilter] = useState(() => localStorage.getItem("feedback_sem_filter") || "");
+  const [selectedFeedbackRound, setSelectedFeedbackRound] = useState(() => Number(localStorage.getItem("feedback_round_filter")) || 1);
+  
   const [mentorFilter, setMentorFilter] = useState("");
   const [semesterDraft, setSemesterDraft] = useState("");
   const [roundDraft, setRoundDraft] = useState(1);
@@ -112,6 +124,8 @@ const FeedbackManagement = () => {
   const [expandedMentors, setExpandedMentors] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
 
+  const [allStudents, setAllStudents] = useState([]);
+  
   const editorMethods = useForm({
     defaultValues: {
       mentorAccessibility: "",
@@ -144,13 +158,17 @@ const FeedbackManagement = () => {
 
       // 3. Update the filter UI state if it's the first load or if we want to sync with window
       if (!semesterFilter && activeSem) setSemesterFilter(activeSem.toString());
-      if (!query.feedbackRound && windowData?.feedbackRound) setSelectedFeedbackRound(windowData.feedbackRound);
+      // Only auto-select the round if we haven't manually changed it or if it's the first load
+      if (!query.feedbackRound && windowData?.feedbackRound && !semesterFilter) {
+        setSelectedFeedbackRound(windowData.feedbackRound);
+      }
 
       // 4. Fetch the data based on active parameters
       const overviewResponse = await api.get("/feedback/overview", { 
         params: { 
           semester: activeSem || undefined, 
-          feedbackRound: activeRound 
+          feedbackRound: activeRound,
+          department: user.roleName !== 'admin' ? user.department : undefined
         } 
       });
       const overviewData = overviewResponse.data?.data || {};
@@ -159,7 +177,13 @@ const FeedbackManagement = () => {
       // 5. Fetch stats if semester is available
       if (activeSem) {
         try {
-          const statsResponse = await api.get(`/feedback/stats/${activeSem}/${activeRound}`);
+          const statsParams = {};
+          if (user.roleName !== 'admin' && user.department) {
+            statsParams.department = user.department;
+          }
+          const statsResponse = await api.get(`/feedback/stats/${activeSem}/${activeRound}`, {
+            params: statsParams
+          });
           setStats(statsResponse.data?.data || null);
         } catch (err) {
           logger.error("Error fetching stats:", err);
@@ -167,13 +191,32 @@ const FeedbackManagement = () => {
         }
       }
 
-      // 6. Fetch mentor groups for HOD/Director
+      // 6. Fetch all students for this semester/department to show pending status
+      if (activeSem) {
+        try {
+          const studentResponse = await api.get("/users", {
+            params: {
+              role: "student",
+              semester: activeSem,
+              department: user.roleName !== 'admin' ? user.department : undefined,
+              limit: 1000 // Get all for this semester
+            }
+          });
+          setAllStudents(studentResponse.data?.data?.users || []);
+        } catch (err) {
+          logger.error("Error fetching students:", err);
+          setAllStudents([]);
+        }
+      }
+
+      // 7. Fetch mentor groups for HOD/Director
       if (isHodOrDirector && activeSem) {
         try {
           const mentorResponse = await api.get(`/feedback/by-mentor/${user._id}`, {
             params: {
               semester: activeSem,
               round: activeRound,
+              department: user.department,
             },
           });
           setMentorGroups(mentorResponse.data?.data?.mentors || []);
@@ -234,6 +277,10 @@ const FeedbackManagement = () => {
       enqueueSnackbar("Please select a semester first", { variant: "warning" });
       return;
     }
+    // Save to localStorage
+    localStorage.setItem("feedback_sem_filter", semesterFilter);
+    localStorage.setItem("feedback_round_filter", selectedFeedbackRound);
+
     await loadFeedbackData({
       semester: semesterFilter.trim(),
       feedbackRound: selectedFeedbackRound,
@@ -319,13 +366,26 @@ const FeedbackManagement = () => {
     }
   };
 
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const filteredStudents = useMemo(() => {
-    if (!searchTerm) return feedbacks;
-    return feedbacks.filter((f) =>
-      f.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      f.userId?.collegeCode?.toLowerCase().includes(searchTerm.toLowerCase())
+    // Merge allStudents with feedbacks to show status
+    const studentList = allStudents.map(student => {
+      const feedback = feedbacks.find(f => f.userId?._id === student._id && f.feedbackRound === selectedFeedbackRound);
+      return {
+        ...student,
+        feedback,
+        hasResponded: !!feedback
+      };
+    });
+
+    if (!searchTerm) return studentList;
+    return studentList.filter((s) =>
+      s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.collegeCode?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [feedbacks, searchTerm]);
+  }, [allStudents, feedbacks, searchTerm, selectedFeedbackRound]);
 
   const filteredMentorGroups = useMemo(() => {
     if (!searchTerm) return mentorGroups;
@@ -337,6 +397,15 @@ const FeedbackManagement = () => {
       ),
     }));
   }, [mentorGroups, searchTerm]);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   return (
     <Page title="Feedback Management">
@@ -493,14 +562,26 @@ const FeedbackManagement = () => {
                 {stats && (
                   <Grid container spacing={2}>
                     {[
-                      { label: "Responded", value: stats.responded, color: "success", icon: <GroupIcon /> },
-                      { label: "Enrolled", value: stats.totalEnrolled, color: "primary", icon: <GroupIcon /> },
-                      { label: "Response Rate", value: `${stats.responseRate}%`, color: "info", icon: <AssessmentIcon /> },
-                      { label: "Avg. Score", value: `${stats.averageScoreOverall.toFixed(2)}/5.0`, color: "warning", icon: <AssessmentIcon /> },
+                      { label: "Responded", value: stats.responded || 0, color: "success", icon: <GroupIcon /> },
+                      { label: "Enrolled", value: stats.totalEnrolled || 0, color: "primary", icon: <GroupIcon /> },
+                      { label: "Response Rate", value: `${stats.responseRate || 0}%`, color: "info", icon: <AssessmentIcon /> },
+                      { label: "Avg. Score", value: `${(stats.averageScoreOverall || 0).toFixed(2)}/5.0`, color: "warning", icon: <AssessmentIcon /> },
                     ].map((s) => (
                       <Grid item xs={6} sm={3} key={s.label}>
-                        <Card sx={{ p: 2, textAlign: "center", borderRadius: 3, border: `1px solid ${alpha(theme.palette[s.color].main, 0.15)}`, backgroundColor: alpha(theme.palette[s.color].main, 0.05) }}>
-                          <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800 }}>{s.label}</Typography>
+                        <Card sx={{ 
+                          p: 2.5, 
+                          textAlign: "center", 
+                          borderRadius: 3, 
+                          border: `1px solid ${alpha(theme.palette[s.color].main, 0.15)}`, 
+                          backgroundColor: alpha(theme.palette[s.color].main, 0.04),
+                          transition: theme.transitions.create(['transform', 'box-shadow']),
+                          '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: theme.customShadows?.z8,
+                            backgroundColor: alpha(theme.palette[s.color].main, 0.08),
+                          }
+                        }}>
+                          <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 1.2 }}>{s.label}</Typography>
                           <Typography variant="h4" sx={{ fontWeight: 900, color: theme.palette[s.color].main }}>{s.value}</Typography>
                         </Card>
                       </Grid>
@@ -516,7 +597,7 @@ const FeedbackManagement = () => {
                       <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 700, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
                         <FilterListIcon fontSize="small" /> Data View Filters
                       </Typography>
-                      <Grid container spacing={2}>
+                      <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} sm={4}>
                           <FormControl fullWidth size="small">
                             <InputLabel>View Semester</InputLabel>
@@ -633,175 +714,133 @@ const FeedbackManagement = () => {
               </Stack>
             ) : (
               <Box>
-                {isHodOrDirector ? (
-                  <Stack spacing={3}>
-                    {filteredMentorGroups
-                      .filter((group) => !mentorFilter || group.mentorId === mentorFilter)
-                      .map((group) => (
-                        <Card key={group.mentorId} sx={{ borderRadius: 3, border: `1px solid ${alpha(theme.palette.divider, 0.8)}`, overflow: 'hidden' }}>
-                          <Box
-                            sx={{
-                              p: 2.5,
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              backgroundColor: alpha(theme.palette.primary.main, 0.03),
-                              cursor: "pointer",
-                              '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.06) }
-                            }}
-                            onClick={() =>
-                              setExpandedMentors({
-                                ...expandedMentors,
-                                [group.mentorId]: !expandedMentors[group.mentorId],
-                              })
-                            }
-                          >
-                            <Stack direction="row" alignItems="center" spacing={2}>
-                              <Box
-                                sx={{
-                                  width: 44,
-                                  height: 44,
-                                  borderRadius: 1.5,
-                                  backgroundColor: theme.palette.primary.main,
-                                  color: "#fff",
-                                  display: "grid",
-                                  placeItems: "center",
-                                  fontWeight: 800,
-                                  boxShadow: theme.customShadows?.primary
-                                }}
-                              >
-                                {group.mentorName?.charAt(0)}
-                              </Box>
-                              <Box>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{group.mentorName}</Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>{group.menteeCount} Mentees assigned</Typography>
-                              </Box>
-                            </Stack>
-                            {expandedMentors[group.mentorId] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                          </Box>
-
-                          {expandedMentors[group.mentorId] && (
-                            <Box sx={{ p: 2, backgroundColor: alpha(theme.palette.background.neutral, 0.5) }}>
-                              <Grid container spacing={2}>
-                                {group.mentees.length === 0 ? (
-                                  <Grid item xs={12}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>No mentees found matching search.</Typography>
-                                  </Grid>
-                                ) : (
-                                  group.mentees.map((mentee) => (
-                                    <Grid item xs={12} md={6} key={mentee.studentId}>
-                                      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, "&:hover": { borderColor: theme.palette.primary.main, boxShadow: theme.customShadows?.z4 } }}>
-                                        <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                          <Box>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{mentee.studentName}</Typography>
-                                            <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
-                                              {mentee.feedbacks?.map((fb, idx) => (
-                                                <Chip
-                                                  key={idx}
-                                                  size="small"
-                                                  label={`R${fb.feedbackRound}: ${fb.averageScore?.toFixed(1) || "N/A"}`}
-                                                  color={fb.feedbackRound === selectedFeedbackRound ? "primary" : "default"}
-                                                  variant={fb.feedbackRound === selectedFeedbackRound ? "filled" : "outlined"}
-                                                  sx={{ height: 20, fontSize: "0.65rem", fontWeight: 800 }}
-                                                />
-                                              ))}
-                                            </Stack>
-                                          </Box>
-                                          <Stack direction="row" spacing={1}>
-                                            <Button size="small" variant="contained" onClick={() => handleOpenDrillDown(mentee)} sx={{ borderRadius: 1.5 }}>Details</Button>
-                                            {canEditWindow && (
-                                              <Button
-                                                size="small"
-                                                variant="outlined"
-                                                onClick={() => {
-                                                  const feedback = mentee.feedbacks?.find(f => f.feedbackRound === selectedFeedbackRound);
-                                                  if (feedback) handleOpenSidebarEditor(feedback);
-                                                }}
-                                                sx={{ borderRadius: 1.5 }}
-                                              >
-                                                Edit
-                                              </Button>
-                                            )}
-                                          </Stack>
-                                        </Stack>
-                                      </Paper>
-                                    </Grid>
-                                  ))
-                                )}
-                              </Grid>
-                            </Box>
-                          )}
-                        </Card>
-                      ))}
-                  </Stack>
-                ) : (
-                  <Grid container spacing={2}>
-                    {filteredStudents.length === 0 ? (
-                      <Grid item xs={12}>
-                        <Alert severity="warning" sx={{ borderRadius: 2 }}>No responses found for your current search/filters.</Alert>
-                      </Grid>
-                    ) : (
-                      filteredStudents.map((entry) => (
-                        <Grid item xs={12} md={6} lg={4} key={entry._id}>
-                          <Card
-                            sx={{
-                              p: 2.5,
-                              borderRadius: 3,
-                              border: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
-                              transition: "all 0.2s",
-                              "&:hover": {
-                                transform: "translateY(-4px)",
-                                boxShadow: theme.customShadows?.z12,
-                                borderColor: theme.palette.primary.main,
-                              },
-                            }}
-                          >
-                            <Stack spacing={2}>
-                              <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                                <Box>
-                                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{entry.userId?.name}</Typography>
-                                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>{entry.userId?.collegeCode}</Typography>
-                                </Box>
-                                <Box sx={{ textAlign: "right" }}>
-                                  <Typography variant="h4" sx={{ fontWeight: 900, color: theme.palette.success.main }}>
-                                    {entry.averageScore?.toFixed(2)}
+                <TableContainer component={Paper} sx={{ borderRadius: 3, border: `1px solid ${theme.palette.divider}`, overflow: 'hidden' }}>
+                  <Table>
+                    <TableHead sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 800 }}>Student</TableCell>
+                        {isHodOrDirector && <TableCell sx={{ fontWeight: 800 }}>Mentor</TableCell>}
+                        <TableCell align="center" sx={{ fontWeight: 800 }}>Avg Score</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 800 }}>Status</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 800 }}>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {isHodOrDirector ? (
+                        // HOD/Director View: Flattened list or Grouped? 
+                        // Let's flatten it for the "User List" feel
+                        filteredMentorGroups
+                          .filter((group) => !mentorFilter || group.mentorId === mentorFilter)
+                          .flatMap((group) => group.mentees.map(mentee => ({ ...mentee, mentorName: group.mentorName })))
+                          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                          .map((mentee) => {
+                            const feedback = mentee.feedbacks?.find(f => f.feedbackRound === selectedFeedbackRound);
+                            return (
+                              <TableRow key={mentee.studentId} hover>
+                                <TableCell>
+                                  <Stack direction="row" spacing={2} alignItems="center">
+                                    <Avatar sx={{ bgcolor: theme.palette.primary.main, fontWeight: 700, width: 36, height: 36 }}>
+                                      {mentee.studentName?.charAt(0)}
+                                    </Avatar>
+                                    <Box>
+                                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{mentee.studentName}</Typography>
+                                      <Typography variant="caption" color="text.secondary">{mentee.collegeCode || mentee.studentId}</Typography>
+                                    </Box>
+                                  </Stack>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{mentee.mentorName}</Typography>
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Typography variant="subtitle2" sx={{ 
+                                    fontWeight: 800, 
+                                    color: feedback ? (feedback.averageScore >= 4 ? 'success.main' : feedback.averageScore >= 3 ? 'warning.main' : 'error.main') : 'text.disabled'
+                                  }}>
+                                    {feedback?.averageScore?.toFixed(2) || "N/A"}
                                   </Typography>
-                                  <Typography variant="caption" color="text.secondary">Avg Score</Typography>
-                                </Box>
-                              </Stack>
-                              
-                              <Stack direction="row" spacing={1}>
-                                <Chip label={`Semester ${entry.semester}`} size="small" variant="outlined" sx={{ fontWeight: 700 }} />
-                                <Chip label={`Round ${entry.feedbackRound}`} size="small" color="secondary" variant="outlined" sx={{ fontWeight: 700 }} />
-                              </Stack>
-
-                              <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
-                                <Button 
-                                  fullWidth 
-                                  variant="contained" 
-                                  size="small" 
-                                  onClick={() => handleOpenDrillDown({ studentId: entry.userId._id, studentName: entry.userId.name })} 
-                                  sx={{ borderRadius: 1.5, fontWeight: 700 }}
-                                >
-                                  View Details
-                                </Button>
-                                {canEditWindow && (
-                                  <IconButton 
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Chip 
+                                    label={feedback ? "Responded" : "Pending"} 
                                     size="small" 
-                                    onClick={() => handleOpenSidebarEditor(entry)} 
-                                    sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.1), borderRadius: 1.5, '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.2) } }}
-                                  >
-                                    <SettingsIcon fontSize="small" color="primary" />
-                                  </IconButton>
-                                )}
-                              </Stack>
-                            </Stack>
-                          </Card>
-                        </Grid>
-                      ))
-                    )}
-                  </Grid>
-                )}
+                                    color={feedback ? "success" : "default"}
+                                    variant={feedback ? "filled" : "outlined"}
+                                    sx={{ fontWeight: 700, fontSize: '0.7rem' }}
+                                  />
+                                </TableCell>
+                                <TableCell align="right">
+                                  <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                    <Button size="small" variant="text" onClick={() => handleOpenDrillDown(mentee)}>Details</Button>
+                                    {canEditWindow && feedback && (
+                                      <IconButton size="small" onClick={() => handleOpenSidebarEditor(feedback)}>
+                                        <SettingsIcon fontSize="small" />
+                                      </IconButton>
+                                    )}
+                                  </Stack>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                      ) : (
+                        filteredStudents
+                          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                          .map((student) => (
+                            <TableRow key={student._id} hover>
+                              <TableCell>
+                                <Stack direction="row" spacing={2} alignItems="center">
+                                  <Avatar sx={{ bgcolor: theme.palette.primary.main, fontWeight: 700, width: 36, height: 36 }}>
+                                    {student.name?.charAt(0)}
+                                  </Avatar>
+                                  <Box>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{student.name}</Typography>
+                                    <Typography variant="caption" color="text.secondary">{student.collegeCode}</Typography>
+                                  </Box>
+                                </Stack>
+                              </TableCell>
+                              <TableCell align="center">
+                                <Typography variant="subtitle2" sx={{ 
+                                  fontWeight: 800, 
+                                  color: student.hasResponded 
+                                    ? (student.feedback.averageScore >= 4 ? 'success.main' : student.feedback.averageScore >= 3 ? 'warning.main' : 'error.main') 
+                                    : 'text.disabled'
+                                }}>
+                                  {student.hasResponded ? student.feedback.averageScore?.toFixed(2) : "N/A"}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                <Chip 
+                                  label={student.hasResponded ? "Responded" : "Pending"} 
+                                  size="small" 
+                                  color={student.hasResponded ? "success" : "default"}
+                                  variant={student.hasResponded ? "filled" : "outlined"}
+                                  sx={{ fontWeight: 700, fontSize: '0.7rem' }} 
+                                />
+                              </TableCell>
+                              <TableCell align="right">
+                                <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                  <Button size="small" variant="text" onClick={() => handleOpenDrillDown({ studentId: student._id, studentName: student.name })}>Details</Button>
+                                  {canEditWindow && student.hasResponded && (
+                                    <IconButton size="small" onClick={() => handleOpenSidebarEditor(student.feedback)}>
+                                      <SettingsIcon fontSize="small" />
+                                    </IconButton>
+                                  )}
+                                </Stack>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <TablePagination
+                  component="div"
+                  count={isHodOrDirector ? filteredMentorGroups.flatMap(g => g.mentees).length : filteredStudents.length}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  rowsPerPage={rowsPerPage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                  rowsPerPageOptions={[5, 10, 25]}
+                />
               </Box>
             )}
           </Box>
