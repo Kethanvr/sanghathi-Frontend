@@ -864,12 +864,22 @@ const FeedbackManagement = () => {
                         // Let's flatten it for the "User List" feel
                         filteredMentorGroups
                           .filter((group) => !mentorFilter || group.mentorId === mentorFilter)
-                          .flatMap((group) => group.mentees.map(mentee => ({ ...mentee, mentorName: group.mentorName })))
+                          .flatMap((group) => group.mentees.map(mentee => ({ ...mentee, mentorName: group.mentorName, mentorId: group.mentorId })))
                           .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                           .map((mentee) => {
-                            const feedback = mentee.feedbacks?.find(f => f.feedbackRound === selectedFeedbackRound);
+                            // Handle both nested feedbacks array and flat feedback objects
+                            let feedback = null;
+                            if (mentee.feedbacks && Array.isArray(mentee.feedbacks)) {
+                              feedback = mentee.feedbacks.find(f => f.feedbackRound === selectedFeedbackRound);
+                            } else if (mentee.feedback && mentee.feedback.feedbackRound === selectedFeedbackRound) {
+                              feedback = mentee.feedback;
+                            } else if (mentee.averageScore !== undefined) {
+                              // Direct feedback object
+                              feedback = mentee;
+                            }
+                            
                             return (
-                              <TableRow key={mentee.studentId} hover>
+                              <TableRow key={`${mentee.studentId}-${mentee.mentorId}`} hover>
                                 <TableCell>
                                   <Stack direction="row" spacing={2} alignItems="center">
                                     <Avatar sx={{ bgcolor: theme.palette.primary.main, fontWeight: 700, width: 36, height: 36 }}>
@@ -887,7 +897,7 @@ const FeedbackManagement = () => {
                                 <TableCell align="center">
                                   <Typography variant="subtitle2" sx={{ 
                                     fontWeight: 800, 
-                                    color: feedback ? (feedback.averageScore >= 4 ? 'success.main' : feedback.averageScore >= 3 ? 'warning.main' : 'error.main') : 'text.disabled'
+                                    color: feedback && feedback.averageScore ? (feedback.averageScore >= 4 ? 'success.main' : feedback.averageScore >= 3 ? 'warning.main' : 'error.main') : 'text.disabled'
                                   }}>
                                     {feedback?.averageScore?.toFixed(2) || "N/A"}
                                   </Typography>
@@ -903,11 +913,25 @@ const FeedbackManagement = () => {
                                 </TableCell>
                                 <TableCell align="right">
                                   <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                    <Button size="small" variant="text" onClick={() => handleOpenDrillDown(mentee)}>Details</Button>
+                                    <Button size="small" variant="text" onClick={() => handleOpenDrillDown({ studentId: mentee.studentId, studentName: mentee.studentName })}>Details</Button>
                                     {canEditWindow && feedback && (
-                                      <IconButton size="small" onClick={() => handleOpenEditInDialog(feedback)}>
-                                        <SettingsIcon fontSize="small" />
-                                      </IconButton>
+                                      <>
+                                        <IconButton 
+                                          size="small" 
+                                          onClick={() => handleOpenEditInDialog(feedback)}
+                                          title="Edit feedback"
+                                        >
+                                          <EditIcon fontSize="small" />
+                                        </IconButton>
+                                        <IconButton 
+                                          size="small" 
+                                          color="error"
+                                          onClick={() => { setFeedbackToDelete(feedback); setDeleteConfirmOpen(true); }}
+                                          title="Delete feedback"
+                                        >
+                                          <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                      </>
                                     )}
                                   </Stack>
                                 </TableCell>
@@ -1030,7 +1054,7 @@ const FeedbackManagement = () => {
                 </Typography>
               </Box>
             ) : isEditingInDialog ? (
-              <FormProvider methods={editorMethods} onSubmit={editorMethods.handleSubmit(handleDialogEditSubmit)}>
+              <FormProvider methods={editorMethods} onSubmit={editorMethods.handleSubmit(handleDialogSubmit)}>
                 <Stack spacing={4}>
                   <Box sx={{ maxHeight: '60vh', overflowY: 'auto', pr: 1 }}>
                     <Stack spacing={4}>
