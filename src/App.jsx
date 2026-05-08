@@ -28,7 +28,11 @@ const Ptm = lazy(() => import("./pages/ParentsTeacherMeeting/Ptm"));
 const Attendance = lazy(() => import("./pages/Student/Attendance"));
 const Thread = lazy(() => import("./pages/Thread/Thread"));
 const ThreadWindow = lazy(() => import("./pages/Thread/ThreadWindow"));
-const Report = lazy(() => import("./pages/Report/ReportUpgradeNotice"));
+const Report = lazy(() => import("./pages/Report/Report"));
+const ThreadReports = lazy(() => import("./pages/ThreadReports/ThreadReports"));
+const ThreadReportsByMentor = lazy(() => import("./pages/ThreadReports/ThreadReportsByMentor"));
+const ThreadReportsByStudent = lazy(() => import("./pages/ThreadReports/ThreadReportsByStudent"));
+const RecentThreads = lazy(() => import("./pages/ThreadReports/RecentThreads"));
 const AdminDashboard = lazy(() => import("./pages/Admin/AdminDashboard"));
 const DirectorDashboard = lazy(() => import("./pages/Director/DirectorDashboard"));
 const DirectorViewMentors = lazy(() => import("./pages/Director/DirectorViewMentors"));
@@ -183,6 +187,38 @@ function App() {
                     element={
                       <ProtectedRouteWrapper allowedRoles={["hod"]}>
                         <LazyLoadWrapper component={DirectorViewMentors} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/hod/thread-reports"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["hod", "admin", "director"]}>
+                        <LazyLoadWrapper component={ThreadReports} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/hod/thread-reports/:mentorId"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["hod", "admin", "director"]}>
+                        <LazyLoadWrapper component={ThreadReportsByMentor} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/hod/thread-reports/:mentorId/:studentId"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["hod", "admin", "director"]}>
+                        <LazyLoadWrapper component={ThreadReportsByStudent} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/recent-threads"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["hod", "admin", "director"]}>
+                        <LazyLoadWrapper component={RecentThreads} />
                       </ProtectedRouteWrapper>
                     }
                   />

@@ -29,7 +29,8 @@ const HodNavConfig = [
   { text: "View Users", 
     icon: <PeopleOutlinedIcon />, 
     link: "/hod/users" },
-  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
+  { text: "Thread Reports", icon: <SummarizeOutlinedIcon />, link: "/hod/thread-reports" },
+  { text: "Recent Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/recent-threads" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
 
@@ -66,7 +67,7 @@ const adminNavConfig = [
     link: "/admin/upload-history",
   },
   { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
-  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
+  { text: "Thread Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
 
@@ -83,8 +84,8 @@ const hodNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/hod/dashboard" },
   { text: "Department Mentors", icon: <PeopleIcon />, link: "/hod/mentors" },
   { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
-  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
-  { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
+  { text: "Thread Reports", icon: <SummarizeOutlinedIcon />, link: "/hod/thread-reports" },
+  { text: "Recent Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/recent-threads" },
   { text: "View Users", icon: <PeopleOutlinedIcon />, link: "/admin/users" },
   { text: "Campus Buddy", icon: <HdrStrongIcon />, link: "/campus-buddy" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
@@ -95,8 +96,8 @@ const directorNavConfig = [
   { text: "All Mentors", icon: <PeopleIcon />, link: "/director/mentors" },
   { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
   { text: "View Users", icon: <PeopleOutlinedIcon />, link: "/director/users" },
-  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
-  { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
+  { text: "Thread Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
+  { text: "Recent Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/recent-threads" },
   { text: "Campus Buddy", icon: <HdrStrongIcon />, link: "/campus-buddy" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
