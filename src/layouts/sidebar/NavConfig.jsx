@@ -15,6 +15,7 @@ import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import DatasetOutlinedIcon from '@mui/icons-material/DatasetOutlined';
 import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
 import SchoolIcon from "@mui/icons-material/School";
+import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 
 // Campus buddy icon needs special treatment as it represents a feature
 // NavItemButton already handles the correct color for all icons based on theme mode
@@ -64,6 +65,7 @@ const adminNavConfig = [
     icon: <HistoryOutlinedIcon />,
     link: "/admin/upload-history",
   },
+  { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
   { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
@@ -80,6 +82,7 @@ const facultyNavConfig = [
 const hodNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/hod/dashboard" },
   { text: "Department Mentors", icon: <PeopleIcon />, link: "/hod/mentors" },
+  { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
   { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
   { text: "View Users", icon: <PeopleOutlinedIcon />, link: "/admin/users" },
@@ -90,6 +93,7 @@ const hodNavConfig = [
 const directorNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/director/dashboard" },
   { text: "All Mentors", icon: <PeopleIcon />, link: "/director/mentors" },
+  { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
   { text: "View Users", icon: <PeopleOutlinedIcon />, link: "/director/users" },
   { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
