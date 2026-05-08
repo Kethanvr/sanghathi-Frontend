@@ -52,6 +52,12 @@ const AddIat = () => {
     return Number.isNaN(parsed) ? undefined : parsed;
   };
 
+  const formatAverage = (value) => {
+    if (!Number.isFinite(value)) return undefined;
+    const rounded = Math.round(value * 100) / 100;
+    return Number.isInteger(rounded) ? rounded : Number(rounded.toFixed(2));
+  };
+
   const getColumnIndex = (header) => {
     const suffixMatch = header.match(/_(\d+)$/);
     if (suffixMatch) return suffixMatch[1];
@@ -93,14 +99,26 @@ const AddIat = () => {
         subjectBuckets[bucketIndex].iat1 = parseScore(rawValue);
       } else if (normalized.includes("iat2")) {
         subjectBuckets[bucketIndex].iat2 = parseScore(rawValue);
-      } else if (normalized === "avg" || normalized.includes("average")) {
+      } else if (normalized.startsWith("avg") || normalized.includes("average")) {
         subjectBuckets[bucketIndex].avg = parseScore(rawValue);
       }
     }
 
-    return Object.values(subjectBuckets).filter(
-      (subject) => subject.subjectCode && subject.subjectName
-    );
+    return Object.values(subjectBuckets)
+      .filter((subject) => subject.subjectCode && subject.subjectName)
+      .map((subject) => {
+        const iat1 = parseScore(subject.iat1);
+        const iat2 = parseScore(subject.iat2);
+
+        if (subject.avg === undefined) {
+          const values = [iat1, iat2].filter((value) => Number.isFinite(value));
+          if (values.length > 0) {
+            subject.avg = formatAverage(values.reduce((sum, value) => sum + value, 0) / values.length);
+          }
+        }
+
+        return subject;
+      });
   };
 
   const getFieldValueFromRow = (row, aliases = []) => {

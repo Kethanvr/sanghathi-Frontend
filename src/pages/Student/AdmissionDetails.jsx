@@ -59,7 +59,7 @@ export default function AdmissionDetails() {
     watch,
     formState: { isSubmitting },
   } = methods;
-  const documentsSubmitted = watch("documentsSubmitted");
+  const documentsSubmitted = watch("documentsSubmitted") || [];
 
   const fetchAdmissionDetails = useCallback(async () => {
     try {

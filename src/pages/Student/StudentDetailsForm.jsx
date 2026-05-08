@@ -486,6 +486,10 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
                 label="Semester"
                 fullWidth
                 required={!isDataFetched}
+                disabled
+                InputProps={{
+                  readOnly: true,
+                }}
                 InputLabelProps={{
                   shrink: shouldShrink("studentProfile.sem"),
                 }}

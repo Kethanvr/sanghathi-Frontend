@@ -37,6 +37,38 @@ const Iat = () => {
   const [error, setError] = useState("");
   const [selectedSemester, setSelectedSemester] = useState(null);
 
+  const getSelectedSemesterSubjects = useCallback(() => {
+    if (!selectedSemester) return [];
+
+    const semesterData = iatData.find((s) => s.semester === selectedSemester);
+    if (!semesterData || !Array.isArray(semesterData.subjects)) return [];
+
+    const subjectsMap = new Map();
+    semesterData.subjects.forEach((subject) => {
+      subjectsMap.set(subject.subjectCode, subject);
+    });
+
+    return Array.from(subjectsMap.values());
+  }, [iatData, selectedSemester]);
+
+  const formatAverage = (subject) => {
+    if (!subject) return "";
+
+    if (subject.avg !== undefined && subject.avg !== null && subject.avg !== "") {
+      return subject.avg;
+    }
+
+    const iat1 = Number(subject.iat1);
+    const iat2 = Number(subject.iat2);
+    const values = [iat1, iat2].filter((value) => Number.isFinite(value));
+
+    if (!values.length) return "";
+
+    const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+    const rounded = Math.round(average * 100) / 100;
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+  };
+
   const fetchIatData = useCallback(async () => {
     // Wait for semester to load before fetching
     if (semesterLoading) {
@@ -90,30 +122,18 @@ const Iat = () => {
   };
 
   const getSubjectsForSemester = () => {
-    if (!selectedSemester) return [];
-    const semesterData = iatData.find((s) => s.semester === selectedSemester);
-    if (!semesterData) return [];
-
-    const subjectsMap = new Map();
-    semesterData.subjects.forEach((subject) => {
-      subjectsMap.set(subject.subjectCode, subject);
-    });
-    return Array.from(subjectsMap.values());
+    return getSelectedSemesterSubjects();
   };
 
   //  Get IAT marks for a specific subject and IAT number
     const getIatMarks = (subjectCode, iatNumber) => {
-        if (!selectedSemester) return "";
-        const semesterData = iatData.find(s => s.semester === selectedSemester);
-        if (!semesterData) return "";
-
-        const subject = semesterData.subjects.find(s => s.subjectCode === subjectCode);
+        const subject = getSelectedSemesterSubjects().find((s) => s.subjectCode === subjectCode);
         if (!subject) return "";
 
         switch (iatNumber) {
             case 1: return subject.iat1 || "";
             case 2: return subject.iat2 || "";
-            case 3: return subject.avg || "";
+          case 3: return formatAverage(subject);
             default: return "";
         }
     };
