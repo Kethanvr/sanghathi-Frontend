@@ -1270,15 +1270,7 @@ const FeedbackManagement = () => {
                             <Button
                               variant="outlined"
                               startIcon={<EditIcon />}
-                              onClick={() => {
-                                setEditingFeedback(studentFeedbacks[round]);
-                                setIsEditingInDialog(true);
-                                editorMethods.reset({
-                                  ...studentFeedbacks[round],
-                                  awareOfPST: studentFeedbacks[round].awareOfPST ? 'yes' : 'no',
-                                  awareOfPLT: studentFeedbacks[round].awareOfPLT ? 'yes' : 'no'
-                                });
-                              }}
+                              onClick={() => handleOpenEditInDialog(studentFeedbacks[round])}
                               fullWidth
                               sx={{ py: 1.5, borderRadius: 2, fontWeight: 700 }}
                             >
