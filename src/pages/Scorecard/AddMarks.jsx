@@ -223,6 +223,16 @@ const AddMarks = () => {
           // Create an array to track results for each student
           const results = [];
           const affectedUserIds = new Set();
+          const uploadEntries = [];
+          const previousSemesterByTarget = new Map();
+
+          const cloneValue = (value) => {
+            if (value === undefined || value === null) {
+              return value;
+            }
+
+            return JSON.parse(JSON.stringify(value));
+          };
 
           // Process each student
           for (const [usn, semesterGroups] of studentGroups) {
@@ -262,6 +272,23 @@ const AddMarks = () => {
                   result: subject.result || "FAIL"
                 }));
 
+                const targetKey = `${studentId}-${semester}`;
+                if (!previousSemesterByTarget.has(targetKey)) {
+                  let previousSemester = null;
+
+                  try {
+                    const currentResponse = await api.get(`/students/external/${studentId}`);
+                    const currentExternal = currentResponse.data?.data?.external;
+                    previousSemester = currentExternal?.semesters?.find((entry) => Number(entry.semester) === Number(semester)) || null;
+                  } catch (snapshotError) {
+                    if (snapshotError?.response?.status !== 404) {
+                      throw snapshotError;
+                    }
+                  }
+
+                  previousSemesterByTarget.set(targetKey, cloneValue(previousSemester));
+                }
+
                 await api.post(
                   `/students/external/${studentId}`,
                   {
@@ -271,6 +298,13 @@ const AddMarks = () => {
                     sgpa: subjects[0]?.cgpa || null
                   }
                 );
+                uploadEntries.push({
+                  uploadIndex: uploadEntries.length + 1,
+                  userId: String(studentId),
+                  usn,
+                  semester,
+                  previousSemester: previousSemesterByTarget.get(targetKey),
+                });
               }
 
               // Add success result for this student
@@ -307,6 +341,9 @@ const AddMarks = () => {
               .filter((entry) => entry.status === "error")
               .map((entry) => `${entry.usn}: ${entry.message || "Unknown error"}`),
             affectedUserIds: Array.from(affectedUserIds),
+            metadata: {
+              entries: uploadEntries,
+            },
           });
 
           setFile(null);

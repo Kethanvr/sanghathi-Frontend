@@ -153,6 +153,16 @@ const AddMoocDetails = () => {
     let errCount = 0;
     const newErrors = [];
     const affectedUserIds = new Set();
+    const uploadEntries = [];
+    const previousDataByUser = new Map();
+
+    const cloneValue = (value) => {
+      if (value === undefined || value === null) {
+        return value;
+      }
+
+      return JSON.parse(JSON.stringify(value));
+    };
 
     for (const row of rows) {
       try {
@@ -170,6 +180,22 @@ const AddMoocDetails = () => {
 
         if (!userId) throw new Error("User not found");
 
+        if (!previousDataByUser.has(String(userId))) {
+          let previousMooc = null;
+          try {
+            const currentResponse = await api.get(`/mooc-data/mooc/${userId}`);
+            previousMooc = Array.isArray(currentResponse.data?.data?.mooc)
+              ? currentResponse.data.data.mooc
+              : null;
+          } catch (snapshotError) {
+            if (snapshotError?.response?.status !== 404) {
+              throw snapshotError;
+            }
+          }
+
+          previousDataByUser.set(String(userId), cloneValue(previousMooc));
+        }
+
         await api.post(`/mooc-data/mooc`, {
           userId,
           mooc: [
@@ -185,6 +211,12 @@ const AddMoocDetails = () => {
 
         success++;
         affectedUserIds.add(String(userId));
+        uploadEntries.push({
+          uploadIndex: uploadEntries.length + 1,
+          userId: String(userId),
+          usn: row.USN,
+          previousMooc: previousDataByUser.get(String(userId)),
+        });
       } catch (error) {
         errCount++;
         newErrors.push(`Error for ${row.USN}: ${error.message}`);
@@ -199,6 +231,9 @@ const AddMoocDetails = () => {
       errorCount: errCount,
       errors: newErrors,
       affectedUserIds: Array.from(affectedUserIds),
+      metadata: {
+        entries: uploadEntries,
+      },
     });
 
     setSuccessCount(success);

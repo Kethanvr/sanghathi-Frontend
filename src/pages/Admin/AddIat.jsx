@@ -229,6 +229,15 @@ const AddIat = () => {
     const newErrors = [];
     const affectedUserIds = new Set();
     const uploadEntries = [];
+    const previousSemesterByTarget = new Map();
+
+    const cloneValue = (value) => {
+      if (value === undefined || value === null) {
+        return value;
+      }
+
+      return JSON.parse(JSON.stringify(value));
+    };
 
     // Group rows by USN and Semester
     const groupedData = {};
@@ -273,6 +282,23 @@ const AddIat = () => {
         };
 
         // Submit IAT data
+        const targetKey = `${userId}-${data.semester}`;
+        if (!previousSemesterByTarget.has(targetKey)) {
+          let previousSemester = null;
+
+          try {
+            const currentResponse = await api.get(`/students/iat/${userId}`);
+            const currentIat = currentResponse.data?.data?.iat;
+            previousSemester = currentIat?.semesters?.find((entry) => Number(entry.semester) === Number(data.semester)) || null;
+          } catch (snapshotError) {
+            if (snapshotError?.response?.status !== 404) {
+              throw snapshotError;
+            }
+          }
+
+          previousSemesterByTarget.set(targetKey, cloneValue(previousSemester));
+        }
+
         await api.post(`/students/iat/${userId}`, iatData);
         success++;
         affectedUserIds.add(String(userId));
@@ -281,6 +307,7 @@ const AddIat = () => {
           userId: String(userId),
           usn: data.usn,
           semester: data.semester,
+          previousSemester: previousSemesterByTarget.get(targetKey),
         });
       } catch (error) {
         errors++;

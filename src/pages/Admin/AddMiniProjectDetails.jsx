@@ -151,6 +151,16 @@ const AddMiniProjectDetails = () => {
     let errCount = 0;
     const newErrors = [];
     const affectedUserIds = new Set();
+    const uploadEntries = [];
+    const previousDataByUser = new Map();
+
+    const cloneValue = (value) => {
+      if (value === undefined || value === null) {
+        return value;
+      }
+
+      return JSON.parse(JSON.stringify(value));
+    };
 
     for (const row of rows) {
       try {
@@ -168,6 +178,22 @@ const AddMiniProjectDetails = () => {
 
         if (!userId) throw new Error("User not found");
 
+        if (!previousDataByUser.has(String(userId))) {
+          let previousMiniProject = null;
+          try {
+            const currentResponse = await api.get(`/project/miniproject/${userId}`);
+            previousMiniProject = Array.isArray(currentResponse.data?.data?.miniproject)
+              ? currentResponse.data.data.miniproject
+              : null;
+          } catch (snapshotError) {
+            if (snapshotError?.response?.status !== 404) {
+              throw snapshotError;
+            }
+          }
+
+          previousDataByUser.set(String(userId), cloneValue(previousMiniProject));
+        }
+
         await api.post(`/project/miniproject`, {
           userId,
           miniproject: [
@@ -182,6 +208,12 @@ const AddMiniProjectDetails = () => {
 
         success++;
         affectedUserIds.add(String(userId));
+        uploadEntries.push({
+          uploadIndex: uploadEntries.length + 1,
+          userId: String(userId),
+          usn: row.USN,
+          previousMiniProject: previousDataByUser.get(String(userId)),
+        });
       } catch (error) {
         errCount++;
         newErrors.push(`Error for ${row.USN}: ${error.message}`);
@@ -196,6 +228,9 @@ const AddMiniProjectDetails = () => {
       errorCount: errCount,
       errors: newErrors,
       affectedUserIds: Array.from(affectedUserIds),
+      metadata: {
+        entries: uploadEntries,
+      },
     });
 
     setSuccessCount(success);

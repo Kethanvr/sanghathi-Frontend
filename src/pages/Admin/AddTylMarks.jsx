@@ -187,6 +187,16 @@ const AddTylMarks = () => {
     let errCount = 0;
     const newErrors = [];
     const affectedUserIds = new Set();
+    const uploadEntries = [];
+    const previousSemesterByTarget = new Map();
+
+    const cloneValue = (value) => {
+      if (value === undefined || value === null) {
+        return value;
+      }
+
+      return JSON.parse(JSON.stringify(value));
+    };
 
     for (const row of rows) {
 
@@ -297,6 +307,22 @@ const AddTylMarks = () => {
         const userId = response.data?.userId || response.data?._id;
         if (!userId) throw new Error("User not found");
 
+        const targetKey = `${userId}-1`;
+        if (!previousSemesterByTarget.has(targetKey)) {
+          let previousSemester = null;
+          try {
+            const currentResponse = await api.get(`/tyl-scores/${userId}`);
+            const currentSemesters = Array.isArray(currentResponse.data?.data) ? currentResponse.data.data : [];
+            previousSemester = currentSemesters.find((entry) => Number(entry.semester) === 1) || null;
+          } catch (snapshotError) {
+            if (snapshotError?.response?.status !== 404) {
+              throw snapshotError;
+            }
+          }
+
+          previousSemesterByTarget.set(targetKey, cloneValue(previousSemester));
+        }
+
         await api.post(`/tyl-scores`, {
           userId,
           semester: 1,
@@ -305,6 +331,13 @@ const AddTylMarks = () => {
 
         success++;
         affectedUserIds.add(String(userId));
+        uploadEntries.push({
+          uploadIndex: uploadEntries.length + 1,
+          userId: String(userId),
+          usn: normalizedUsn,
+          semester: 1,
+          previousSemester: previousSemesterByTarget.get(targetKey),
+        });
       } catch (error) {
         errCount++;
         newErrors.push(`Error for ${row.USN}: ${error.message}`);
@@ -319,6 +352,9 @@ const AddTylMarks = () => {
       errorCount: errCount,
       errors: newErrors,
       affectedUserIds: Array.from(affectedUserIds),
+      metadata: {
+        entries: uploadEntries,
+      },
     });
 
     setSuccessCount(success);
