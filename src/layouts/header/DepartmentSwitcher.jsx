@@ -86,6 +86,7 @@ const DepartmentSwitcher = ({ variant = "header" }) => {
         logger.info(`Switched to department: ${dept.name}`);
       }
       handleMenuClose();
+      window.location.reload();
     } catch (err) {
       logger.error("Failed to switch department:", err);
     } finally {

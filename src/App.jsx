@@ -200,7 +200,7 @@ function App() {
                   <Route
                     path="/hod/thread-reports"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={ThreadReports} />
                       </ProtectedRouteWrapper>
                     }
@@ -208,7 +208,7 @@ function App() {
                   <Route
                     path="/hod/thread-reports/:mentorId"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={ThreadReportsByMentor} />
                       </ProtectedRouteWrapper>
                     }
@@ -216,7 +216,7 @@ function App() {
                   <Route
                     path="/hod/thread-reports/:mentorId/:studentId"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={ThreadReportsByStudent} />
                       </ProtectedRouteWrapper>
                     }
@@ -224,7 +224,7 @@ function App() {
                   <Route
                     path="/recent-threads"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["hod", "admin", "director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["hod", "admin", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={RecentThreads} />
                       </ProtectedRouteWrapper>
                     }
@@ -232,7 +232,7 @@ function App() {
                   <Route
                     path="/director/mentors"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["director", "strcoordinator"]}>
                         <LazyLoadWrapper component={DirectorViewMentors} />
                       </ProtectedRouteWrapper>
                     }
@@ -240,7 +240,7 @@ function App() {
                   <Route
                     path="/director/mentor/:mentorId/mentees"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["director","hod"]}>
+                      <ProtectedRouteWrapper allowedRoles={["director", "hod", "strcoordinator"]}>
                         <LazyLoadWrapper component={DirectorMenteesList} />
                       </ProtectedRouteWrapper>
                     }
@@ -256,7 +256,7 @@ function App() {
                   <Route
                     path="/director/mentee-profile/:menteeId"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["director","hod"]}>
+                      <ProtectedRouteWrapper allowedRoles={["director", "hod", "strcoordinator"]}>
                         <LazyLoadWrapper component={StudentDashboard} />
                       </ProtectedRouteWrapper>
                     }
@@ -368,7 +368,7 @@ function App() {
                   <Route
                     path="/feedback/manage"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["admin", "hod", "director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["admin", "hod", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={FeedbackManagement} />
                       </ProtectedRouteWrapper>
                     }
