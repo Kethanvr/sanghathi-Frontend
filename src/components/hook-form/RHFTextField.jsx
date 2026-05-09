@@ -10,13 +10,14 @@ RHFTextField.propTypes = {
   name: PropTypes.string,
 };
 
-export default function RHFTextField({ name, ...other }) {
+export default function RHFTextField({ name, rules, ...other }) {
   const { control } = useFormContext();
 
   return (
     <Controller
       name={name}
       control={control}
+      rules={rules}
       render={({ field, fieldState: { error } }) => (
         <TextField {...field} fullWidth error={!!error} helperText={error?.message} {...other} />
       )}

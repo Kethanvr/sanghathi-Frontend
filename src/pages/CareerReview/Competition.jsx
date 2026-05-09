@@ -7,6 +7,7 @@ import { Box, Grid, Card, CardContent, Stack, Button, IconButton, Typography, Te
 import { LoadingButton } from "@mui/lab";
 import { Delete as DeleteIcon } from "@mui/icons-material";
 import { FormProvider, RHFTextField } from "../../components/hook-form";
+import { Controller } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
 
@@ -167,43 +168,73 @@ export default function Competition() {
                   </Stack>
 
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].eventName`} label="Name of the Event" fullWidth /></Grid>
-                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].organizedBy`} label="Organized by" fullWidth /></Grid>
-                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].eventDate`} label="Date" type="date" InputLabelProps={{ shrink: true }} inputProps={{ max: todayIso }} fullWidth /></Grid>
+                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].eventName`} label="Name of the Event" fullWidth required rules={{ required: "Required" }} /></Grid>
+                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].organizedBy`} label="Organized by" fullWidth required rules={{ required: "Required" }} /></Grid>
+                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].eventDate`} label="Date" type="date" InputLabelProps={{ shrink: true }} inputProps={{ max: todayIso }} fullWidth required rules={{ required: "Required" }} /></Grid>
 
-                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].studentNames`} label="Student Name(s) (comma separated)" fullWidth /></Grid>
-                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].studentUSNs`} label="Student USN(s) (comma separated)" fullWidth /></Grid>
-                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].contactNumber`} label="Contact Number" fullWidth /></Grid>
+                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].studentNames`} label="Student Name(s) (comma separated)" fullWidth required rules={{ required: "Required" }} /></Grid>
+                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].studentUSNs`} label="Student USN(s) (comma separated)" fullWidth required rules={{ required: "Required" }} /></Grid>
+                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].contactNumber`} label="Contact Number" fullWidth required rules={{ required: "Required" }} /></Grid>
 
-                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].mentorName`} label="Mentor / Guide" fullWidth /></Grid>
+                    <Grid item xs={12} sm={4}><RHFTextField name={`competition[${idx}].mentorName`} label="Mentor / Guide" fullWidth required rules={{ required: "Required" }} /></Grid>
                     <Grid item xs={12} sm={4}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel>Status</InputLabel>
-                        <Select name={`competition[${idx}].status`} label="Status" defaultValue="Participated">
-                          <MenuItem value="Winner">Winner</MenuItem>
-                          <MenuItem value="Runner">Runner</MenuItem>
-                          <MenuItem value="Moved to First Round">Moved to First Round</MenuItem>
-                          <MenuItem value="Moved to Second Round">Moved to Second Round</MenuItem>
-                          <MenuItem value="Finalist">Finalist</MenuItem>
-                          <MenuItem value="Participated">Participated</MenuItem>
-                          <MenuItem value="Registered">Registered</MenuItem>
-                        </Select>
-                      </FormControl>
+                      <Controller name={`competition[${idx}].status`} control={methods.control} rules={{ required: "Required" }} render={({ field, fieldState }) => (
+                        <FormControl fullWidth size="small" required error={!!fieldState.error}>
+                          <InputLabel>Status</InputLabel>
+                          <Select {...field} value={field.value !== undefined ? field.value : ""} label="Status">
+                            <MenuItem value="Winner">Winner</MenuItem>
+                            <MenuItem value="Runner">Runner</MenuItem>
+                            <MenuItem value="Moved to First Round">Moved to First Round</MenuItem>
+                            <MenuItem value="Moved to Second Round">Moved to Second Round</MenuItem>
+                            <MenuItem value="Finalist">Finalist</MenuItem>
+                            <MenuItem value="Participated">Participated</MenuItem>
+                            <MenuItem value="Registered">Registered</MenuItem>
+                          </Select>
+                        </FormControl>
+                      )} />
                     </Grid>
 
-                    <Grid item xs={12}><RHFTextField name={`competition[${idx}].cashAwardOrTrophy`} label="Cash Award/Trophy (Type NA if not applicable)" fullWidth /></Grid>
-                    <Grid item xs={12}><RHFTextField name={`competition[${idx}].projectTitle`} label="Project Title / Idea Title" fullWidth /></Grid>
-                    <Grid item xs={12} sm={6}><RHFTextField name={`competition[${idx}].category`} label="Category of the event" fullWidth /></Grid>
-                    <Grid item xs={12} sm={6}><FormControl fullWidth size="small"><InputLabel>Level</InputLabel><Select name={`competition[${idx}].level`} label="Level" defaultValue="State"><MenuItem value="State">State</MenuItem><MenuItem value="National">National</MenuItem><MenuItem value="International">International</MenuItem></Select></FormControl></Grid>
+                    <Grid item xs={12}><RHFTextField name={`competition[${idx}].cashAwardOrTrophy`} label="Cash Award/Trophy (Type NA if not applicable)" fullWidth required rules={{ required: "Required" }} /></Grid>
+                    <Grid item xs={12}><RHFTextField name={`competition[${idx}].projectTitle`} label="Project Title / Idea Title" fullWidth required rules={{ required: "Required" }} /></Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Controller name={`competition[${idx}].category`} control={methods.control} rules={{ required: "Required" }} render={({ field, fieldState }) => (
+                        <FormControl fullWidth size="small" required error={!!fieldState.error}>
+                          <InputLabel>Category of the event</InputLabel>
+                          <Select {...field} value={field.value !== undefined ? field.value : ""} label="Category of the event">
+                            <MenuItem value="Hackathon">Hackathon</MenuItem>
+                            <MenuItem value="Ideathon">Ideathon</MenuItem>
+                            <MenuItem value="Business Competition">Business Competition</MenuItem>
+                            <MenuItem value="Other">Other</MenuItem>
+                          </Select>
+                        </FormControl>
+                      )} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Controller name={`competition[${idx}].level`} control={methods.control} rules={{ required: "Required" }} render={({ field, fieldState }) => (
+                        <FormControl fullWidth size="small" required error={!!fieldState.error}><InputLabel>Level</InputLabel><Select {...field} value={field.value !== undefined ? field.value : ""} label="Level"><MenuItem value="State">State</MenuItem><MenuItem value="National">National</MenuItem><MenuItem value="International">International</MenuItem></Select></FormControl>
+                      )} />
+                    </Grid>
 
-                    <Grid item xs={12} sm={6}><FormControl fullWidth size="small"><InputLabel>Event Affiliation</InputLabel><Select name={`competition[${idx}].eventAffiliation`} label="Event Affiliation" defaultValue="External"><MenuItem value="Internal">Internal Event (Within CMRIT)</MenuItem><MenuItem value="External">External Event</MenuItem></Select></FormControl></Grid>
-                    <Grid item xs={12} sm={6}><RHFTextField name={`competition[${idx}].eventType`} label="Event Type (Hackathon / Project Contest / Other)" fullWidth /></Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Controller name={`competition[${idx}].eventAffiliation`} control={methods.control} rules={{ required: "Required" }} render={({ field, fieldState }) => (
+                        <FormControl fullWidth size="small" required error={!!fieldState.error}><InputLabel>Event Affiliation</InputLabel><Select {...field} value={field.value !== undefined ? field.value : ""} label="Event Affiliation"><MenuItem value="Internal">Internal Event (Within CMRIT)</MenuItem><MenuItem value="External">External Event</MenuItem></Select></FormControl>
+                      )} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}><RHFTextField name={`competition[${idx}].eventType`} label="Event Type (Hackathon / Project Contest / Other)" fullWidth required rules={{ required: "Required" }} /></Grid>
 
-                    <Grid item xs={12} sm={6}><FormControl fullWidth size="small"><InputLabel>Financial Support Requested</InputLabel><Select name={`competition[${idx}].financialSupportRequested`} label="Financial Support Requested" defaultValue={false}><MenuItem value={true}>Requested</MenuItem><MenuItem value={false}>NA</MenuItem></Select></FormControl></Grid>
-                    <Grid item xs={12} sm={6}><RHFTextField name={`competition[${idx}].amountSanctioned`} label="Amount Sanctioned / NA" fullWidth /></Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Controller name={`competition[${idx}].financialSupportRequested`} control={methods.control} render={({ field, fieldState }) => (
+                        <FormControl fullWidth size="small" required error={!!fieldState.error}><InputLabel>Financial Support Requested</InputLabel><Select {...field} value={field.value !== undefined ? field.value : ""} label="Financial Support Requested"><MenuItem value={true}>Requested</MenuItem><MenuItem value={false}>NA</MenuItem></Select></FormControl>
+                      )} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}><RHFTextField name={`competition[${idx}].amountSanctioned`} label="Amount Sanctioned / NA" fullWidth required rules={{ required: "Required" }} /></Grid>
 
-                    <Grid item xs={12} sm={6}><FormControl fullWidth size="small"><InputLabel>Related To</InputLabel><Select name={`competition[${idx}].relatedTo`} label="Related To" defaultValue="NA"><MenuItem value="I & E">I & E</MenuItem><MenuItem value="CoE">CoE</MenuItem><MenuItem value="DRC">DRC</MenuItem><MenuItem value="NA">NA</MenuItem></Select></FormControl></Grid>
-                    <Grid item xs={12} sm={6}><RHFTextField name={`competition[${idx}].proofLink`} label="Proof / Certificate Link" fullWidth /></Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Controller name={`competition[${idx}].relatedTo`} control={methods.control} render={({ field, fieldState }) => (
+                        <FormControl fullWidth size="small" error={!!fieldState.error}><InputLabel>Related To</InputLabel><Select {...field} value={field.value !== undefined ? field.value : ""} label="Related To"><MenuItem value="I & E">I & E</MenuItem><MenuItem value="CoE">CoE</MenuItem><MenuItem value="DRC">DRC</MenuItem><MenuItem value="NA">NA</MenuItem></Select></FormControl>
+                      )} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}><RHFTextField name={`competition[${idx}].proofLink`} label="Proof / Certificate Link" fullWidth required rules={{ required: "Required" }} /></Grid>
                   </Grid>
                 </CardContent>
               </Card>

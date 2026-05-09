@@ -16,7 +16,13 @@ import {
   useTheme,
   TextField,
   InputAdornment,
-  IconButton
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  MenuItem
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
@@ -53,6 +59,10 @@ const CompetitionReportPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterMentor, setFilterMentor] = useState("");
+  const [filterSemester, setFilterSemester] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [viewDetailsRow, setViewDetailsRow] = useState(null);
 
   const loadReports = useCallback(async () => {
     try {
@@ -70,17 +80,27 @@ const CompetitionReportPage = () => {
     loadReports();
   }, [loadReports]);
 
+  const mentors = useMemo(() => [...new Set(competitionRows.map(r => r.mentorName).filter(Boolean))], [competitionRows]);
+  const semesters = useMemo(() => [...new Set(competitionRows.map(r => r.sem).filter(Boolean))], [competitionRows]);
+  const statuses = useMemo(() => [...new Set(competitionRows.map(r => r.status).filter(Boolean))], [competitionRows]);
+
   const filteredRows = useMemo(() => {
-    if (!searchQuery) return competitionRows;
-    const lowerQuery = searchQuery.toLowerCase();
-    return competitionRows.filter((row) => 
-      buildStudentName(row).toLowerCase().includes(lowerQuery) ||
-      (row.usn || "").toLowerCase().includes(lowerQuery) ||
-      (row.email || "").toLowerCase().includes(lowerQuery) ||
-      (row.department || "").toLowerCase().includes(lowerQuery) ||
-      (row.eventName || "").toLowerCase().includes(lowerQuery)
-    );
-  }, [competitionRows, searchQuery]);
+    return competitionRows.filter((row) => {
+      if (filterMentor && row.mentorName !== filterMentor) return false;
+      if (filterSemester && String(row.sem) !== String(filterSemester)) return false;
+      if (filterStatus && row.status !== filterStatus) return false;
+      
+      if (!searchQuery) return true;
+      const lowerQuery = searchQuery.toLowerCase();
+      return (
+        buildStudentName(row).toLowerCase().includes(lowerQuery) ||
+        (row.usn || "").toLowerCase().includes(lowerQuery) ||
+        (row.email || "").toLowerCase().includes(lowerQuery) ||
+        (row.department || "").toLowerCase().includes(lowerQuery) ||
+        (row.eventName || "").toLowerCase().includes(lowerQuery)
+      );
+    });
+  }, [competitionRows, searchQuery, filterMentor, filterSemester, filterStatus]);
 
   const pageRows = useMemo(
     () => filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
@@ -114,6 +134,15 @@ const CompetitionReportPage = () => {
         { header: "Status", key: "status", width: 16 },
         { header: "Level", key: "level", width: 14 },
         { header: "Event Affiliation", key: "eventAffiliation", width: 18 },
+        { header: "Contact Number", key: "contactNumber", width: 16 },
+        { header: "Cash Award/Trophy", key: "cashAwardOrTrophy", width: 20 },
+        { header: "Project Title", key: "projectTitle", width: 28 },
+        { header: "Category", key: "category", width: 20 },
+        { header: "Event Type", key: "eventType", width: 20 },
+        { header: "Financial Support", key: "financialSupportRequested", width: 18 },
+        { header: "Amount Sanctioned", key: "amountSanctioned", width: 18 },
+        { header: "Related To", key: "relatedTo", width: 14 },
+        { header: "Proof Link", key: "proofLink", width: 30 },
       ];
 
       worksheet.addRows(
@@ -121,13 +150,14 @@ const CompetitionReportPage = () => {
           ...row,
           name: buildStudentName(row),
           eventDate: formatDate(row.eventDate),
+          financialSupportRequested: row.financialSupportRequested ? "Requested" : "NA"
         }))
       );
 
       worksheet.getRow(1).font = { bold: true };
       worksheet.autoFilter = {
         from: "A1",
-        to: "L1",
+        to: "V1",
       };
 
       const buffer = await workbook.xlsx.writeBuffer();
@@ -200,24 +230,59 @@ const CompetitionReportPage = () => {
                 justifyContent="space-between"
                 alignItems={{ xs: "flex-start", sm: "center" }}
               >
-                <TextField
-                  placeholder="Search by name, USN, email, department..."
-                  variant="outlined"
-                  size="small"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setPage(0);
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon color="action" />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{ minWidth: { xs: "100%", sm: 300 } }}
-                />
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ flexGrow: 1, flexWrap: "wrap" }}>
+                  <TextField
+                    placeholder="Search by name, USN, email, department..."
+                    variant="outlined"
+                    size="small"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setPage(0);
+                    }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{ minWidth: { xs: "100%", sm: 250 } }}
+                  />
+                  <TextField
+                    select
+                    label="Mentor"
+                    size="small"
+                    value={filterMentor}
+                    onChange={(e) => { setFilterMentor(e.target.value); setPage(0); }}
+                    sx={{ minWidth: 150 }}
+                  >
+                    <MenuItem value="">All Mentors</MenuItem>
+                    {mentors.map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
+                  </TextField>
+                  <TextField
+                    select
+                    label="Semester"
+                    size="small"
+                    value={filterSemester}
+                    onChange={(e) => { setFilterSemester(e.target.value); setPage(0); }}
+                    sx={{ minWidth: 120 }}
+                  >
+                    <MenuItem value="">All Sems</MenuItem>
+                    {semesters.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                  </TextField>
+                  <TextField
+                    select
+                    label="Status"
+                    size="small"
+                    value={filterStatus}
+                    onChange={(e) => { setFilterStatus(e.target.value); setPage(0); }}
+                    sx={{ minWidth: 150 }}
+                  >
+                    <MenuItem value="">All Statuses</MenuItem>
+                    {statuses.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                  </TextField>
+                </Stack>
                 <Button
                   variant="contained"
                   startIcon={<DownloadOutlinedIcon />}
@@ -241,12 +306,13 @@ const CompetitionReportPage = () => {
                     <TableCell sx={{ fontWeight: 800 }}>Event</TableCell>
                     <TableCell sx={{ fontWeight: 800 }}>Date</TableCell>
                     <TableCell sx={{ fontWeight: 800 }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
+                      <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
                         Loading report data...
                       </TableCell>
                     </TableRow>
@@ -261,11 +327,16 @@ const CompetitionReportPage = () => {
                         <TableCell>{row.eventName || "N/A"}</TableCell>
                         <TableCell>{formatDate(row.eventDate)}</TableCell>
                         <TableCell>{row.status || "N/A"}</TableCell>
+                        <TableCell>
+                          <Button size="small" variant="outlined" color="primary" onClick={() => setViewDetailsRow(row)}>
+                            View All Details
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
+                      <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
                         No records found.
                       </TableCell>
                     </TableRow>
@@ -286,6 +357,108 @@ const CompetitionReportPage = () => {
           </Paper>
         </Container>
       </Box>
+
+      {/* Details Dialog */}
+      <Dialog open={!!viewDetailsRow} onClose={() => setViewDetailsRow(null)} maxWidth="md" fullWidth>
+        <DialogTitle>Competition Entry Details</DialogTitle>
+        <DialogContent dividers>
+          {viewDetailsRow && (
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Student Name</Typography>
+                <Typography variant="body1">{buildStudentName(viewDetailsRow)}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">USN</Typography>
+                <Typography variant="body1">{viewDetailsRow.usn || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Email</Typography>
+                <Typography variant="body1">{viewDetailsRow.email || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Contact Number</Typography>
+                <Typography variant="body1">{viewDetailsRow.contactNumber || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Mentor Name</Typography>
+                <Typography variant="body1">{viewDetailsRow.mentorName || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Department & Semester</Typography>
+                <Typography variant="body1">{viewDetailsRow.department || "N/A"} - Sem {viewDetailsRow.sem || "N/A"}</Typography>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Event Details</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Event Name</Typography>
+                <Typography variant="body1">{viewDetailsRow.eventName || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Organized By</Typography>
+                <Typography variant="body1">{viewDetailsRow.organizedBy || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Event Date</Typography>
+                <Typography variant="body1">{formatDate(viewDetailsRow.eventDate)}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Status</Typography>
+                <Typography variant="body1">{viewDetailsRow.status || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Project Title</Typography>
+                <Typography variant="body1">{viewDetailsRow.projectTitle || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Category</Typography>
+                <Typography variant="body1">{viewDetailsRow.category || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Level</Typography>
+                <Typography variant="body1">{viewDetailsRow.level || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Event Type & Affiliation</Typography>
+                <Typography variant="body1">{viewDetailsRow.eventType || "N/A"} ({viewDetailsRow.eventAffiliation || "N/A"})</Typography>
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Awards & Support</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Cash Award/Trophy</Typography>
+                <Typography variant="body1">{viewDetailsRow.cashAwardOrTrophy || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Financial Support Requested</Typography>
+                <Typography variant="body1">{viewDetailsRow.financialSupportRequested ? "Yes" : "No"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Amount Sanctioned</Typography>
+                <Typography variant="body1">{viewDetailsRow.amountSanctioned || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="subtitle2" color="text.secondary">Related To</Typography>
+                <Typography variant="body1">{viewDetailsRow.relatedTo || "N/A"}</Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" color="text.secondary">Proof Link</Typography>
+                <Typography variant="body1">
+                  {viewDetailsRow.proofLink && viewDetailsRow.proofLink !== "N/A" ? (
+                    <a href={viewDetailsRow.proofLink} target="_blank" rel="noopener noreferrer">View Proof</a>
+                  ) : "N/A"}
+                </Typography>
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setViewDetailsRow(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Page>
   );
 };
