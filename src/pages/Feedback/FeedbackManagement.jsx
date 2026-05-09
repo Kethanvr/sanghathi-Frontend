@@ -57,7 +57,6 @@ import GroupIcon from "@mui/icons-material/Group";
 import UpdateIcon from "@mui/icons-material/Update";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
 
 const roundOptions = [
   { value: 1, label: "Feedback 1" },
@@ -1090,23 +1089,14 @@ const FeedbackManagement = () => {
                                   <Stack direction="row" spacing={1} justifyContent="flex-end">
                                     <Button size="small" variant="text" onClick={() => handleOpenDrillDown({ studentId: mentee.studentId, studentName: mentee.studentName })}>Details</Button>
                                     {canEditWindow && feedback && (
-                                      <>
-                                        <IconButton 
-                                          size="small" 
-                                          onClick={() => handleOpenEditInDialog(feedback)}
-                                          title="Edit feedback"
-                                        >
-                                          <EditIcon fontSize="small" />
-                                        </IconButton>
-                                        <IconButton 
-                                          size="small" 
-                                          color="error"
-                                          onClick={() => { setFeedbackToDelete(feedback); setDeleteConfirmOpen(true); }}
-                                          title="Delete feedback"
-                                        >
-                                          <DeleteIcon fontSize="small" />
-                                        </IconButton>
-                                      </>
+                                      <IconButton 
+                                        size="small" 
+                                        color="error"
+                                        onClick={() => { setFeedbackToDelete(feedback); setDeleteConfirmOpen(true); }}
+                                        title="Delete feedback"
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
                                     )}
                                   </Stack>
                                 </TableCell>
@@ -1152,23 +1142,14 @@ const FeedbackManagement = () => {
                                 <Stack direction="row" spacing={1} justifyContent="flex-end">
                                   <Button size="small" variant="text" onClick={() => handleOpenDrillDown({ studentId: student._id, studentName: student.name })}>Details</Button>
                                   {canEditWindow && student.hasResponded && (
-                                    <>
-                                      <IconButton 
-                                        size="small" 
-                                        onClick={() => handleOpenEditInDialog(student.feedback)}
-                                        title="Edit feedback"
-                                      >
-                                        <EditIcon fontSize="small" />
-                                      </IconButton>
-                                      <IconButton 
-                                        size="small" 
-                                        color="error"
-                                        onClick={() => { setFeedbackToDelete(student.feedback); setDeleteConfirmOpen(true); }}
-                                        title="Delete feedback"
-                                      >
-                                        <DeleteIcon fontSize="small" />
-                                      </IconButton>
-                                    </>
+                                    <IconButton 
+                                      size="small" 
+                                      color="error"
+                                      onClick={() => { setFeedbackToDelete(student.feedback); setDeleteConfirmOpen(true); }}
+                                      title="Delete feedback"
+                                    >
+                                      <DeleteIcon fontSize="small" />
+                                    </IconButton>
                                   )}
                                 </Stack>
                               </TableCell>
@@ -1410,15 +1391,6 @@ const FeedbackManagement = () => {
 
                         {canEditWindow && (
                           <Stack direction="row" spacing={2}>
-                            <Button
-                              variant="outlined"
-                              startIcon={<EditIcon />}
-                              onClick={() => handleOpenEditInDialog(studentFeedbacks[round])}
-                              fullWidth
-                              sx={{ py: 1.5, borderRadius: 2, fontWeight: 700 }}
-                            >
-                              Modify This Feedback Entry
-                            </Button>
                             <Button
                               variant="outlined"
                               color="error"

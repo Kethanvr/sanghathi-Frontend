@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useContext } from "react";
 import { styled } from "@mui/system";
 import { formatDistanceToNowStrict } from "date-fns";
 import { Box, Avatar, Typography } from "@mui/material";
-import { Stack, Input, Divider, IconButton } from "@mui/material";
+import { Input, Divider, IconButton } from "@mui/material";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 
 import Iconify from "../../../components/Iconify";
@@ -213,12 +213,7 @@ const RootStyle = styled("div")(({ theme }) => ({
 }));
 
 export function MessageInput({ disabled, onSend }) {
-  const fileInputRef = useRef(null);
   const [message, setMessage] = useState("");
-
-  const handleAttach = () => {
-    fileInputRef.current?.click();
-  };
 
   const handleKeyUp = (event) => {
     if (event.key === "Enter") {
@@ -245,21 +240,7 @@ export function MessageInput({ disabled, onSend }) {
         onChange={(event) => setMessage(event.target.value)}
         placeholder="Type a message"
         endAdornment={
-          <Stack direction="row" spacing={1} sx={{ flexShrink: 0, mr: 1.5 }}>
-            <IconButton disabled={disabled} size="small" onClick={handleAttach}>
-              <Iconify
-                icon="ic:round-add-photo-alternate"
-                width={22}
-                height={22}
-              />
-            </IconButton>
-            <IconButton disabled={disabled} size="small" onClick={handleAttach}>
-              <Iconify icon="eva:attach-2-fill" width={22} height={22} />
-            </IconButton>
-            <IconButton disabled={disabled} size="small">
-              <Iconify icon="eva:mic-fill" width={22} height={22} />
-            </IconButton>
-          </Stack>
+          null
         }
       />
 
@@ -273,8 +254,6 @@ export function MessageInput({ disabled, onSend }) {
       >
         <Iconify icon="ic:round-send" width={22} height={22} />
       </IconButton>
-
-      <input type="file" ref={fileInputRef} style={{ display: "none" }} />
     </RootStyle>
   );
 }

@@ -31,13 +31,13 @@ const DEFAULT_VALUES = {
   admissionType: "",
   category: "",
   collegeId: "",
-  collegeCode: "CMRIT",
+  collegeCode: "",
   branchChange: {
     year: "",
     branch: "",
     usn: "",
     collegeId: "",
-    collegeCode: "CMRIT",
+    collegeCode: "",
   },
   documentsSubmitted: [],
 };
@@ -103,12 +103,6 @@ export default function AdmissionDetails() {
 
   const onSubmit = async (data) => {
     try {
-      if (!data.collegeCode) {
-        data.collegeCode = "CMRIT";
-      }
-      if (data.branchChange && !data.branchChange.collegeCode) {
-        data.branchChange.collegeCode = "CMRIT";
-      }
       // Clean up empty strings and null values
       const cleanedData = Object.entries(data).reduce((acc, [key, value]) => {
         if (key === 'branchChange') {

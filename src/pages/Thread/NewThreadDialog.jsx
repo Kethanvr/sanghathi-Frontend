@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSnackbar } from "notistack";
 import {
   Autocomplete,
@@ -34,6 +34,8 @@ const NewThreadDialog = ({
   users,
   currentUser,
   onSave,
+  initialParticipants = [],
+  allowedUserIds = null,
   colorMode = "primary",
 }) => {
   const { enqueueSnackbar } = useSnackbar();
@@ -43,18 +45,38 @@ const NewThreadDialog = ({
     title: "",
     topic: "",
     author: currentUser._id,
-    participants: [{ _id: currentUser._id, name: currentUser.name }],
+    participants: [{ _id: currentUser._id, name: currentUser.name }, ...initialParticipants],
   });
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setNewThreadData({
+      title: "",
+      topic: "",
+      author: currentUser._id,
+      participants: [{ _id: currentUser._id, name: currentUser.name }, ...initialParticipants],
+    });
+  }, [currentUser._id, currentUser.name, initialParticipants, open]);
 
   const TOPICS = ["general", "attendance", "performance", "well-being"];
 
-  const selectableUsers = users.filter(
-    (user) =>
-      user._id !== currentUser._id &&
-      !newThreadData.participants.some(
-        (participant) => participant._id === user._id
-      )
-  );
+  const selectableUsers = users.filter((user) => {
+    const userId = user?._id;
+    if (!userId || userId === currentUser._id) {
+      return false;
+    }
+
+    if (Array.isArray(allowedUserIds) && allowedUserIds.length > 0) {
+      return allowedUserIds.includes(userId);
+    }
+
+    return !newThreadData.participants.some(
+      (participant) => participant._id === userId
+    );
+  });
 
   const membersForDisplay =
     currentUser?.roleName === "faculty"
@@ -69,7 +91,7 @@ const NewThreadDialog = ({
       title: "",
       topic: "",
       author: currentUser._id,
-      participants: [{ _id: currentUser._id, name: currentUser.name }],
+      participants: [{ _id: currentUser._id, name: currentUser.name }, ...initialParticipants],
     });
     setSearchTerm("");
   };
@@ -163,84 +185,86 @@ const NewThreadDialog = ({
               ))}
             </Select>
           </Box>
-          <Box sx={{ py: 1 }}>
-            <Autocomplete
-              value={null}
-              options={selectableUsers}
-              getOptionLabel={(option) => option?.name || ""}
-              inputValue={searchTerm}
-              onInputChange={(_event, newInputValue) => {
-                setSearchTerm(newInputValue);
-              }}
-              onChange={(_event, selectedUser) => {
-                if (selectedUser) {
-                  handleAddMember(selectedUser);
-                }
-              }}
-              filterOptions={(options, state) => {
-                const normalized = state.inputValue.trim().toLowerCase();
-                if (!normalized) {
-                  return options;
-                }
+          {currentUser?.roleName !== "student" && (
+            <Box sx={{ py: 1 }}>
+              <Autocomplete
+                value={null}
+                options={selectableUsers}
+                getOptionLabel={(option) => option?.name || ""}
+                inputValue={searchTerm}
+                onInputChange={(_event, newInputValue) => {
+                  setSearchTerm(newInputValue);
+                }}
+                onChange={(_event, selectedUser) => {
+                  if (selectedUser) {
+                    handleAddMember(selectedUser);
+                  }
+                }}
+                filterOptions={(options, state) => {
+                  const normalized = state.inputValue.trim().toLowerCase();
+                  if (!normalized) {
+                    return options;
+                  }
 
-                return options.filter((user) =>
-                  `${user.name || ""} ${user.email || ""}`
-                    .toLowerCase()
-                    .includes(normalized)
-                );
-              }}
-              noOptionsText={
-                searchTerm.trim()
-                  ? "No matching users found"
-                  : "Start typing to search users"
-              }
-              renderOption={(props, option) => {
-                const optionAvatarSrc = getAvatarSrc(option);
+                  return options.filter((user) =>
+                    `${user.name || ""} ${user.email || ""}`
+                      .toLowerCase()
+                      .includes(normalized)
+                  );
+                }}
+                noOptionsText={
+                  searchTerm.trim()
+                    ? "No matching users found"
+                    : "Start typing to search users"
+                }
+                renderOption={(props, option) => {
+                  const optionAvatarSrc = getAvatarSrc(option);
 
-                return (
-                  <Box component="li" {...props} key={option._id}>
-                    <Avatar
-                      src={optionAvatarSrc || undefined}
-                      alt={option.name}
-                      sx={{ width: 30, height: 30, mr: 1.2 }}
-                    >
-                      {!optionAvatarSrc
-                        ? getAvatarFallbackText(option.name)
-                        : null}
-                    </Avatar>
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {option.name}
-                      </Typography>
-                      {option.email ? (
-                        <Typography variant="caption" color="text.secondary">
-                          {option.email}
+                  return (
+                    <Box component="li" {...props} key={option._id}>
+                      <Avatar
+                        src={optionAvatarSrc || undefined}
+                        alt={option.name}
+                        sx={{ width: 30, height: 30, mr: 1.2 }}
+                      >
+                        {!optionAvatarSrc
+                          ? getAvatarFallbackText(option.name)
+                          : null}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {option.name}
                         </Typography>
-                      ) : null}
+                        {option.email ? (
+                          <Typography variant="caption" color="text.secondary">
+                            {option.email}
+                          </Typography>
+                        ) : null}
+                      </Box>
                     </Box>
-                  </Box>
-                );
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Search user"
-                  color={colorMode}
-                  helperText="Select users from the dropdown"
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton color={colorMode} edge="end" tabIndex={-1}>
-                          <Search />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              )}
-            />
-          </Box>
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Search user"
+                    color={colorMode}
+                    helperText="Select users from the dropdown"
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton color={colorMode} edge="end" tabIndex={-1}>
+                            <Search />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+              />
+            </Box>
+          )}
         </Box>
 
         <Typography variant="subtitle1" mt={2}>

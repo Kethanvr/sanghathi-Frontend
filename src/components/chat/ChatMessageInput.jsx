@@ -1,16 +1,10 @@
 import PropTypes from "prop-types";
-import { useRef, useState, useContext } from "react";
+import { useState, useContext } from "react";
 
 import ChatContext from "../../context/ChatContext";
 // @mui
 import { styled } from "@mui/material/styles";
-import {
-  Stack,
-  Input,
-  Divider,
-  IconButton,
-  InputAdornment,
-} from "@mui/material";
+import { Input, Divider, IconButton } from "@mui/material";
 
 import Iconify from "../Iconify";
 
@@ -31,13 +25,9 @@ ChatMessageInput.propTypes = {
 };
 
 export default function ChatMessageInput({ disabled, conversationId, onSend }) {
-  const fileInputRef = useRef(null);
   const [message, setMessage] = useState("");
 
   const { sendMessage } = useContext(ChatContext);
-  const handleAttach = () => {
-    fileInputRef.current?.click();
-  };
 
   const handleKeyUp = (event) => {
     if (event.key === "Enter") {
@@ -65,21 +55,7 @@ export default function ChatMessageInput({ disabled, conversationId, onSend }) {
         onChange={(event) => setMessage(event.target.value)}
         placeholder="Type a message"
         endAdornment={
-          <Stack direction="row" spacing={1} sx={{ flexShrink: 0, mr: 1.5 }}>
-            <IconButton disabled={disabled} size="small" onClick={handleAttach}>
-              <Iconify
-                icon="ic:round-add-photo-alternate"
-                width={22}
-                height={22}
-              />
-            </IconButton>
-            <IconButton disabled={disabled} size="small" onClick={handleAttach}>
-              <Iconify icon="eva:attach-2-fill" width={22} height={22} />
-            </IconButton>
-            <IconButton disabled={disabled} size="small">
-              <Iconify icon="eva:mic-fill" width={22} height={22} />
-            </IconButton>
-          </Stack>
+          null
         }
       />
 
@@ -93,8 +69,6 @@ export default function ChatMessageInput({ disabled, conversationId, onSend }) {
       >
         <Iconify icon="ic:round-send" width={22} height={22} />
       </IconButton>
-
-      <input type="file" ref={fileInputRef} style={{ display: "none" }} />
     </RootStyle>
   );
 }

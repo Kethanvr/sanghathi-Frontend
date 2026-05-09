@@ -41,7 +41,7 @@ const nationalityOptions = [
   "Indian",
   "Foreigner"
 ];
-const DEFAULT_COLLEGE_CODE = "CMRIT";
+const DEFAULT_COLLEGE_CODE = "";
 
 const isCloudinaryUrl = (url) => {
   return typeof url === 'string' && url.includes('cloudinary.com');
@@ -195,11 +195,11 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
             Object.keys(data.studentProfile[key]).forEach((innerKey) => {
               setValue(
                 `studentProfile.${key}.${innerKey}`,
-                data.studentProfile[key][innerKey]
+                data.studentProfile[key][innerKey] ?? ""
               );
             });
           } else {
-            setValue(`studentProfile.${key}`, data.studentProfile[key]);
+            setValue(`studentProfile.${key}`, data.studentProfile[key] ?? "");
           }
         });
         setIsDataFetched(true);
@@ -218,7 +218,7 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
     const fetchDepartments = async () => {
       try {
         const response = await api.get("/departments", {
-          params: { collegeCode: DEFAULT_COLLEGE_CODE, status: "active" },
+          params: { status: "active" },
         });
         const options = response.data?.data?.departments || [];
         if (options.length) {
@@ -315,7 +315,7 @@ export default function StudentDetailsForm({ colorMode, menteeId, isAdminEdit })
   const onSubmit = async (data) => {
     try {
       if (!data.studentProfile.collegeCode) {
-        data.studentProfile.collegeCode = DEFAULT_COLLEGE_CODE;
+        delete data.studentProfile.collegeCode;
       }
       const currentPhoto = watch('studentProfile.photo');
       let photoUrl = currentPhoto;

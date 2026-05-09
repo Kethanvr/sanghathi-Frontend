@@ -88,15 +88,28 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await loginCall(
+      const loginResponse = await loginCall(
         { email: email.current.value, password: password.current.value },
         dispatch
       );
+      
+      const userRole = loginResponse?.data?.user?.roleName;
+      
       const savedRedirectPath = sessionStorage.getItem("postLoginRedirectPath");
-      const redirectPath =
+      let redirectPath =
         redirectParam ||
         savedRedirectPath ||
         (from ? `${from.pathname || "/"}${from.search || ""}` : "/");
+
+      if (redirectPath.startsWith("/admin/") && userRole !== "admin") {
+        redirectPath = "/";
+      } else if (redirectPath.startsWith("/faculty/") && userRole !== "faculty") {
+        redirectPath = "/";
+      } else if (redirectPath.startsWith("/director/") && userRole !== "director") {
+        redirectPath = "/";
+      } else if (redirectPath.startsWith("/hod/") && userRole !== "hod") {
+        redirectPath = "/";
+      }
 
       sessionStorage.removeItem("postLoginRedirectPath");
       navigate(redirectPath, { replace: true });

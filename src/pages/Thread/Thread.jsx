@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import {
   Box,
@@ -62,15 +62,18 @@ const Thread = () => {
   const [threads, setThreads] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [users, setUsers] = useState([]);
+  const [assignedMentor, setAssignedMentor] = useState(null);
   const { user } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const colorMode = isLight ? 'primary' : 'info';
+  const mentorIdParam = searchParams.get("mentorId");
 
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
@@ -121,6 +124,23 @@ const Thread = () => {
   const fetchUsers = useCallback(async () => {
     try {
       const shouldScopeToStudents = ["faculty", "hod", "director"].includes(user?.roleName);
+
+      if (user?.roleName === "student") {
+        try {
+          const response = await api.get(`/mentorship/mentor/${user._id}`);
+          const mentor = response?.data?.mentor;
+
+          if (mentor?._id) {
+            setAssignedMentor(mentor);
+            setUsers([mentor]);
+            return;
+          }
+        } catch (mentorError) {
+          logger.error("Error fetching assigned mentor:", mentorError);
+          setUsers([]);
+          return;
+        }
+      }
 
       if (user?.roleName === "faculty") {
         const mentees = [];
@@ -189,6 +209,12 @@ const Thread = () => {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    if (mentorIdParam && assignedMentor?._id === mentorIdParam) {
+      setOpenDialog(true);
+    }
+  }, [mentorIdParam, assignedMentor]);
 
   const handleThreadClick = (thread) => {
     navigate(`/threads/${thread._id}`);
@@ -389,6 +415,8 @@ const Thread = () => {
             users={users}
             currentUser={user}
             onSave={handleAddNewThread}
+            initialParticipants={assignedMentor ? [assignedMentor] : []}
+            allowedUserIds={assignedMentor ? [assignedMentor._id] : null}
             colorMode={colorMode}
           />
         </Box>
