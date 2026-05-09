@@ -20,7 +20,7 @@ export default function Activity() {
     logger.info("id: ",menteeId);
     const methods = useForm({
       defaultValues: {
-        activity: [{ eventType: "", eventTitle: "", description: "", eventDate: "" }],
+        activity: [],
       },
     });
 
@@ -47,7 +47,7 @@ export default function Activity() {
           reset({ activity: formattedActivity });
         } else {
           logger.warn("No activity data found for this user");
-          reset({ activity: [{ eventType: "", eventTitle: "", description: "", eventDate: ""  }] });
+          reset({ activity: [] });
         }
       } catch (error) {
         logger.info("Error fetching activity data:", error);
