@@ -118,7 +118,8 @@ export default function Mooc({ resolvedSemester = null }) {
           reset({ mooc: formattedMooc });
         } else {
           logger.warn("No mooc data found for this user");
-          reset({ mooc: [] });
+          // show one empty row by default
+          reset({ mooc: [{ portal: "", title: "", semester: normalizedResolvedSemester ? String(normalizedResolvedSemester) : "", startDate: "", completedDate: "", score: "", certificateLink: "" }] });
         }
       } catch (error) {
         logger.info("Error fetching mooc data:", error);

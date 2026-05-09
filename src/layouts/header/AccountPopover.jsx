@@ -103,6 +103,8 @@ export default function AccountPopover() {
   const handleLogout = async () => {
     try {
       dispatch({ type: "LOGOUT" });
+      // Clear any stored post-login redirect so fresh login goes to dashboard/home
+      try { sessionStorage.removeItem("postLoginRedirectPath"); } catch (e) {}
       navigate("/login");
 
       if (isMountedRef.current) {

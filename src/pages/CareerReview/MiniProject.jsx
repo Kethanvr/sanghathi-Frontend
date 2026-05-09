@@ -79,7 +79,8 @@ export default function MiniProject({ resolvedSemester = null }) {
           reset({ miniproject: formattedMiniProject });
         } else {
           logger.warn("No miniproject data found for this user");
-          reset({ miniproject: [] });
+          // ensure one empty row is visible by default
+          reset({ miniproject: [{ title: "", guide: "", semester: normalizedResolvedSemester ? String(normalizedResolvedSemester) : "", startDate: "", completedDate: "" }] });
         }
       } catch (error) {
         logger.info("Error fetching miniproject data:", error);

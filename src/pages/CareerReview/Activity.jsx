@@ -47,7 +47,8 @@ export default function Activity() {
           reset({ activity: formattedActivity });
         } else {
           logger.warn("No activity data found for this user");
-          reset({ activity: [] });
+          // show one empty row by default
+          reset({ activity: [{ eventType: "", eventTitle: "", eventDate: "" }] });
         }
       } catch (error) {
         logger.info("Error fetching activity data:", error);

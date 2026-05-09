@@ -18,6 +18,7 @@ import MiniProject from "./MiniProject";
 import Activity from "./Activity";
 import Hobbies from "./Hobbies";
 import Project from "../Placement/Project";
+import Competition from "./Competition";
 
 const parseSemester = (value) => {
   if (value === undefined || value === null || value === "") {
@@ -113,6 +114,11 @@ export default function CareerReview() {
         value: "Hobbies",
         icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
         component: <Hobbies />,
+      },
+      {
+        value: "Competition",
+        icon: <Iconify icon={"ic:round-account-box"} width={20} height={20} />,
+        component: <Competition />,
       },
     ];
 
