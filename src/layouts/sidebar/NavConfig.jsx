@@ -111,6 +111,16 @@ const studentNavConfig = [
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
 
+const strcoordinatorNavConfig = [
+  { text: "Home", icon: <HomeOutlinedIcon />, link: "/strcoordinator/dashboard" },
+  { text: "View Users", icon: <PeopleOutlinedIcon />, link: "/admin/users" },
+  { text: "View Mentors", icon: <PeopleIcon />, link: "/director/mentors" },
+  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/hod/thread-reports" },
+  { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
+  { text: "Campus Buddy", icon: <HdrStrongIcon />, link: "/campus-buddy" },
+  { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
+];
+
 const getNavConfig = (role) => {
   switch (role) {
     case "admin":
@@ -121,6 +131,8 @@ const getNavConfig = (role) => {
       return hodNavConfig;
     case "director":
       return directorNavConfig;
+    case "strcoordinator":
+      return strcoordinatorNavConfig;
     case "student":
       return studentNavConfig;
     default:

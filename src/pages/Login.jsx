@@ -94,6 +94,7 @@ const Login = () => {
       );
       
       const userRole = loginResponse?.data?.user?.roleName;
+      const userDepartment = loginResponse?.data?.user?.department;
       
       const savedRedirectPath = sessionStorage.getItem("postLoginRedirectPath");
       let redirectPath =
@@ -109,6 +110,19 @@ const Login = () => {
         redirectPath = "/";
       } else if (redirectPath.startsWith("/hod/") && userRole !== "hod") {
         redirectPath = "/";
+      } else if (
+        redirectPath.startsWith("/strcoordinator/") &&
+        userRole !== "strcoordinator" &&
+        userRole !== "director"
+      ) {
+        redirectPath = "/";
+      }
+
+      // Always show department selection cards for strcoordinator after login
+      if (userRole === "strcoordinator") {
+        redirectPath = "/strcoordinator/select-department";
+      } else if (userRole === "director" && !userDepartment) {
+        redirectPath = "/strcoordinator/select-department";
       }
 
       sessionStorage.removeItem("postLoginRedirectPath");

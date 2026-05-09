@@ -58,6 +58,7 @@ const FeedbackForm = lazy(() => import("./pages/Feedback/feedback"));
 const FeedbackManagement = lazy(() => import("./pages/Feedback/FeedbackManagement"));
 const MyChatBot = lazy(() => import("./mychatbot"));
 const Updates = lazy(() => import("./pages/Updates"));
+const DepartmentSelectionPage = lazy(() => import("./pages/StrCoordinator/DepartmentSelectionPage"));
 
 function App() {
   // Track page views on route change using Google Analytics GA4
@@ -128,10 +129,16 @@ function App() {
                         ) : user.roleName === "admin" ? (
                           <Navigate replace to="/admin/dashboard" />
                         ) : user.roleName === "director" ? (
-                          <Navigate replace to="/director/dashboard" />
+                          user.department ? (
+                            <Navigate replace to="/director/dashboard" />
+                          ) : (
+                            <Navigate replace to="/strcoordinator/select-department" />
+                          )
                         ) : user.roleName === "hod" ? (
                           <Navigate replace to="/hod/dashboard" />
-                        ): (
+                        ) : user.roleName === "strcoordinator" ? (
+                          <Navigate replace to="/strcoordinator/select-department" />
+                        ) : (
                           <ProtectedRouteWrapper allowedRoles={["student"]}>
                             <LazyLoadWrapper component={Dashboard} />
                           </ProtectedRouteWrapper>
@@ -291,6 +298,22 @@ function App() {
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={ViewUsers} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/strcoordinator/select-department"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["strcoordinator", "director"]}>
+                        <LazyLoadWrapper component={DepartmentSelectionPage} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/strcoordinator/dashboard"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["strcoordinator", "director"]}>
+                        <LazyLoadWrapper component={DirectorDashboard} />
                       </ProtectedRouteWrapper>
                     }
                   />
