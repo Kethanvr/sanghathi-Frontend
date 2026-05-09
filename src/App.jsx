@@ -491,7 +491,7 @@ function App() {
                   <Route
                     path="/report"
                     element={
-                      <ProtectedRouteWrapper>
+                      <ProtectedRouteWrapper allowedRoles={["admin", "hod", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={Report} />
                       </ProtectedRouteWrapper>
                     }
