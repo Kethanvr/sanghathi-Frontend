@@ -43,8 +43,8 @@ function HodViewMentors() {
   const { user } = useContext(AuthContext);
   const [mentors, setMentors] = useState([]);
   const [page, setPage] = useState(0);
-  const rowsPerPageOptions = [10, 20, 25];
-  const [rowsPerPage, setRowsPerPage] = useState(rowsPerPageOptions[0]);
+  const rowsPerPageOptions = [25, 50, 100];
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -70,7 +70,7 @@ function HodViewMentors() {
         params: {
           department: user?.department,
           page: 1,
-          limit: 500,
+          limit: 100,
         },
       });
 
@@ -278,7 +278,7 @@ function HodViewMentors() {
             </TableContainer>
 
             <TablePagination
-              rowsPerPageOptions={isMobile ? [10, 20] : rowsPerPageOptions}
+              rowsPerPageOptions={rowsPerPageOptions}
               component="div"
               count={filteredMentors.length}
               rowsPerPage={rowsPerPage}

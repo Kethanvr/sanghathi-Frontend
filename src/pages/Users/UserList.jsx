@@ -56,8 +56,8 @@ function UserList({ onEdit }) {
   const [openDialog, setOpenDialog] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [page, setPage] = useState(0);
-  const rowsPerPageOptions = [20, 10, 25];
-  const [rowsPerPage, setRowsPerPage] = useState(rowsPerPageOptions[0]);
+  const rowsPerPageOptions = [25, 50, 100];
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("all");
@@ -78,7 +78,7 @@ function UserList({ onEdit }) {
 
   const getAllUsers = useCallback(async () => {
     try {
-      const pageSize = 200;
+      const pageSize = 100;
       let pageNumber = 1;
       let totalPages = 1;
       const aggregatedUsers = [];

@@ -31,7 +31,7 @@ const ThreadList = ({
   colorMode = "primary",
 }) => {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const theme = useTheme();
   const isMobile = useResponsive("down", "sm");
 
@@ -51,7 +51,7 @@ const ThreadList = ({
     setPage(0);
   };
 
-  const rowsPerPageOptions = [10, 25, 50];
+  const rowsPerPageOptions = [25, 50, 100];
 
   const getStatusColor = (status) => {
     const normalizedStatus = (status || "").toLowerCase().trim();
@@ -241,7 +241,7 @@ const ThreadList = ({
           }}
         >
           <TablePagination
-            rowsPerPageOptions={isMobile ? [10, 25] : rowsPerPageOptions}
+            rowsPerPageOptions={rowsPerPageOptions}
             component="div"
             count={threads.length}
             rowsPerPage={rowsPerPage}

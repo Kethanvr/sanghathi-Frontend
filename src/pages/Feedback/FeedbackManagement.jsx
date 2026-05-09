@@ -98,7 +98,10 @@ const FeedbackManagement = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
   const canEditWindow = user?.roleName === "admin";
-  const isHodOrDirector = user?.roleName === "hod" || user?.roleName === "director";
+  const isHodOrDirector =
+    user?.roleName === "hod" ||
+    user?.roleName === "director" ||
+    user?.roleName === "strcoordinator";
   const [departmentScope, setDepartmentScope] = useState(
     user?.department || user?.facultyProfile?.department || ""
   );
@@ -281,7 +284,7 @@ const FeedbackManagement = () => {
               role: "student",
               semester: activeSem,
               department: user.roleName !== 'admin' ? departmentParam : undefined,
-              limit: 1000 // Get all for this semester
+              limit: 100
             }
           });
           const fetchedStudents = studentResponse.data?.data?.users || [];
@@ -1166,7 +1169,7 @@ const FeedbackManagement = () => {
                   onPageChange={handleChangePage}
                   rowsPerPage={rowsPerPage}
                   onRowsPerPageChange={handleChangeRowsPerPage}
-                  rowsPerPageOptions={[25, 50, 75, 100]}
+                  rowsPerPageOptions={[25, 50, 100]}
                 />
               </Box>
             )}
