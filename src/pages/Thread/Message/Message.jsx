@@ -83,6 +83,7 @@ const MessageItem = ({ message, conversation }) => {
   let alignRight = isMe;
 
   if (isObserver) {
+    // For observers, always put Mentor (Faculty) on the right and Mentee (others) on the left
     if (sender?.roleName === "faculty") {
       justifyContent = "flex-end";
       alignRight = true;
