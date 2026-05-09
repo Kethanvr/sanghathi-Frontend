@@ -10,12 +10,20 @@ import {
   Alert,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  IconButton
 } from "@mui/material";
 import {
   FileDownload as FileDownloadIcon,
-  CloudUpload as CloudUploadIcon
+  CloudUpload as CloudUploadIcon,
+  Clear as ClearIcon
 } from "@mui/icons-material";
+import { alpha, useTheme } from "@mui/material/styles";
 import Papa from "papaparse";
 import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
@@ -27,6 +35,9 @@ const AddMoocDetails = () => {
   const [successCount, setSuccessCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
   const [errors, setErrors] = useState([]);
+  const [file, setFile] = useState(null);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [tempRows, setTempRows] = useState([]);
   const [fileName, setFileName] = useState("");
 
   const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
@@ -59,6 +70,7 @@ const AddMoocDetails = () => {
       "USN",
       "StudentName",
       "CourseName",
+      "Semester",
       "Platform",
       "CertificateLink",
       "Man Hours",
@@ -71,8 +83,12 @@ const AddMoocDetails = () => {
       "1CR23IS001",
       "AAMITH PRAMOD",
       "Foundation of Python",
+      "4",
       "Infosys Springboard",
-      "https://certificate-link.com"
+      "https://certificate-link.com",
+      "40",
+      "2024-01-05",
+      "2024-03-05"
     ];
 
     const csvContent = Papa.unparse([headers, exampleRow], { quotes: true });
@@ -97,14 +113,10 @@ const AddMoocDetails = () => {
     const uploadedFile = event.target.files[0];
     if (!uploadedFile) return;
 
+    setFile(uploadedFile);
     setFileName(uploadedFile.name || "");
-    setProcessing(true);
-    setErrors([]);
-    setSuccessCount(0);
-    setErrorCount(0);
-
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       const content = e.target.result;
 
       const results = Papa.parse(content, {
@@ -112,10 +124,46 @@ const AddMoocDetails = () => {
         skipEmptyLines: true
       });
 
-      await processRows(results.data);
+      if (results.data.length === 0) {
+        return;
+      }
+
+      setTempRows(results.data);
+      setOpenConfirm(true);
     };
 
     reader.readAsText(uploadedFile);
+    event.target.value = "";
+  };
+
+  const handleConfirmUpload = async () => {
+    setOpenConfirm(false);
+    setProcessing(true);
+    setErrors([]);
+    setSuccessCount(0);
+    setErrorCount(0);
+    await processRows(tempRows);
+  };
+
+  const handleClearResults = () => {
+    setSuccessCount(0);
+    setErrorCount(0);
+    setErrors([]);
+    setFile(null);
+  };
+
+  // ================= VALIDATE SEMESTER =================
+  const validateSemester = (semesterValue) => {
+    if (!semesterValue || semesterValue.toString().trim() === "") {
+      return { valid: true, normalizedValue: null };
+    }
+    
+    const parsed = parseInt(semesterValue, 10);
+    if (isNaN(parsed) || parsed < 1 || parsed > 8) {
+      return { valid: false, error: `Invalid semester: must be 1–8, got "${semesterValue}"` };
+    }
+    
+    return { valid: true, normalizedValue: parsed };
   };
 
   // ================= PROCESS ROWS =================
@@ -124,22 +172,50 @@ const AddMoocDetails = () => {
     let errCount = 0;
     const newErrors = [];
     const affectedUserIds = new Set();
+    const uploadEntries = [];
+    const previousDataByUser = new Map();
+
+    const cloneValue = (value) => {
+      if (value === undefined || value === null) {
+        return value;
+      }
+
+      return JSON.parse(JSON.stringify(value));
+    };
 
     for (const row of rows) {
       try {
         if (!row.USN) throw new Error("USN missing");
         if (!row.CourseName) throw new Error("Course Name missing");
 
+        // Validate semester if provided
+        const semesterValidation = validateSemester(row.Semester);
+        if (!semesterValidation.valid) {
+          throw new Error(semesterValidation.error);
+        }
+
         const response = await api.get(`/users/usn/${row.USN}`, {
           params: { _ts: Date.now() },
-          headers: {
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache"
-          }
         });
         const userId = response.data?.userId || response.data?._id;
 
         if (!userId) throw new Error("User not found");
+
+        if (!previousDataByUser.has(String(userId))) {
+          let previousMooc = null;
+          try {
+            const currentResponse = await api.get(`/mooc-data/mooc/${userId}`);
+            previousMooc = Array.isArray(currentResponse.data?.data?.mooc)
+              ? currentResponse.data.data.mooc
+              : null;
+          } catch (snapshotError) {
+            if (snapshotError?.response?.status !== 404) {
+              throw snapshotError;
+            }
+          }
+
+          previousDataByUser.set(String(userId), cloneValue(previousMooc));
+        }
 
         await api.post(`/mooc-data/mooc`, {
           userId,
@@ -147,6 +223,7 @@ const AddMoocDetails = () => {
             {
               portal: row.Platform,
               title: row.CourseName,
+              semester: row.Semester || null,
               startDate: row["Start Date"] || null,
               completedDate: row["End Date"] || null,
               certificateLink: row.CertificateLink
@@ -156,6 +233,12 @@ const AddMoocDetails = () => {
 
         success++;
         affectedUserIds.add(String(userId));
+        uploadEntries.push({
+          uploadIndex: uploadEntries.length + 1,
+          userId: String(userId),
+          usn: row.USN,
+          previousMooc: previousDataByUser.get(String(userId)),
+        });
       } catch (error) {
         errCount++;
         newErrors.push(`Error for ${row.USN}: ${error.message}`);
@@ -170,6 +253,9 @@ const AddMoocDetails = () => {
       errorCount: errCount,
       errors: newErrors,
       affectedUserIds: Array.from(affectedUserIds),
+      metadata: {
+        entries: uploadEntries,
+      },
     });
 
     setSuccessCount(success);
@@ -220,6 +306,7 @@ const AddMoocDetails = () => {
 
           <Typography variant="body2">• USN must exist in system</Typography>
           <Typography variant="body2">• Course Name is mandatory</Typography>
+          <Typography variant="body2">• Semester: integer 1–8 (provide blank if unknown)</Typography>
           <Typography variant="body2">• Platform should be Infosys Springboard / Coursera / NPTEL etc.</Typography>
           <Typography variant="body2">• Certificate Link must be valid URL</Typography>
         </Box>
@@ -263,6 +350,18 @@ const AddMoocDetails = () => {
                 Errors encountered: {errorCount}
               </Alert>
             )}
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+              <Button 
+                size="small" 
+                onClick={handleClearResults}
+                startIcon={<ClearIcon />}
+                color="inherit"
+                sx={{ opacity: 0.7 }}
+              >
+                Clear Results
+              </Button>
+            </Box>
           </Box>
         )}
 
@@ -284,6 +383,35 @@ const AddMoocDetails = () => {
           </Typography>
         </Paper>
       </Paper>
+
+      <Dialog
+        open={openConfirm}
+        onClose={() => setOpenConfirm(false)}
+        PaperProps={{
+          sx: { borderRadius: 2, p: 1 }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Confirm Upload</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You have selected <strong>{file?.name}</strong> with <strong>{tempRows.length}</strong> records. 
+            Are you sure you want to proceed with the bulk upload for <strong>MOOC Details</strong>?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOpenConfirm(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmUpload} 
+            variant="contained" 
+            autoFocus
+            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
+          >
+            Start Upload
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

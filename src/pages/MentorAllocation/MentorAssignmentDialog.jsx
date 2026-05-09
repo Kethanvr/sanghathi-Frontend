@@ -1,5 +1,5 @@
 // MentorAssignmentDialog.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,42 +9,78 @@ import {
   Button,
   Box,
   Paper,
+  Chip,
+  Stack,
+  Typography,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import api from "../../utils/axios";
 import MentorSuggestionMenu from "./MentorSuggestionMenu";
+import { AuthContext } from "../../context/AuthContext";
 
 import logger from "../../utils/logger.js";
+
+const getMentorDepartment = () => {
+  try {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      return user.department;
+    }
+  } catch (e) {
+    logger.warn("Could not get department from localStorage", e);
+  }
+  return null;
+};
+
 const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
   const { enqueueSnackbar } = useSnackbar();
+  const { state: authState } = useContext(AuthContext);
+  const currentUser = authState?.user;
+  const userDepartment = currentUser?.department || getMentorDepartment();
+  
   const [selectedMentor, setSelectedMentor] = useState({ name: "" }); // Initialize with empty name
   const [anchorEl, setAnchorEl] = useState(null);
   const [mentors, setMentors] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchMentors = async () => {
+      if (!open) return;
+      
+      setLoading(true);
       try {
-        const response = await api.get("/users", {
-          params: {
-            role: "faculty",
-            page: 1,
-            limit: 500,
-            fields: "_id,name,email",
-            includeProfiles: false,
-          },
-        });
+        const params = {
+          role: "faculty",
+          page: 1,
+          limit: 1000,
+          fields: "_id,name,email,department,avatar,photo",
+          includeProfiles: true,
+        };
+
+        if (userDepartment) params.department = userDepartment;
+
+        const response = await api.get("/users", { params });
         const { data } = response.data;
-        setMentors(data.users);
+        const loadedMentors = data.users || [];
+        setMentors(loadedMentors);
+        setSuggestions(loadedMentors);
+        
+        if (!loadedMentors.length && userDepartment) {
+          logger.warn(`No ${userDepartment} mentors found.`);
+        }
+        logger.info(`Loaded ${loadedMentors.length || 0} mentors for department: ${userDepartment}`);
       } catch (error) {
-        logger.error(error);
+        logger.error("Failed to fetch mentors:", error);
+        enqueueSnackbar("Failed to load mentors", { variant: "error" });
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (open) {
-      fetchMentors();
-    }
-  }, [open]);
+    fetchMentors();
+  }, [open, userDepartment, enqueueSnackbar]);
 
   const handleMentorNameChange = (event) => {
     const value = event.target.value;
@@ -58,7 +94,7 @@ const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
         )
       );
     } else {
-      setSuggestions([]);
+      setSuggestions(mentors);
     }
   };
 
@@ -103,18 +139,36 @@ const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
       onClose={handleCancel}
       aria-labelledby="mentor-dialog-title"
       maxWidth="sm"
+      fullWidth
       PaperProps={{
         sx: {
           position: 'relative',
-          minHeight: '300px'  // Ensure enough space for suggestions
+          minHeight: '400px'
         }
       }}
     >
-      <DialogTitle>
-        Assign Mentor to {studentIds.length} Selected Student(s)
+      <DialogTitle id="mentor-dialog-title">
+        <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+          <Typography variant="h6">
+            Assign Mentor to {studentIds.length} Selected Student(s)
+          </Typography>
+          {userDepartment && (
+            <Chip
+              label={`${userDepartment} Mentors`}
+              color="primary"
+              variant="outlined"
+              size="small"
+            />
+          )}
+        </Stack>
       </DialogTitle>
       <DialogContent>
-        <Box sx={{ position: 'relative' }}>
+        <Box sx={{ position: 'relative', pt: 2 }}>
+          {loading && (
+            <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+              Loading mentors for {userDepartment} department...
+            </Typography>
+          )}
           <TextField
             autoFocus
             margin="dense"
@@ -123,17 +177,19 @@ const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
             fullWidth
             value={selectedMentor.name || ""}
             onChange={handleMentorNameChange}
+            disabled={loading}
+            placeholder={`Search from ${mentors.length} ${userDepartment} mentors...`}
           />
           {suggestions.length > 0 && (
             <Paper
               elevation={3}
               sx={{
                 position: 'absolute',
-                top: 'calc(100% + 8px)',
+                top: 'calc(100% + 50px)',
                 left: 0,
                 right: 0,
                 zIndex: 1000,
-                maxHeight: '250px',  // Show more items
+                maxHeight: '250px',
                 overflow: 'auto',
                 borderRadius: 1,
                 boxShadow: (theme) => theme.shadows[5]
@@ -153,7 +209,7 @@ const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
           onClick={handleSave} 
           variant="contained" 
           color="primary"
-          disabled={!selectedMentor._id}
+          disabled={!selectedMentor._id || loading}
         >
           Save
         </Button>

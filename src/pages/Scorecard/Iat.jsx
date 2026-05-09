@@ -23,6 +23,7 @@ import { useSearchParams } from "react-router-dom";
 import useStudentSemester from "../../hooks/useStudentSemester";
 import api from "../../utils/axios";
 import logger from "../../utils/logger.js";
+import DataStateCard from "../../components/DataStateCard";
 
 const Iat = () => {
   const { user } = useContext(AuthContext);
@@ -35,7 +36,35 @@ const Iat = () => {
   const [iatData, setIatData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [noDataMessage, setNoDataMessage] = useState("");
   const [selectedSemester, setSelectedSemester] = useState(null);
+
+  const getSelectedSemesterSubjects = useCallback(() => {
+    if (!selectedSemester) return [];
+
+    const semesterData = iatData.find((s) => s.semester === selectedSemester);
+    if (!semesterData || !Array.isArray(semesterData.subjects)) return [];
+
+    return semesterData.subjects;
+  }, [iatData, selectedSemester]);
+
+  const formatAverage = (subject) => {
+    if (!subject) return "";
+
+    if (subject.avg !== undefined && subject.avg !== null && subject.avg !== "") {
+      return subject.avg;
+    }
+
+    const iat1 = Number(subject.iat1);
+    const iat2 = Number(subject.iat2);
+    const values = [iat1, iat2].filter((value) => Number.isFinite(value));
+
+    if (!values.length) return "";
+
+    const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+    const rounded = Math.round(average * 100) / 100;
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+  };
 
   const fetchIatData = useCallback(async () => {
     // Wait for semester to load before fetching
@@ -71,11 +100,18 @@ const Iat = () => {
         }
       } else {
           setIatData([]);
+          setNoDataMessage("No IAT data found for this student yet.");
       }
 
       setLoading(false);
     } catch (err) {
-      setError("Failed to fetch IAT data");
+      if (err?.response?.status === 404) {
+        setIatData([]);
+        setNoDataMessage("No IAT data found for this student yet.");
+        setError("");
+      } else {
+        setError("Failed to fetch IAT data");
+      }
       setLoading(false);
       logger.error(err); // Log the error for debugging
     }
@@ -90,33 +126,23 @@ const Iat = () => {
   };
 
   const getSubjectsForSemester = () => {
-    if (!selectedSemester) return [];
-    const semesterData = iatData.find((s) => s.semester === selectedSemester);
-    if (!semesterData) return [];
-
-    const subjectsMap = new Map();
-    semesterData.subjects.forEach((subject) => {
-      subjectsMap.set(subject.subjectCode, subject);
-    });
-    return Array.from(subjectsMap.values());
+    return getSelectedSemesterSubjects();
   };
 
-  //  Get IAT marks for a specific subject and IAT number
-    const getIatMarks = (subjectCode, iatNumber) => {
-        if (!selectedSemester) return "";
-        const semesterData = iatData.find(s => s.semester === selectedSemester);
-        if (!semesterData) return "";
+  const getIatMarks = (subject, iatNumber) => {
+    if (!subject) return "";
 
-        const subject = semesterData.subjects.find(s => s.subjectCode === subjectCode);
-        if (!subject) return "";
-
-        switch (iatNumber) {
-            case 1: return subject.iat1 || "";
-            case 2: return subject.iat2 || "";
-            case 3: return subject.avg || "";
-            default: return "";
-        }
-    };
+    switch (iatNumber) {
+      case 1:
+        return subject.iat1 || "";
+      case 2:
+        return subject.iat2 || "";
+      case 3:
+        return formatAverage(subject);
+      default:
+        return "";
+    }
+  };
 
 
 
@@ -159,6 +185,14 @@ const Iat = () => {
 
       {!loading && !error && (
       <TableContainer sx={{ border: "1px solid gray", overflowX: "auto" }}>
+        {noDataMessage && iatData.length === 0 ? (
+          <Box sx={{ mb: 2 }}>
+            <DataStateCard
+              title="IAT marks not found"
+              message={noDataMessage}
+            />
+          </Box>
+        ) : null}
         <Table sx={{ minWidth: { xs: 640, md: "100%" } }}>
           <TableHead>
             <TableRow>
@@ -177,12 +211,12 @@ const Iat = () => {
             {getSubjectsForSemester().length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} align="center" sx={{ border: "1px solid gray", py: 3 }}>
-                  No IAT data available for the selected semester.
+                  {noDataMessage || "No IAT data available for the selected semester."}
                 </TableCell>
               </TableRow>
             ) : (
-            getSubjectsForSemester().map((subject) => (
-              <TableRow key={subject.subjectCode}>
+            getSubjectsForSemester().map((subject, index) => (
+              <TableRow key={`${subject.subjectCode}-${index}`}>
                 <TableCell sx={{ border: "1px solid gray", display: { xs: "none", sm: "table-cell" } }}>
                   {subject.subjectCode}
                 </TableCell>
@@ -190,13 +224,13 @@ const Iat = () => {
                   {subject.subjectName}
                 </TableCell>
                 <TableCell sx={{ border: "1px solid gray" }}>
-                    {getIatMarks(subject.subjectCode, 1)}
+                  {getIatMarks(subject, 1)}
                 </TableCell>
                 <TableCell sx={{ border: "1px solid gray" }}>
-                    {getIatMarks(subject.subjectCode, 2)}
+                  {getIatMarks(subject, 2)}
                 </TableCell>
                 <TableCell sx={{ border: "1px solid gray" }}>
-                    {getIatMarks(subject.subjectCode, 3)}
+                  {getIatMarks(subject, 3)}
                 </TableCell>
               </TableRow>
             ))

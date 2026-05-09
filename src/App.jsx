@@ -29,12 +29,17 @@ const Attendance = lazy(() => import("./pages/Student/Attendance"));
 const Thread = lazy(() => import("./pages/Thread/Thread"));
 const ThreadWindow = lazy(() => import("./pages/Thread/ThreadWindow"));
 const Report = lazy(() => import("./pages/Report/Report"));
+const ThreadReports = lazy(() => import("./pages/ThreadReports/ThreadReports"));
+const ThreadReportsByMentor = lazy(() => import("./pages/ThreadReports/ThreadReportsByMentor"));
+const ThreadReportsByStudent = lazy(() => import("./pages/ThreadReports/ThreadReportsByStudent"));
+const RecentThreads = lazy(() => import("./pages/ThreadReports/RecentThreads"));
 const AdminDashboard = lazy(() => import("./pages/Admin/AdminDashboard"));
 const DirectorDashboard = lazy(() => import("./pages/Director/DirectorDashboard"));
 const DirectorViewMentors = lazy(() => import("./pages/Director/DirectorViewMentors"));
 const DirectorMenteesList = lazy(() => import("./pages/Director/DirectorMenteesList"));
 const HodDashboard = lazy(() => import("./pages/Hod/HodDashboard"));
 const ViewUsers = lazy(() => import("./pages/Admin/ViewUsers"));
+const ViewMentors = lazy(() => import("./pages/Admin/ViewMentors"));
 const Data = lazy(() => import("./pages/Admin/Data"));
 const UploadHistory = lazy(() => import("./pages/Admin/UploadHistory"));
 const FacultyDashboard = lazy(() => import("./pages/Faculty/FacultyDashboard"));
@@ -49,9 +54,9 @@ const StudentDashboard = lazy(() => import("./pages/Faculty/StudentDashboard"));
 const Settings = lazy(() => import("./pages/Settings/Settings"));
 const TYLScorecard = lazy(() => import("./pages/Student/TYLScorecard"));
 const MentorMenteeConversation = lazy(() => import("./pages/MentorMentee/MentorMenteeConversation"));
+const FeedbackForm = lazy(() => import("./pages/Feedback/feedback"));
+const FeedbackManagement = lazy(() => import("./pages/Feedback/FeedbackManagement"));
 const MyChatBot = lazy(() => import("./mychatbot"));
-const AboutDevelopers = lazy(() => import("./pages/AboutDevelopers"));
-const DeveloperProfile = lazy(() => import("./pages/DeveloperProfile"));
 const Updates = lazy(() => import("./pages/Updates"));
 
 function App() {
@@ -186,6 +191,38 @@ function App() {
                     }
                   />
                   <Route
+                    path="/hod/thread-reports"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director"]}>
+                        <LazyLoadWrapper component={ThreadReports} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/hod/thread-reports/:mentorId"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director"]}>
+                        <LazyLoadWrapper component={ThreadReportsByMentor} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/hod/thread-reports/:mentorId/:studentId"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director"]}>
+                        <LazyLoadWrapper component={ThreadReportsByStudent} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/recent-threads"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["hod", "admin", "director"]}>
+                        <LazyLoadWrapper component={RecentThreads} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
                     path="/director/mentors"
                     element={
                       <ProtectedRouteWrapper allowedRoles={["director"]}>
@@ -242,6 +279,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/admin/mentors"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["admin"]}>
+                        <LazyLoadWrapper component={ViewMentors} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
                     path="/director/users"
                     element={
                       <ProtectedRouteWrapper>
@@ -286,6 +331,22 @@ function App() {
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={StudentProfile} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/feedback"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["student"]}>
+                        <LazyLoadWrapper component={FeedbackForm} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/feedback/manage"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["admin", "hod", "director"]}>
+                        <LazyLoadWrapper component={FeedbackManagement} />
                       </ProtectedRouteWrapper>
                     }
                   />
@@ -388,7 +449,11 @@ function App() {
                     path="/threads"
                     element={
                       <ProtectedRouteWrapper>
-                        <LazyLoadWrapper component={Thread} />
+                        {["hod", "admin", "director"].includes(user?.roleName) ? (
+                          <Navigate replace to="/recent-threads" />
+                        ) : (
+                          <LazyLoadWrapper component={Thread} />
+                        )}
                       </ProtectedRouteWrapper>
                     }
                   />
@@ -473,14 +538,6 @@ function App() {
                         <LazyLoadWrapper component={MentorMenteeConversation} />
                       </ProtectedRouteWrapper>
                     }
-                  />
-                  <Route
-                    path="/about-developers"
-                    element={<LazyLoadWrapper component={AboutDevelopers} />}
-                  />
-                  <Route
-                    path="/about-developers/:developerId"
-                    element={<LazyLoadWrapper component={DeveloperProfile} />}
                   />
                 </Route>
                 

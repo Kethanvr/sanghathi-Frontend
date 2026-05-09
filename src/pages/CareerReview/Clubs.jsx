@@ -22,7 +22,7 @@ export default function ClubEvents() {
 
   const methods = useForm({
     defaultValues: {
-      clubs: [{ clubName: "", clubdepartment: "", registeredDate: null }],
+      clubs: [],
     },
   });
   const { handleSubmit, reset, formState: { isSubmitting } } = methods;
@@ -50,7 +50,7 @@ export default function ClubEvents() {
         reset({ clubs: formattedClubs });
       } else {
         logger.warn("No club data found for this user");
-        reset({ clubs: [{ clubName: "", clubdepartment: "", registeredDate: null }] });
+        reset({ clubs: [] });
       }
     } catch (error) {
       logger.info("Error fetching club data:", error);

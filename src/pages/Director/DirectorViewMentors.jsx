@@ -52,7 +52,7 @@ function DirectorViewMentors() {
   const [mentors, setMentors] = useState([]);
   const [page, setPage] = useState(0);
   const rowsPerPageOptions = [10, 20, 25];
-  const [rowsPerPage, setRowsPerPage] = useState(rowsPerPageOptions[0]);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("all");

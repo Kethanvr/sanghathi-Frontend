@@ -1,17 +1,8 @@
 import { Box, Container, Paper, Stack, Typography } from "@mui/material";
-import { Navigate } from "react-router-dom";
-import { useContext } from "react";
-import { AuthContext } from "../../context/AuthContext";
 import UpgradeOutlinedIcon from "@mui/icons-material/UpgradeOutlined";
 import Page from "../../components/Page";
 
-const Report = () => {
-  const { user } = useContext(AuthContext);
-
-  if (user?.roleName === "hod" || user?.roleName === "admin" || user?.roleName === "director") {
-    return <Navigate replace to="/hod/thread-reports" />;
-  }
-
+const ReportUpgradeNotice = () => {
   return (
     <Page title="Thread Reports">
       <Container maxWidth="lg" sx={{ py: { xs: 4, md: 8 } }}>
@@ -91,4 +82,4 @@ const Report = () => {
   );
 };
 
-export default Report;
+export default ReportUpgradeNotice;

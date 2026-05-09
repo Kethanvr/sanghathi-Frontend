@@ -14,6 +14,8 @@ import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import DatasetOutlinedIcon from '@mui/icons-material/DatasetOutlined';
 import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
+import SchoolIcon from "@mui/icons-material/School";
+import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 
 // Campus buddy icon needs special treatment as it represents a feature
 // NavItemButton already handles the correct color for all icons based on theme mode
@@ -27,7 +29,8 @@ const HodNavConfig = [
   { text: "View Users", 
     icon: <PeopleOutlinedIcon />, 
     link: "/hod/users" },
-  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
+  { text: "Thread Reports", icon: <SummarizeOutlinedIcon />, link: "/hod/thread-reports" },
+  { text: "Recent Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/recent-threads" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
 
@@ -50,6 +53,9 @@ const adminNavConfig = [
   { text: "View Users", 
     icon: <PeopleOutlinedIcon />, 
     link: "/admin/users" },
+  { text: "View Mentor", 
+    icon: <SchoolIcon />, 
+    link: "/admin/mentors" },
   {
     text: "Mentor Assignment",
     icon: <PersonOutlinedIcon />,
@@ -60,8 +66,8 @@ const adminNavConfig = [
     icon: <HistoryOutlinedIcon />,
     link: "/admin/upload-history",
   },
-  { text: "What's New", icon: <CampaignOutlinedIcon />, link: "/updates" },
-  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
+  { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
+  { text: "Thread Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
 
@@ -71,28 +77,28 @@ const facultyNavConfig = [
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
   // { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
   { text: "Campus Buddy", icon: <HdrStrongIcon />, link: "/campus-buddy" },
-  { text: "What's New", icon: <CampaignOutlinedIcon />, link: "/updates" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
 
 const hodNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/hod/dashboard" },
   { text: "Department Mentors", icon: <PeopleIcon />, link: "/hod/mentors" },
-  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
-  { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
+  { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
+  { text: "Thread Reports", icon: <SummarizeOutlinedIcon />, link: "/hod/thread-reports" },
+  { text: "Recent Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/recent-threads" },
+  { text: "View Users", icon: <PeopleOutlinedIcon />, link: "/admin/users" },
   { text: "Campus Buddy", icon: <HdrStrongIcon />, link: "/campus-buddy" },
-  { text: "What's New", icon: <CampaignOutlinedIcon />, link: "/updates" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
 
 const directorNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/director/dashboard" },
   { text: "All Mentors", icon: <PeopleIcon />, link: "/director/mentors" },
+  { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
   { text: "View Users", icon: <PeopleOutlinedIcon />, link: "/director/users" },
-  { text: "Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
-  { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
+  { text: "Thread Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
+  { text: "Recent Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/recent-threads" },
   { text: "Campus Buddy", icon: <HdrStrongIcon />, link: "/campus-buddy" },
-  { text: "What's New", icon: <CampaignOutlinedIcon />, link: "/updates" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
 
@@ -102,7 +108,6 @@ const studentNavConfig = [
   // { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
   { text: "Mentor Details", icon: <PersonOutlinedIcon />, link: "/mentor-details" },
   { text: "Campus Buddy", icon: <HdrStrongIcon />, link: "/campus-buddy" },
-  { text: "What's New", icon: <CampaignOutlinedIcon />, link: "/updates" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
 

@@ -9,6 +9,7 @@ import { AuthContext } from "../context/AuthContext";
 import ReleaseAnnouncementDialog from "../components/updates/ReleaseAnnouncementDialog";
 
 const RELEASE_ANNOUNCEMENT_SESSION_KEY = "showSanghathi20Announcement";
+import ViewingContextHeader from "../components/ViewingContextHeader";
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
@@ -80,6 +81,7 @@ const DashboardLayout = () => {
           isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen}
         />
+        <ViewingContextHeader />
         <Box
           sx={{
             flexGrow: 1,

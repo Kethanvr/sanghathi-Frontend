@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+// Admin Upload History Component
 import {
   Alert,
   Box,
@@ -12,6 +13,7 @@ import {
   DialogTitle,
   Divider,
   Grid,
+  IconButton,
   MenuItem,
   Paper,
   Select,
@@ -22,6 +24,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -121,6 +124,9 @@ export default function UploadHistory() {
   const [sourceFilter, setSourceFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [tabFilter, setTabFilter] = useState("all");
+  const [confirmRestoreOpen, setConfirmRestoreOpen] = useState(false);
+  const [sessionToRestore, setSessionToRestore] = useState(null);
+  const [restoreConfirmationText, setRestoreConfirmationText] = useState("");
 
   const loadSessions = useCallback(async () => {
     setLoading(true);
@@ -208,25 +214,28 @@ export default function UploadHistory() {
   };
 
   const handleRestore = async (session) => {
-    const typed = window.prompt(
-      "This will restore this upload session. Type RESTORE to continue."
-    );
+    setSessionToRestore(session);
+    setRestoreConfirmationText("");
+    setConfirmRestoreOpen(true);
+  };
 
-    if (typed !== "RESTORE") {
+  const confirmRestore = async () => {
+    if (restoreConfirmationText !== "RESTORE") {
       return;
     }
 
-    setRestoringId(session._id);
+    const sessionId = sessionToRestore._id;
+    setConfirmRestoreOpen(false);
+    setRestoringId(sessionId);
+    
     try {
-      await restoreAdminUploadSession(session._id);
+      await restoreAdminUploadSession(sessionId);
       await loadSessions();
-      if (previewDialogOpen) {
-        closePreview();
-      }
     } catch (restoreError) {
       setError(restoreError?.message || "Restore failed. Please try again.");
     } finally {
       setRestoringId(null);
+      setSessionToRestore(null);
     }
   };
 
@@ -270,66 +279,115 @@ export default function UploadHistory() {
             </Button>
           </Stack>
 
-          <Grid container spacing={1.5} sx={{ mb: 2 }}>
+          <Grid container spacing={2} sx={{ mb: 3 }}>
             {[
-              { label: "Sessions", value: summary.total },
-              { label: "Success", value: summary.success },
-              { label: "Partial", value: summary.partial },
-              { label: "Failed", value: summary.failed },
-              { label: "Restored", value: summary.restored },
+              { label: "Total Sessions", value: summary.total, color: theme.palette.primary.main, icon: <DetailsIcon /> },
+              { label: "Success", value: summary.success, color: theme.palette.success.main, icon: <PreviewIcon /> },
+              { label: "Partial", value: summary.partial, color: theme.palette.warning.main, icon: <RefreshIcon /> },
+              { label: "Failed", value: summary.failed, color: theme.palette.error.main, icon: <PreviewIcon /> },
+              { label: "Restored", value: summary.restored, color: theme.palette.info.main, icon: <RestoreIcon /> },
             ].map((item) => (
-              <Grid key={item.label} item xs={6} sm={4} md={2}>
-                <Paper variant="outlined" sx={{ p: 1.25, borderRadius: 1.5 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    {item.label}
-                  </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    {item.value}
-                  </Typography>
+              <Grid key={item.label} item xs={12} sm={6} md={2.4}>
+                <Paper 
+                  elevation={0}
+                  sx={{ 
+                    p: 2, 
+                    borderRadius: 2, 
+                    border: '1px solid',
+                    borderColor: alpha(item.color, 0.2),
+                    backgroundColor: alpha(item.color, 0.04),
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2
+                  }}
+                >
+                  <Box sx={{ 
+                    p: 1, 
+                    borderRadius: 1, 
+                    backgroundColor: alpha(item.color, 0.1),
+                    color: item.color,
+                    display: 'flex'
+                  }}>
+                    {item.icon}
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      {item.label}
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                      {item.value}
+                    </Typography>
+                  </Box>
                 </Paper>
               </Grid>
             ))}
           </Grid>
 
-          <Stack direction={{ xs: "column", md: "row" }} spacing={1.25} sx={{ mb: 2 }}>
-            <Select
-              size="small"
-              value={sourceFilter}
-              onChange={(event) => setSourceFilter(event.target.value)}
-              sx={{ minWidth: 190 }}
-            >
-              <MenuItem value="all">All Sources</MenuItem>
-              <MenuItem value="dashboard-ui">Admin Dashboard</MenuItem>
-              <MenuItem value="local-script">Local Script</MenuItem>
-              <MenuItem value="api">API</MenuItem>
-            </Select>
+          <Stack 
+            direction={{ xs: "column", md: "row" }} 
+            spacing={1.25} 
+            sx={{ 
+              mb: 3, 
+              p: 1.5, 
+              backgroundColor: alpha(theme.palette.text.primary, 0.02),
+              borderRadius: 1.5,
+              border: '1px dashed',
+              borderColor: 'divider'
+            }}
+          >
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 0.5, ml: 0.5, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                Filter By Source
+              </Typography>
+              <Select
+                size="small"
+                fullWidth
+                value={sourceFilter}
+                onChange={(event) => setSourceFilter(event.target.value)}
+              >
+                <MenuItem value="all">All Sources</MenuItem>
+                <MenuItem value="dashboard-ui">Admin Dashboard</MenuItem>
+                <MenuItem value="local-script">Local Script</MenuItem>
+                <MenuItem value="api">API</MenuItem>
+              </Select>
+            </Box>
 
-            <Select
-              size="small"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-              sx={{ minWidth: 170 }}
-            >
-              <MenuItem value="all">All Statuses</MenuItem>
-              <MenuItem value="success">Success</MenuItem>
-              <MenuItem value="partial">Partial</MenuItem>
-              <MenuItem value="failed">Failed</MenuItem>
-              <MenuItem value="restored">Restored</MenuItem>
-            </Select>
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 0.5, ml: 0.5, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                Filter By Status
+              </Typography>
+              <Select
+                size="small"
+                fullWidth
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <MenuItem value="all">All Statuses</MenuItem>
+                <MenuItem value="success">Success</MenuItem>
+                <MenuItem value="partial">Partial</MenuItem>
+                <MenuItem value="failed">Failed</MenuItem>
+                <MenuItem value="restored">Restored</MenuItem>
+              </Select>
+            </Box>
 
-            <Select
-              size="small"
-              value={tabFilter}
-              onChange={(event) => setTabFilter(event.target.value)}
-              sx={{ minWidth: 210 }}
-            >
-              <MenuItem value="all">All Tabs</MenuItem>
-              {Object.entries(TAB_LABELS).map(([value, label]) => (
-                <MenuItem key={value} value={value}>
-                  {label}
-                </MenuItem>
-              ))}
-            </Select>
+            <Box sx={{ flexGrow: 1.5 }}>
+              <Typography variant="subtitle2" sx={{ mb: 0.5, ml: 0.5, color: 'text.secondary', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                Filter By Category
+              </Typography>
+              <Select
+                size="small"
+                fullWidth
+                value={tabFilter}
+                onChange={(event) => setTabFilter(event.target.value)}
+              >
+                <MenuItem value="all">All Categories</MenuItem>
+                {Object.entries(TAB_LABELS).map(([value, label]) => (
+                  <MenuItem key={value} value={value}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Box>
           </Stack>
 
           {error && (
@@ -347,20 +405,16 @@ export default function UploadHistory() {
           ) : (
             <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
               <Table size="small">
-                <TableHead>
+                <TableHead sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
                   <TableRow>
-                    <TableCell>Uploaded On</TableCell>
-                    <TableCell>Source</TableCell>
-                    <TableCell>Tab</TableCell>
-                    <TableCell>Uploaded By</TableCell>
-                    <TableCell>File</TableCell>
-                    <TableCell align="right">Rows</TableCell>
-                    <TableCell align="right">Success</TableCell>
-                    <TableCell align="right">Errors</TableCell>
-                    <TableCell align="right">Affected</TableCell>
-                    <TableCell align="right">Created</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Date & Time</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Source</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Uploaded By</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Rows</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Results</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -370,68 +424,58 @@ export default function UploadHistory() {
 
                     return (
                       <TableRow key={session._id} hover>
-                        <TableCell>{formatDateTime(session.createdAt)}</TableCell>
-                        <TableCell>{prettySource(session.source)}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>{formatDateTime(session.createdAt)}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip label={prettySource(session.source)} size="small" variant="outlined" sx={{ borderRadius: 1 }} />
+                        </TableCell>
                         <TableCell>{label}</TableCell>
-                        <TableCell>{toUserLabel(session.adminUserId)}</TableCell>
-                        <TableCell>{session.fileName || "-"}</TableCell>
-                        <TableCell align="right">{session.totalRows || 0}</TableCell>
-                        <TableCell align="right">{session.successCount || 0}</TableCell>
-                        <TableCell align="right">{session.errorCount || 0}</TableCell>
-                        <TableCell align="right">{session.affectedUserIds?.length || 0}</TableCell>
-                        <TableCell align="right">{session.createdUserIds?.length || 0}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{session.adminUserId?.name || "System"}</Typography>
+                          <Typography variant="caption" color="text.secondary">{session.adminUserId?.email || ""}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">{session.totalRows || 0} rows</Typography>
+                          <Typography variant="caption" color="text.secondary">{session.fileName || "No file"}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={1}>
+                            <Tooltip title="Success">
+                              <Chip label={session.successCount || 0} size="small" color="success" variant="outlined" />
+                            </Tooltip>
+                            <Tooltip title="Errors">
+                              <Chip label={session.errorCount || 0} size="small" color="error" variant="outlined" />
+                            </Tooltip>
+                          </Stack>
+                        </TableCell>
                         <TableCell>
                           <Chip
                             size="small"
-                            label={session.status || "unknown"}
+                            label={session.status?.toUpperCase() || "UNKNOWN"}
                             color={statusColor}
-                            variant={statusColor === "default" ? "outlined" : "filled"}
+                            sx={{ fontWeight: 700, borderRadius: 1 }}
                           />
                         </TableCell>
                         <TableCell align="right">
                           <Stack direction="row" spacing={1} justifyContent="flex-end">
-                            <Tooltip title="View full ingest details">
-                              <span>
-                                <Button
-                                  size="small"
-                                  variant="outlined"
-                                  startIcon={<DetailsIcon />}
-                                  onClick={() => openDetails(session)}
-                                  disabled={Boolean(restoringId)}
-                                >
-                                  Details
-                                </Button>
-                              </span>
-                            </Tooltip>
-
-                            <Tooltip title="Preview restore impact">
-                              <span>
-                                <Button
-                                  size="small"
-                                  variant="outlined"
-                                  startIcon={<PreviewIcon />}
-                                  onClick={() => openPreview(session)}
-                                  disabled={Boolean(restoringId)}
-                                >
-                                  Preview
-                                </Button>
-                              </span>
-                            </Tooltip>
-
-                            <Tooltip title="Restore this upload session">
-                              <span>
-                                <Button
-                                  size="small"
-                                  color="warning"
-                                  variant="contained"
-                                  startIcon={<RestoreIcon />}
-                                  disabled={session.restored || restoringId === session._id}
-                                  onClick={() => handleRestore(session)}
-                                >
-                                  {restoringId === session._id ? "Restoring..." : "Restore"}
-                                </Button>
-                              </span>
-                            </Tooltip>
+                            <IconButton color="info" size="small" onClick={() => openDetails(session)}>
+                              <DetailsIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton color="primary" size="small" onClick={() => openPreview(session)}>
+                              <PreviewIcon fontSize="small" />
+                            </IconButton>
+                            <Button
+                              size="small"
+                              color="warning"
+                              variant={session.restored ? "outlined" : "contained"}
+                              startIcon={<RestoreIcon />}
+                              disabled={session.restored || restoringId === session._id}
+                              onClick={() => handleRestore(session)}
+                              sx={{ minWidth: 100 }}
+                            >
+                              {session.restored ? "Restored" : restoringId === session._id ? "..." : "Restore"}
+                            </Button>
                           </Stack>
                         </TableCell>
                       </TableRow>
@@ -595,6 +639,41 @@ export default function UploadHistory() {
         </DialogContent>
         <DialogActions>
           <Button onClick={closeDetails}>Close</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={confirmRestoreOpen} onClose={() => setConfirmRestoreOpen(false)}>
+        <DialogTitle>Confirm Restoration</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body1" gutterBottom>
+            You are about to restore the upload session from <strong>{sessionToRestore && formatDateTime(sessionToRestore.createdAt)}</strong>.
+          </Typography>
+          <Typography variant="body2" color="error" sx={{ mb: 2, fontWeight: 600 }}>
+            This will delete only the semesters recorded in this session for the affected students. This action cannot be undone.
+          </Typography>
+          <Box sx={{ p: 2, bgcolor: alpha(theme.palette.error.main, 0.05), borderRadius: 1, border: '1px solid', borderColor: alpha(theme.palette.error.main, 0.2) }}>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              To confirm, please type <strong>RESTORE</strong> below:
+            </Typography>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Type RESTORE here"
+              value={restoreConfirmationText}
+              onChange={(e) => setRestoreConfirmationText(e.target.value)}
+              autoFocus
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmRestoreOpen(false)}>Cancel</Button>
+          <Button 
+            color="error" 
+            variant="contained" 
+            disabled={restoreConfirmationText !== "RESTORE"}
+            onClick={confirmRestore}
+          >
+            Confirm Restore
+          </Button>
         </DialogActions>
       </Dialog>
     </Page>

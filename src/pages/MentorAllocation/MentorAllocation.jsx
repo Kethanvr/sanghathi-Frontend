@@ -235,43 +235,42 @@ const MentorAllocation = () => {
 
   return (
     <Page title="Mentor Allocation">
-      <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 } }}>
-        <Card sx={{ boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
+      <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+        <Card>
           <Box 
             sx={{ 
               borderBottom: 1, 
               borderColor: 'divider',
               display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
               justifyContent: 'space-between',
-              alignItems: { xs: 'stretch', sm: 'center' },
-              gap: { xs: 1, sm: 0 },
+              alignItems: { xs: "flex-start", sm: "center" },
+              flexDirection: { xs: "column", sm: "row" },
+              gap: { xs: 1.5, sm: 0 },
               px: { xs: 2, sm: 3 },
-              py: 2
+              py: 2,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Typography variant="h6" component="h1" sx={{ fontWeight: 500 }}>
-                Assign Mentors
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={1} sx={{ justifyContent: { xs: 'flex-end', sm: 'flex-start' }, flexWrap: 'wrap', rowGap: 1 }}>
+            <Typography variant="h6" component="h1" sx={{ fontWeight: 500 }}>
+              Mentor Allocation
+            </Typography>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
               <Button
                 variant="contained"
                 color="secondary"
                 disabled={selectedStudents.length === 0}
                 onClick={handleAssignClick}
-                endIcon={<SchoolIcon />}
-                size={isMobile ? "small" : "medium"}
+                startIcon={<SchoolIcon />}
+                size="small"
+                fullWidth={isMobile}
               >
                 Assign Mentor {selectedStudents.length > 0 && `(${selectedStudents.length})`}
               </Button>
               <Button
                 variant="outlined"
-                color="inherit"
                 onClick={() => setShowFilters(!showFilters)}
-                endIcon={<FilterListIcon />}
-                size={isMobile ? "small" : "medium"}
+                startIcon={<FilterListIcon />}
+                size="small"
+                fullWidth={isMobile}
               >
                 {showFilters ? "Hide Filters" : "Show Filters"}
               </Button>

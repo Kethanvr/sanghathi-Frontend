@@ -15,7 +15,10 @@ import {
   Avatar,
   Link,
   useTheme,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useContext, useRef, useState } from "react";
 import { loginCall } from "../apiCalls";
 import { AuthContext } from "../context/AuthContext";
@@ -43,6 +46,7 @@ const Login = () => {
   const [isAdminDemoChecked, setIsAdminDemoChecked] = useState(false);
   const [isFacultyDemoChecked, setIsFacultyDemoChecked] = useState(false);
   const [isStudentDemoChecked, setIsStudentDemoChecked] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleAdminDemoChange = (event) => {
     setIsAdminDemoChecked(event.target.checked);
@@ -77,6 +81,10 @@ const Login = () => {
     }
   };
 
+  const handleShowPasswordToggle = () => {
+    setShowPassword(!showPassword);
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -84,7 +92,6 @@ const Login = () => {
         { email: email.current.value, password: password.current.value },
         dispatch
       );
-      sessionStorage.setItem(RELEASE_ANNOUNCEMENT_SESSION_KEY, "true");
       const savedRedirectPath = sessionStorage.getItem("postLoginRedirectPath");
       const redirectPath =
         redirectParam ||
@@ -201,7 +208,6 @@ const Login = () => {
                       alt="Login illustration"
                       fit="cover"
                       duration={0}
-                      shift="none"
                       style={{
                         width: "100%",
                         height: "clamp(130px, 24vh, 180px)",
@@ -219,10 +225,24 @@ const Login = () => {
                   <TextField
                     label="Password"
                     variant="outlined"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     fullWidth
                     inputRef={password}
                     autoComplete="current-password"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={handleShowPasswordToggle}
+                            edge="end"
+                            aria-label="toggle password visibility"
+                            size="small"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
 
                   <Box display="flex" justifyContent="flex-end">

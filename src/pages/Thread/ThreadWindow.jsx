@@ -307,7 +307,11 @@ export default function ThreadWindow() {
   };
 
   const handleBackToThreads = () => {
-    navigate("/threads");
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(["hod", "admin", "director"].includes(user?.roleName) ? "/recent-threads" : "/threads");
+    }
   };
 
   return (

@@ -21,9 +21,7 @@ const commonLinks = [
   { label: "Settings", to: "/settings" },
 ];
 
-const contactLinks = [
-  { label: "About Developers", to: "/about-developers" },
-];
+const contactLinks = [];
 
 const SUPPORT_EMAIL = "emithru@gmail.com";
 
@@ -168,9 +166,6 @@ const Footer = () => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={2}>
-            <FooterLinkGroup title="Contact" links={contactLinks} />
-          </Grid>
 
           <Grid item xs={12} sm={6} md={2}>
             <FooterLinkGroup

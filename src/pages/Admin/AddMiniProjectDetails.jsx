@@ -11,7 +11,13 @@ import {
   Alert,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  IconButton
 } from "@mui/material";
 import {
   FileDownload as FileDownloadIcon,
@@ -19,6 +25,7 @@ import {
   HelpOutline as HelpOutlineIcon
 } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
+import ClearIcon from "@mui/icons-material/Clear";
 import Papa from "papaparse";
 import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
@@ -34,6 +41,8 @@ const AddMiniProjectDetails = () => {
   const [errorCount, setErrorCount] = useState(0);
   const [errors, setErrors] = useState([]);
   const [file, setFile] = useState(null);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [tempRows, setTempRows] = useState([]);
 
   const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
 
@@ -66,6 +75,7 @@ const AddMiniProjectDetails = () => {
       "USN",
       "Name",
       "Title",
+      "Semester",
       "Man Hours",
       "Start Date",
       "End Date"
@@ -75,7 +85,11 @@ const AddMiniProjectDetails = () => {
       1,
       "1CR23IS001",
       "AAMITH PRAMOD",
-      "AI Based Smart Traffic Optimization System"
+      "AI Based Smart Traffic Optimization System",
+      "4",
+      "120",
+      "2024-01-05",
+      "2024-04-05"
     ];
 
     const csvContent = Papa.unparse([headers, exampleRow], { quotes: true });
@@ -101,24 +115,53 @@ const AddMiniProjectDetails = () => {
     if (!uploadedFile) return;
 
     setFile(uploadedFile);
-    setProcessing(true);
-    setErrors([]);
-    setSuccessCount(0);
-    setErrorCount(0);
-
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       const content = e.target.result;
-
       const results = Papa.parse(content, {
         header: true,
         skipEmptyLines: true
       });
-
-      await processRows(results.data);
+      
+      if (results.data.length === 0) {
+        return;
+      }
+      
+      setTempRows(results.data);
+      setOpenConfirm(true);
     };
-
     reader.readAsText(uploadedFile);
+    event.target.value = "";
+  };
+
+  const handleConfirmUpload = async () => {
+    setOpenConfirm(false);
+    setProcessing(true);
+    setErrors([]);
+    setSuccessCount(0);
+    setErrorCount(0);
+    await processRows(tempRows);
+  };
+
+  const handleClearResults = () => {
+    setSuccessCount(0);
+    setErrorCount(0);
+    setErrors([]);
+    setFile(null);
+  };
+
+  // ================= VALIDATE SEMESTER =================
+  const validateSemester = (semesterValue) => {
+    if (!semesterValue || semesterValue.toString().trim() === "") {
+      return { valid: true, normalizedValue: null };
+    }
+    
+    const parsed = parseInt(semesterValue, 10);
+    if (isNaN(parsed) || parsed < 1 || parsed > 8) {
+      return { valid: false, error: `Invalid semester: must be 1–8, got "${semesterValue}"` };
+    }
+    
+    return { valid: true, normalizedValue: parsed };
   };
 
   // ================= PROCESS ROWS =================
@@ -127,28 +170,57 @@ const AddMiniProjectDetails = () => {
     let errCount = 0;
     const newErrors = [];
     const affectedUserIds = new Set();
+    const uploadEntries = [];
+    const previousDataByUser = new Map();
+
+    const cloneValue = (value) => {
+      if (value === undefined || value === null) {
+        return value;
+      }
+
+      return JSON.parse(JSON.stringify(value));
+    };
 
     for (const row of rows) {
       try {
         if (!row.USN) throw new Error("USN missing");
         if (!row.Title) throw new Error("Project Title missing");
 
+        // Validate semester if provided
+        const semesterValidation = validateSemester(row.Semester);
+        if (!semesterValidation.valid) {
+          throw new Error(semesterValidation.error);
+        }
+
         const response = await api.get(`/users/usn/${row.USN}`, {
           params: { _ts: Date.now() },
-          headers: {
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache"
-          }
         });
         const userId = response.data?.userId || response.data?._id;
 
         if (!userId) throw new Error("User not found");
+
+        if (!previousDataByUser.has(String(userId))) {
+          let previousMiniProject = null;
+          try {
+            const currentResponse = await api.get(`/project/miniproject/${userId}`);
+            previousMiniProject = Array.isArray(currentResponse.data?.data?.miniproject)
+              ? currentResponse.data.data.miniproject
+              : null;
+          } catch (snapshotError) {
+            if (snapshotError?.response?.status !== 404) {
+              throw snapshotError;
+            }
+          }
+
+          previousDataByUser.set(String(userId), cloneValue(previousMiniProject));
+        }
 
         await api.post(`/project/miniproject`, {
           userId,
           miniproject: [
             {
               title: row.Title,
+              semester: row.Semester || null,
               manHours: row["Man Hours"] ? Number(row["Man Hours"]) : null,
               startDate: row["Start Date"] || null,
               completedDate: row["End Date"] || null
@@ -158,6 +230,12 @@ const AddMiniProjectDetails = () => {
 
         success++;
         affectedUserIds.add(String(userId));
+        uploadEntries.push({
+          uploadIndex: uploadEntries.length + 1,
+          userId: String(userId),
+          usn: row.USN,
+          previousMiniProject: previousDataByUser.get(String(userId)),
+        });
       } catch (error) {
         errCount++;
         newErrors.push(`Error for ${row.USN}: ${error.message}`);
@@ -172,6 +250,9 @@ const AddMiniProjectDetails = () => {
       errorCount: errCount,
       errors: newErrors,
       affectedUserIds: Array.from(affectedUserIds),
+      metadata: {
+        entries: uploadEntries,
+      },
     });
 
     setSuccessCount(success);
@@ -212,6 +293,7 @@ const AddMiniProjectDetails = () => {
 
           <Typography variant="body2">• USN must exist in system</Typography>
           <Typography variant="body2">• Title is mandatory</Typography>
+          <Typography variant="body2">• Semester: integer 1–8 (provide blank if unknown)</Typography>
           <Typography variant="body2">• Name should match registered student</Typography>
           <Typography variant="body2">• Do not leave blank rows</Typography>
         </Box>
@@ -263,6 +345,18 @@ const AddMiniProjectDetails = () => {
                 Errors encountered: {errorCount}
               </Alert>
             )}
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+              <Button 
+                size="small" 
+                onClick={handleClearResults}
+                startIcon={<ClearIcon />}
+                color="inherit"
+                sx={{ opacity: 0.7 }}
+              >
+                Clear Results
+              </Button>
+            </Box>
           </Box>
         )}
 
@@ -284,6 +378,35 @@ const AddMiniProjectDetails = () => {
           </Typography>
         </Paper>
       </Paper>
+
+      <Dialog
+        open={openConfirm}
+        onClose={() => setOpenConfirm(false)}
+        PaperProps={{
+          sx: { borderRadius: 2, p: 1 }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Confirm Upload</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You have selected <strong>{file?.name}</strong> with <strong>{tempRows.length}</strong> records. 
+            Are you sure you want to proceed with the bulk upload for <strong>Mini Project Details</strong>?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOpenConfirm(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmUpload} 
+            variant="contained" 
+            autoFocus
+            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
+          >
+            Start Upload
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

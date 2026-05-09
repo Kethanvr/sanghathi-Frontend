@@ -11,7 +11,13 @@ import {
   Alert,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  IconButton
 } from "@mui/material";
 import { 
   FileDownload as FileDownloadIcon,
@@ -19,6 +25,7 @@ import {
   HelpOutline as HelpOutlineIcon
 } from '@mui/icons-material';
 import { alpha, useTheme } from "@mui/material/styles";
+import ClearIcon from "@mui/icons-material/Clear";
 import Papa from "papaparse";
 import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
@@ -35,6 +42,8 @@ const AddAttendance = () => {
   const [errorCount, setErrorCount] = useState(0);
   const [errors, setErrors] = useState([]);
   const [file, setFile] = useState(null);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [tempRows, setTempRows] = useState([]);
 
   const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
 
@@ -131,17 +140,17 @@ const AddAttendance = () => {
     if (!file) return;
     
     setFile(file);
-    setProcessing(true);
-    setErrors([]);
-    setSuccessCount(0);
-    setErrorCount(0);
-
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       const content = e.target.result;
       let rows = [];
       if (file.type === "application/json") {
-        rows = JSON.parse(content);
+        try {
+          rows = JSON.parse(content);
+        } catch (error) {
+          logger.error("JSON parse error:", error);
+          return;
+        }
       } else {
         const results = Papa.parse(content, {
           header: true,
@@ -149,9 +158,32 @@ const AddAttendance = () => {
         });
         rows = results.data;
       }
-      await processRows(rows);
+      
+      if (rows.length === 0) {
+        return;
+      }
+
+      setTempRows(rows);
+      setOpenConfirm(true);
     };
     reader.readAsText(file);
+    event.target.value = "";
+  };
+
+  const handleConfirmUpload = async () => {
+    setOpenConfirm(false);
+    setProcessing(true);
+    setErrors([]);
+    setSuccessCount(0);
+    setErrorCount(0);
+    await processRows(tempRows);
+  };
+
+  const handleClearResults = () => {
+    setSuccessCount(0);
+    setErrorCount(0);
+    setErrors([]);
+    setFile(null);
   };
 
   const processRows = async (rows) => {
@@ -159,22 +191,30 @@ const AddAttendance = () => {
     let errors = 0;
     const newErrors = [];
     const affectedUserIds = new Set();
+    const uploadEntries = [];
+    const previousMonthByTarget = new Map();
+
+    const cloneValue = (value) => {
+      if (value === undefined || value === null) {
+        return value;
+      }
+
+      return JSON.parse(JSON.stringify(value));
+    };
 
     for (const [index, row] of rows.entries()) {
-      // Find headers case-insensitively (declare outside try block for catch access)
       const rowHeaders = Object.keys(row);
-      const usnKey = rowHeaders.find(h => h.toLowerCase() === 'usn');
-      const semKey = rowHeaders.find(h => h.toLowerCase() === 'sem');
-      const monthKey = rowHeaders.find(h => h.toLowerCase() === 'month');
-      
+      const usnKey = rowHeaders.find((h) => h.toLowerCase() === "usn");
+      const semKey = rowHeaders.find((h) => h.toLowerCase() === "sem");
+      const monthKey = rowHeaders.find((h) => h.toLowerCase() === "month");
+
       try {
         logger.info(`Processing row ${index + 1}:`, row);
-        
-        // Trim all values and check for required fields
+
         const usn = row[usnKey]?.toString().trim();
         const sem = row[semKey]?.toString().trim();
         const month = row[monthKey]?.toString().trim();
-        
+
         if (!usn) {
           throw new Error("Missing USN");
         }
@@ -185,76 +225,67 @@ const AddAttendance = () => {
           throw new Error("Missing Month");
         }
 
-        // Convert month name to number using case-insensitive matching
         const monthValue = getMonthValue(month);
         if (monthValue === undefined) {
           throw new Error(`Invalid month: ${month}. Use month names like January, Jan, February, Feb, etc.`);
         }
 
         const subjects = [];
-        
-        // Group headers by their base name to handle Papa Parse's _1, _2 suffixes
-        // This handles duplicate column names like SCHEDULED, SCHEDULED_1, SCHEDULED_2
         const subjectGroups = [];
         const processedIndices = new Set();
-        
+
         rowHeaders.forEach((header, idx) => {
-          if (['usn', 'sem', 'month'].includes(header.toLowerCase()) || processedIndices.has(idx)) {
+          if (["usn", "sem", "month"].includes(header.toLowerCase()) || processedIndices.has(idx)) {
             return;
           }
-          
-          // Check if this is a subject column (not scheduled/attended)
+
           const headerLower = header.toLowerCase();
-          if (!headerLower.includes('scheduled') && !headerLower.includes('attended')) {
-            // This is a subject name column
-            // Find the next two columns that are scheduled and attended
+          if (!headerLower.includes("scheduled") && !headerLower.includes("attended")) {
             let scheduledHeader = null;
             let attendedHeader = null;
-            
+
             for (let i = idx + 1; i < rowHeaders.length; i++) {
               if (processedIndices.has(i)) continue;
-              
+
               const nextHeader = rowHeaders[i];
               const nextLower = nextHeader.toLowerCase();
-              
-              if (!scheduledHeader && nextLower.includes('scheduled')) {
+
+              if (!scheduledHeader && nextLower.includes("scheduled")) {
                 scheduledHeader = nextHeader;
                 processedIndices.add(i);
-              } else if (scheduledHeader && !attendedHeader && nextLower.includes('attended')) {
+              } else if (scheduledHeader && !attendedHeader && nextLower.includes("attended")) {
                 attendedHeader = nextHeader;
                 processedIndices.add(i);
                 break;
               }
             }
-            
+
             if (scheduledHeader && attendedHeader) {
               subjectGroups.push({
                 subjectHeader: header,
                 scheduledHeader,
-                attendedHeader
+                attendedHeader,
               });
               processedIndices.add(idx);
             }
           }
         });
 
-        // Process each subject group
         for (const { subjectHeader, scheduledHeader, attendedHeader } of subjectGroups) {
           const subjectName = row[subjectHeader]?.toString().trim();
           const scheduled = parseInt(row[scheduledHeader], 10);
           const attended = parseInt(row[attendedHeader], 10);
-          
-          // Skip if subject name is empty or is "cumulative"
-          if (!subjectName || subjectName.toLowerCase() === 'cumulative') {
+
+          if (!subjectName || subjectName.toLowerCase() === "cumulative") {
             continue;
           }
-          
-          if (isNaN(scheduled) || isNaN(attended)) {
+
+          if (Number.isNaN(scheduled) || Number.isNaN(attended)) {
             throw new Error(`Invalid numbers for ${subjectName}`);
           }
-          
+
           subjects.push({
-            subjectCode: '',  // No subject code in this format
+            subjectCode: "",
             subjectName,
             attendedClasses: attended,
             totalClasses: scheduled,
@@ -276,16 +307,46 @@ const AddAttendance = () => {
         };
         logger.info("Attendance Data to send: ", attendanceData);
 
+        const targetKey = `${userId}-${attendanceData.semester}-${attendanceData.month}`;
+        if (!previousMonthByTarget.has(targetKey)) {
+          let previousMonth = null;
+          try {
+            const currentResponse = await api.get(`/students/attendance/${userId}`);
+            const currentAttendance = currentResponse.data?.data?.attendance;
+            const currentSemester = currentAttendance?.semesters?.find(
+              (item) => Number(item.semester) === attendanceData.semester
+            );
+            previousMonth = currentSemester?.months?.find(
+              (item) => Number(item.month) === attendanceData.month
+            ) || null;
+          } catch (snapshotError) {
+            if (snapshotError?.response?.status !== 404) {
+              throw snapshotError;
+            }
+          }
+
+          previousMonthByTarget.set(targetKey, cloneValue(previousMonth));
+        }
+
         try {
           await api.post(`/students/attendance/${userId}`, attendanceData);
           success++;
           affectedUserIds.add(String(userId));
+          uploadEntries.push({
+            uploadIndex: uploadEntries.length + 1,
+            userId: String(userId),
+            usn,
+            semester: attendanceData.semester,
+            month: attendanceData.month,
+            previousMonth: previousMonthByTarget.get(targetKey),
+          });
         } catch (postError) {
           logger.error("Post error details:", postError.response?.data);
-          const errorMessage = postError.response?.data?.message || 
-                             postError.response?.data?.error || 
-                             postError.message || 
-                             'Unknown error occurred';
+          const errorMessage =
+            postError.response?.data?.message ||
+            postError.response?.data?.error ||
+            postError.message ||
+            "Unknown error occurred";
           throw new Error(`Failed to save attendance: ${errorMessage}`);
         }
       } catch (error) {
@@ -303,6 +364,9 @@ const AddAttendance = () => {
       errorCount: errors,
       errors: newErrors,
       affectedUserIds: Array.from(affectedUserIds),
+      metadata: {
+        entries: uploadEntries,
+      },
     });
 
     setSuccessCount(success);
@@ -519,6 +583,18 @@ const AddAttendance = () => {
                 Errors encountered: {errorCount} record(s)
               </Alert>
             )}
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Button 
+                size="small" 
+                onClick={handleClearResults}
+                startIcon={<ClearIcon />}
+                color="inherit"
+                sx={{ opacity: 0.7 }}
+              >
+                Clear Results
+              </Button>
+            </Box>
             
             {errors.length > 0 && (
               <Box 
@@ -579,6 +655,35 @@ const AddAttendance = () => {
           </Typography>
         </Paper>
       </Paper>
+
+      <Dialog
+        open={openConfirm}
+        onClose={() => setOpenConfirm(false)}
+        PaperProps={{
+          sx: { borderRadius: 2, p: 1 }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Confirm Upload</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You have selected <strong>{file?.name}</strong> with <strong>{tempRows.length}</strong> records. 
+            Are you sure you want to proceed with the bulk upload for <strong>Attendance</strong>?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOpenConfirm(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmUpload} 
+            variant="contained" 
+            autoFocus
+            sx={{ bgcolor: isLight ? theme.palette.primary.main : theme.palette.info.main }}
+          >
+            Start Upload
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

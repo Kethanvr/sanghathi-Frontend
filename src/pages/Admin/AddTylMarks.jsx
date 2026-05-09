@@ -11,7 +11,13 @@ import {
   Alert,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  IconButton
 } from "@mui/material";
 import {
   FileDownload as FileDownloadIcon,
@@ -19,6 +25,7 @@ import {
   HelpOutline as HelpOutlineIcon
 } from "@mui/icons-material";
 import { alpha, useTheme } from "@mui/material/styles";
+import ClearIcon from "@mui/icons-material/Clear";
 import Papa from "papaparse";
 import api from "../../utils/axios";
 import useDraftPersistence from "../../hooks/useDraftPersistence";
@@ -34,6 +41,8 @@ const AddTylMarks = () => {
   const [errorCount, setErrorCount] = useState(0);
   const [errors, setErrors] = useState([]);
   const [file, setFile] = useState(null);
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [tempRows, setTempRows] = useState([]);
 
   const draftScopeId = useMemo(() => resolveDraftScopeId(), []);
 
@@ -137,21 +146,39 @@ const AddTylMarks = () => {
     if (!uploadedFile) return;
 
     setFile(uploadedFile);
-    setProcessing(true);
-    setErrors([]);
-    setSuccessCount(0);
-    setErrorCount(0);
-
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       const content = e.target.result;
       const results = Papa.parse(content, {
         header: true,
         skipEmptyLines: true
       });
-      await processRows(results.data);
+      
+      if (results.data.length === 0) {
+        return;
+      }
+      
+      setTempRows(results.data);
+      setOpenConfirm(true);
     };
     reader.readAsText(uploadedFile);
+    event.target.value = "";
+  };
+
+  const handleConfirmUpload = async () => {
+    setOpenConfirm(false);
+    setProcessing(true);
+    setErrors([]);
+    setSuccessCount(0);
+    setErrorCount(0);
+    await processRows(tempRows);
+  };
+
+  const handleClearResults = () => {
+    setSuccessCount(0);
+    setErrorCount(0);
+    setErrors([]);
+    setFile(null);
   };
 
   // ================= PROCESS ROWS =================
@@ -160,6 +187,16 @@ const AddTylMarks = () => {
     let errCount = 0;
     const newErrors = [];
     const affectedUserIds = new Set();
+    const uploadEntries = [];
+    const previousSemesterByTarget = new Map();
+
+    const cloneValue = (value) => {
+      if (value === undefined || value === null) {
+        return value;
+      }
+
+      return JSON.parse(JSON.stringify(value));
+    };
 
     for (const row of rows) {
 
@@ -270,6 +307,22 @@ const AddTylMarks = () => {
         const userId = response.data?.userId || response.data?._id;
         if (!userId) throw new Error("User not found");
 
+        const targetKey = `${userId}-1`;
+        if (!previousSemesterByTarget.has(targetKey)) {
+          let previousSemester = null;
+          try {
+            const currentResponse = await api.get(`/tyl-scores/${userId}`);
+            const currentSemesters = Array.isArray(currentResponse.data?.data) ? currentResponse.data.data : [];
+            previousSemester = currentSemesters.find((entry) => Number(entry.semester) === 1) || null;
+          } catch (snapshotError) {
+            if (snapshotError?.response?.status !== 404) {
+              throw snapshotError;
+            }
+          }
+
+          previousSemesterByTarget.set(targetKey, cloneValue(previousSemester));
+        }
+
         await api.post(`/tyl-scores`, {
           userId,
           semester: 1,
@@ -278,6 +331,13 @@ const AddTylMarks = () => {
 
         success++;
         affectedUserIds.add(String(userId));
+        uploadEntries.push({
+          uploadIndex: uploadEntries.length + 1,
+          userId: String(userId),
+          usn: normalizedUsn,
+          semester: 1,
+          previousSemester: previousSemesterByTarget.get(targetKey),
+        });
       } catch (error) {
         errCount++;
         newErrors.push(`Error for ${row.USN}: ${error.message}`);
@@ -292,6 +352,9 @@ const AddTylMarks = () => {
       errorCount: errCount,
       errors: newErrors,
       affectedUserIds: Array.from(affectedUserIds),
+      metadata: {
+        entries: uploadEntries,
+      },
     });
 
     setSuccessCount(success);
@@ -347,6 +410,18 @@ const AddTylMarks = () => {
                 Errors encountered: {errorCount}
               </Alert>
             )}
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+              <Button 
+                size="small" 
+                onClick={handleClearResults}
+                startIcon={<ClearIcon />}
+                color="inherit"
+                sx={{ opacity: 0.7 }}
+              >
+                Clear Results
+              </Button>
+            </Box>
           </Box>
         )}
 
@@ -368,6 +443,35 @@ const AddTylMarks = () => {
           </Typography>
         </Paper>
       </Paper>
+
+      <Dialog
+        open={openConfirm}
+        onClose={() => setOpenConfirm(false)}
+        PaperProps={{
+          sx: { borderRadius: 2, p: 1 }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Confirm Upload</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You have selected <strong>{file?.name}</strong> with <strong>{tempRows.length}</strong> records. 
+            Are you sure you want to proceed with the bulk upload for <strong>TYL Marks</strong>?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOpenConfirm(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmUpload} 
+            variant="contained" 
+            autoFocus
+            sx={{ bgcolor: theme.palette.primary.main, '&:hover': { bgcolor: theme.palette.primary.dark } }}
+          >
+            Start Upload
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
