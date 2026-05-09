@@ -231,50 +231,48 @@ const FeedbackManagement = () => {
               limit: 1000 // Get all for this semester
             }
           });
-          setAllStudents(studentResponse.data?.data?.users || []);
+          const fetchedStudents = studentResponse.data?.data?.users || [];
+          setAllStudents(fetchedStudents);
+
+          if (isHodOrDirector) {
+            const feedbackMap = {};
+            (overviewData.feedbacks || []).forEach((fb) => {
+              const studentId = fb.userId?._id || fb.userId;
+              if (!feedbackMap[studentId]) {
+                feedbackMap[studentId] = [];
+              }
+              feedbackMap[studentId].push(fb);
+            });
+
+            const enrichedMentees = fetchedStudents.map((student) => ({
+              studentId: student._id,
+              studentName: student.name,
+              collegeCode: student.collegeCode,
+              semester: student.semester || student.sem,
+              feedbacks: feedbackMap[student._id] || [],
+              averageScore: feedbackMap[student._id]?.find((f) => f.feedbackRound === activeRound)?.averageScore,
+            }));
+
+            setMentorGroups([
+              {
+                mentorId: user._id,
+                mentorName: "My Mentees",
+                mentees: enrichedMentees,
+              },
+            ]);
+
+            logger.info("Mentee data prepared for HOD/Director:", enrichedMentees.length, "mentees");
+          }
         } catch (err) {
           logger.error("Error fetching students:", err);
           setAllStudents([]);
+          if (isHodOrDirector) {
+            setMentorGroups([]);
+          }
         }
       } else {
         setAllStudents([]);
-      }
-
-      // 7. For HOD/Director, organize feedback data into mentee lists
-      if (isHodOrDirector && activeSem && allStudents.length > 0) {
-        try {
-          // Create a map of student feedback
-          const feedbackMap = {};
-          feedbacks.forEach(fb => {
-            const studentId = fb.userId?._id || fb.userId;
-            if (!feedbackMap[studentId]) {
-              feedbackMap[studentId] = [];
-            }
-            feedbackMap[studentId].push(fb);
-          });
-          
-          // Enrich all students with feedback data
-          const enrichedMentees = allStudents.map(student => ({
-            studentId: student._id,
-            studentName: student.name,
-            collegeCode: student.collegeCode,
-            semester: student.semester,
-            feedbacks: feedbackMap[student._id] || [],
-            // Add average score for current round
-            averageScore: feedbackMap[student._id]?.find(f => f.feedbackRound === activeRound)?.averageScore
-          }));
-          
-          // For now, show all as one group for HOD/Director
-          // Later can be enhanced to fetch actual mentor assignments
-          setMentorGroups([{
-            mentorId: user._id,
-            mentorName: "My Mentees", 
-            mentees: enrichedMentees
-          }]);
-          
-          logger.info("Mentee data prepared for HOD/Director:", enrichedMentees.length, "mentees");
-        } catch (err) {
-          logger.error("Error organizing mentor groups:", err);
+        if (isHodOrDirector) {
           setMentorGroups([]);
         }
       }

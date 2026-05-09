@@ -49,22 +49,33 @@ const ThreadReports = () => {
     const fetchMentors = async () => {
       try {
         setIsLoading(true);
-        
-        // For HOD, use the /hod/mentors endpoint
-        let endpoint = "/users?role=faculty";
-        if (user?.roleName === "hod") {
-          endpoint = `/hod/mentors`;
+
+        if (user?.roleName === "faculty") {
+          const facultyMentor = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            avatar: user.avatar || user.photo || null,
+            department: user.department || null,
+          };
+
+          setMentors([facultyMentor]);
+          setDepartments(user.department ? [user.department] : []);
+          return;
         }
-        
+
+        // HOD keeps the department-scoped mentors endpoint, everyone else uses the general faculty list
+        const endpoint = user?.roleName === "hod" ? "/hod/mentors" : "/users?role=faculty";
+
         const response = await api.get(endpoint);
         const mentorsData = response.data.data.mentors || response.data.data.users || response.data.data;
-        
-        setMentors(Array.isArray(mentorsData) ? mentorsData : []);
-        
-        // Extract unique departments
+
+        const normalizedMentors = Array.isArray(mentorsData) ? mentorsData : [];
+        setMentors(normalizedMentors);
+
         const uniqueDepartments = [
           ...new Set(
-            mentorsData
+            normalizedMentors
               .map((m) => m?.department?.name || m?.department)
               .filter(Boolean)
           ),
