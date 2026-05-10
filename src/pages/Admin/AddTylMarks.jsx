@@ -463,13 +463,7 @@ const AddTylMarks = () => {
 
     for (const entry of normalizedEntries) {
       try {
-        const response = await api.get(`/users/usn/${encodeURIComponent(entry.usn)}`, {
-          params: { _ts: Date.now() },
-          headers: {
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-          },
-        });
+        const response = await api.get(`/users/usn/${encodeURIComponent(entry.usn)}`);
         const userId = response.data?.userId || response.data?._id;
         if (!userId) throw new Error("User not found");
 
