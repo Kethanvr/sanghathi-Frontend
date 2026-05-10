@@ -127,25 +127,31 @@ const FeedbackReportPage = () => {
       try {
         setIsLoading(true);
         const resp = await api.get(`/feedback/by-mentor/${mentorId}`);
-        const mentees = resp.data?.data?.mentees || [];
+        // Backend returns { data: { mentors: [ { mentees: [...] , mentorName, mentorId } ] } }
+        const mentorsArr = resp.data?.data?.mentors || [];
+        const mentorGroup = Array.isArray(mentorsArr) && mentorsArr.length > 0 ? mentorsArr[0] : null;
+        const mentees = mentorGroup?.mentees || [];
+
         // Flatten mentees.feedbacks into rows
         const rows = [];
         mentees.forEach((m) => {
           (Array.isArray(m.feedbacks) ? m.feedbacks : []).forEach((fb) => {
             rows.push({
               _id: fb._id,
-              studentId: m.studentId,
+              studentId: m.studentId || m.studentId || (fb.userId && fb.userId._id) || null,
               studentName: m.studentName || fb.userId?.name || "N/A",
-              studentEmail: fb.userId?.email || "N/A",
-              usn: fb.studentUSN || fb.usn || "N/A",
+              studentEmail: fb.userId?.email || m.studentEmail || "N/A",
+              usn: fb.studentUSN || fb.usn || m.usn || "N/A",
               semester: fb.semester || "N/A",
               feedbackRound: fb.feedbackRound || fb.round || "N/A",
               averageScore: fb.averageScore || "N/A",
+              submittedAt: fb.submittedAt || fb.createdAt || null,
               remarks: fb.remarks || "",
-              mentorName: resp.data?.data?.mentor?.name || "N/A",
+              mentorName: mentorGroup?.mentorName || resp.data?.data?.mentor?.name || "N/A",
             });
           });
         });
+
         setMentorFeedback(rows);
         if (rows.length) setSelectedFeedback(rows[0]);
       } catch (error) {
@@ -185,6 +191,21 @@ const FeedbackReportPage = () => {
     }
     return rows;
   }, [mentorFeedback, selectedMentorId, semesterFilter, roundFilter, searchQuery]);
+
+  // Latest feedback per mentee (one row per mentee) derived from mentorFilteredRows
+  const menteeLatestRows = useMemo(() => {
+    const map = new Map();
+    for (const r of mentorFilteredRows) {
+      const id = String(r.studentId || r.studentId || "");
+      const existing = map.get(id);
+      const currTime = r.submittedAt ? new Date(r.submittedAt).getTime() : 0;
+      const existTime = existing && existing.submittedAt ? new Date(existing.submittedAt).getTime() : 0;
+      if (!existing || currTime >= existTime) {
+        map.set(id, r);
+      }
+    }
+    return Array.from(map.values());
+  }, [mentorFilteredRows]);
 
   const handleDownloadExcel = useCallback(async () => {
     try {
@@ -323,32 +344,7 @@ const FeedbackReportPage = () => {
                 Back to Mentors
               </Button>
 
-              {/* Mentees Grid */}
-              <Grid container spacing={3} sx={{ mb: 2 }}>
-                {isLoading ? (
-                  <Grid item xs={12}><Typography>Loading mentees...</Typography></Grid>
-                ) : (
-                  // derive mentees from mentorFeedback
-                  Array.from(new Map(mentorFeedback.map((r) => [r.studentId, { studentId: r.studentId, studentName: r.studentName, studentEmail: r.studentEmail, usn: r.usn }])).values()).map((mentee) => (
-                    <Grid item xs={12} sm={6} md={4} lg={3} key={mentee.studentId}>
-                      <Card sx={{ cursor: 'pointer', border: `1px solid ${theme.palette.divider}` }} onClick={() => {
-                        // set selected feedback to first feedback of this mentee
-                        const rows = mentorFeedback.filter((r) => String(r.studentId) === String(mentee.studentId));
-                        if (rows.length) setSelectedFeedback(rows[0]);
-                        if (typeof setSelectedMenteeId === 'function') setSelectedMenteeId(mentee.studentId);
-                      }}>
-                        <CardContent>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{mentee.studentName || 'N/A'}</Typography>
-                          <Typography variant="caption" color="text.secondary">{mentee.studentEmail}</Typography>
-                          <Box sx={{ mt: 1 }}>
-                            <Typography variant="caption" color="text.secondary">USN: {mentee.usn || 'N/A'}</Typography>
-                          </Box>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))
-                )}
-              </Grid>
+              {/* Mentee list table: one row per mentee (latest feedback) with View Details action */}
 
               {/* Feedback table for selected mentor (and optionally filtered by selectedFeedback/mentee) */}
               <Paper elevation={0} sx={{ borderRadius: 3, overflow: "hidden", border: `1px solid ${theme.palette.divider}` }}>
@@ -410,28 +406,32 @@ const FeedbackReportPage = () => {
                           <TableCell sx={{ fontWeight: 800 }}>USN</TableCell>
                           <TableCell sx={{ fontWeight: 800 }}>Round</TableCell>
                           <TableCell sx={{ fontWeight: 800 }}>Score</TableCell>
+                          <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>Action</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {isLoading ? (
                           <TableRow>
-                            <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                            <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                               Loading...
                             </TableCell>
                           </TableRow>
-                        ) : mentorFilteredRows.length ? (
-                          mentorFilteredRows.map((row) => (
-                            <TableRow key={row._id} hover onClick={() => setSelectedFeedback(row)} sx={{ cursor: 'pointer' }}>
+                        ) : menteeLatestRows.length ? (
+                          menteeLatestRows.map((row) => (
+                            <TableRow key={row._id} hover>
                               <TableCell>{row.studentName}</TableCell>
                               <TableCell>{row.studentEmail}</TableCell>
                               <TableCell>{row.usn}</TableCell>
                               <TableCell>{row.feedbackRound}</TableCell>
                               <TableCell>{row.averageScore}</TableCell>
+                              <TableCell align="center">
+                                <Button size="small" variant="outlined" onClick={() => setSelectedFeedback(row)}>View Details</Button>
+                              </TableCell>
                             </TableRow>
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                            <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                               No feedback for this mentor.
                             </TableCell>
                           </TableRow>
