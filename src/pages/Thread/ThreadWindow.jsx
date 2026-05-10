@@ -51,20 +51,8 @@ const ThreadHeader = ({ thread, onCloseThread, currentUser, onBack }) => {
       ? thread.participants
       : [];
 
-    if (currentUser?.roleName !== "faculty") {
-      return participants;
-    }
-
-    const studentParticipants = participants.filter(
-      (participant) => participant?.roleName === "student"
-    );
-
-    if (studentParticipants.length > 0) {
-      return studentParticipants;
-    }
-
     return participants.filter(
-      (participant) => participant?._id !== currentUser?._id
+      (participant) => String(participant?._id || "") !== String(currentUser?._id || "")
     );
   };
 

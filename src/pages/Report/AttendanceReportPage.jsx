@@ -22,6 +22,7 @@ import {
   TextField,
   InputAdornment
 } from "@mui/material";
+import { MenuItem } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
   Close as CloseIcon,
@@ -51,6 +52,8 @@ const AttendanceReportPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterMentor, setFilterMentor] = useState("");
+  const [filterSemester, setFilterSemester] = useState("");
   
   const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
   const [attendanceDetail, setAttendanceDetail] = useState(null);
@@ -74,15 +77,23 @@ const AttendanceReportPage = () => {
   }, [loadReports]);
 
   const filteredRows = useMemo(() => {
-    if (!searchQuery) return attendanceRows;
-    const lowerQuery = searchQuery.toLowerCase();
-    return attendanceRows.filter((row) => 
-      buildStudentName(row).toLowerCase().includes(lowerQuery) ||
-      (row.usn || "").toLowerCase().includes(lowerQuery) ||
-      (row.email || "").toLowerCase().includes(lowerQuery) ||
-      (row.department || "").toLowerCase().includes(lowerQuery)
-    );
+    return attendanceRows.filter((row) => {
+      if (filterMentor && row.mentorName !== filterMentor) return false;
+      if (filterSemester && String(row.semester) !== String(filterSemester)) return false;
+
+      if (!searchQuery) return true;
+      const lowerQuery = searchQuery.toLowerCase();
+      return (
+        buildStudentName(row).toLowerCase().includes(lowerQuery) ||
+        (row.usn || "").toLowerCase().includes(lowerQuery) ||
+        (row.email || "").toLowerCase().includes(lowerQuery) ||
+        (row.department || "").toLowerCase().includes(lowerQuery)
+      );
+    });
   }, [attendanceRows, searchQuery]);
+
+  const mentors = useMemo(() => [...new Set(attendanceRows.map(r => r.mentorName).filter(Boolean))], [attendanceRows]);
+  const semesters = useMemo(() => [...new Set(attendanceRows.map(r => r.semester).filter(Boolean))], [attendanceRows]);
 
   const pageRows = useMemo(
     () => filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
@@ -239,6 +250,30 @@ const AttendanceReportPage = () => {
                   }}
                   sx={{ minWidth: { xs: "100%", sm: 300 } }}
                 />
+
+                <TextField
+                  select
+                  label="Mentor"
+                  size="small"
+                  value={filterMentor}
+                  onChange={(e) => { setFilterMentor(e.target.value); setPage(0); }}
+                  sx={{ minWidth: 160 }}
+                >
+                  <MenuItem value="">All Mentors</MenuItem>
+                  {mentors.map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
+                </TextField>
+
+                <TextField
+                  select
+                  label="Semester"
+                  size="small"
+                  value={filterSemester}
+                  onChange={(e) => { setFilterSemester(e.target.value); setPage(0); }}
+                  sx={{ minWidth: 120 }}
+                >
+                  <MenuItem value="">All Sems</MenuItem>
+                  {semesters.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                </TextField>
                 <Button
                   variant="contained"
                   startIcon={<DownloadOutlinedIcon />}
