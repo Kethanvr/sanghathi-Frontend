@@ -66,24 +66,28 @@ const FeedbackReportPage = () => {
     try {
       setIsLoading(true);
       const response = await api.get("/feedback/overview");
-      const allData = response.data?.data || {};
-      const feedbacks = allData.feedbacks || [];
+      const feedbacks = response.data?.data?.feedbacks || [];
       
       // Extract unique mentors from feedback data
       const mentorMap = new Map();
       (Array.isArray(feedbacks) ? feedbacks : []).forEach((feedback) => {
-        if (feedback.mentorId) {
+        if (feedback.mentorId && feedback.mentorName) {
           if (!mentorMap.has(String(feedback.mentorId))) {
             mentorMap.set(String(feedback.mentorId), {
               _id: feedback.mentorId,
-              name: feedback.mentorName || "N/A",
+              name: feedback.mentorName,
               email: feedback.mentorEmail || "",
             });
           }
         }
       });
       
-      setMentors(Array.from(mentorMap.values()));
+      const mentorsArray = Array.from(mentorMap.values());
+      setMentors(mentorsArray);
+      
+      if (mentorsArray.length === 0) {
+        enqueueSnackbar("No mentors with feedback available", { variant: "info" });
+      }
     } catch (error) {
       enqueueSnackbar(error?.response?.data?.message || "Failed to load mentors", { variant: "error" });
     } finally {
