@@ -894,101 +894,97 @@ const FeedbackManagement = () => {
                     ? `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, rgba(255,255,255,0.98) 100%)`
                     : `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(theme.palette.grey[900], 0.75)} 100%)`,
                 }}>
-                  <Stack spacing={3}>
-                    {/* Row 1: Data View Filters */}
-                    <Box sx={{ p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.06), border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}` }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 900, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <FilterListIcon fontSize="small" /> Data View Filters
-                      </Typography>
-                      <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={4}>
+                  <Stack spacing={2.5}>
+                    {/* Search Bar - Full Width */}
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder="Search student by name, USN, or email..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon color="disabled" />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          backgroundColor: alpha(theme.palette.background.paper, 0.6),
+                        },
+                      }}
+                    />
+
+                    {/* Filter Row */}
+                    <Typography variant="subtitle2" sx={{ fontWeight: 900, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                      <FilterListIcon fontSize="small" /> Filters
+                    </Typography>
+                    <Grid container spacing={2} alignItems="center">
+                      <Grid item xs={12} sm={6} md={3}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>View Semester</InputLabel>
+                          <Select
+                            label="View Semester"
+                            value={semesterFilter}
+                            onChange={(e) => setSemesterFilter(e.target.value)}
+                          >
+                            {(user?.department === "MCA" ? [1, 2, 3, 4] : [1, 2, 3, 4, 5, 6, 7, 8]).map((sem) => (
+                              <MenuItem key={sem} value={sem.toString()}>
+                                Semester {sem}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={3}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>View Round</InputLabel>
+                          <Select
+                            label="View Round"
+                            value={selectedFeedbackRound}
+                            onChange={(e) => setSelectedFeedbackRound(Number(e.target.value))}
+                          >
+                            <MenuItem value={1}>Feedback 1</MenuItem>
+                            <MenuItem value={2}>Feedback 2</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={3}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Response Status</InputLabel>
+                          <Select
+                            label="Response Status"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                          >
+                            <MenuItem value="all">All Students</MenuItem>
+                            <MenuItem value="responded">Responded</MenuItem>
+                            <MenuItem value="pending">Pending</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      {isHodOrDirector && (
+                        <Grid item xs={12} sm={6} md={3}>
                           <FormControl fullWidth size="small">
-                            <InputLabel>View Semester</InputLabel>
+                            <InputLabel>Filter by Mentor</InputLabel>
                             <Select
-                              label="View Semester"
-                              value={semesterFilter}
-                              onChange={(e) => setSemesterFilter(e.target.value)}
+                              label="Filter by Mentor"
+                              value={mentorFilter}
+                              onChange={(e) => setMentorFilter(e.target.value)}
                             >
-                              {(user?.department === "MCA" ? [1, 2, 3, 4] : [1, 2, 3, 4, 5, 6, 7, 8]).map((sem) => (
-                                <MenuItem key={sem} value={sem.toString()}>
-                                  Semester {sem}
+                              <MenuItem value="">All Mentors</MenuItem>
+                              {mentorGroups.map((group) => (
+                                <MenuItem key={group.mentorId} value={group.mentorId}>
+                                  {group.mentorName}
                                 </MenuItem>
                               ))}
                             </Select>
                           </FormControl>
                         </Grid>
-                        <Grid item xs={12} sm={4}>
-                          <FormControl fullWidth size="small">
-                            <InputLabel>View Round</InputLabel>
-                            <Select
-                              label="View Round"
-                              value={selectedFeedbackRound}
-                              onChange={(e) => setSelectedFeedbackRound(Number(e.target.value))}
-                            >
-                              <MenuItem value={1}>Feedback 1</MenuItem>
-                              <MenuItem value={2}>Feedback 2</MenuItem>
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                      </Grid>
-                    </Box>
-
-                    <Divider />
-
-                    {/* Row 2: Search, Status & Mentor Filter */}
-                    <Box sx={{ p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.info.main, 0.05), border: `1px solid ${alpha(theme.palette.info.main, 0.12)}` }}>
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={4}>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            placeholder="Search student..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <SearchIcon color="disabled" />
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                          <FormControl fullWidth size="small">
-                            <InputLabel>Response Status</InputLabel>
-                            <Select
-                              label="Response Status"
-                              value={statusFilter}
-                              onChange={(e) => setStatusFilter(e.target.value)}
-                            >
-                              <MenuItem value="all">All Students</MenuItem>
-                              <MenuItem value="responded">Responded</MenuItem>
-                              <MenuItem value="pending">Pending</MenuItem>
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                        {isHodOrDirector && (
-                          <Grid item xs={12} sm={4}>
-                            <FormControl fullWidth size="small">
-                              <InputLabel>Filter by Mentor</InputLabel>
-                              <Select
-                                label="Filter by Mentor"
-                                value={mentorFilter}
-                                onChange={(e) => setMentorFilter(e.target.value)}
-                              >
-                                <MenuItem value="">All Mentors</MenuItem>
-                                {mentorGroups.map((group) => (
-                                  <MenuItem key={group.mentorId} value={group.mentorId}>
-                                    {group.mentorName}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                            </FormControl>
-                          </Grid>
-                        )}
-                      </Grid>
-                    </Box>
+                      )}
+                    </Grid>
                   </Stack>
                 </Card>
               </Stack>
