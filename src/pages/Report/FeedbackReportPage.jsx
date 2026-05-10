@@ -5,34 +5,16 @@ import {
   Card,
   CardContent,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  FormControl,
   Grid,
-  IconButton,
   InputAdornment,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
   TextField,
   Typography,
   useTheme,
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
-  Close as CloseIcon,
   DownloadOutlined as DownloadOutlinedIcon,
   Search as SearchIcon,
 } from "@mui/icons-material";
@@ -52,106 +34,75 @@ const FeedbackReportPage = () => {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
-  const [mentors, setMentors] = useState([]);
-  const [selectedMentor, setSelectedMentor] = useState(null);
-  const [feedbackData, setFeedbackData] = useState([]);
+  const [allFeedback, setAllFeedback] = useState([]);
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState("");
-  const [detailRow, setDetailRow] = useState(null);
 
-  // Load available mentors from feedback overview
-  const loadMentors = useCallback(async () => {
+  // Load all feedback data on page load
+  const loadAllFeedback = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await api.get("/feedback/overview");
       const feedbacks = response.data?.data?.feedbacks || [];
       
-      // Extract unique mentors from feedback data
-      const mentorMap = new Map();
-      (Array.isArray(feedbacks) ? feedbacks : []).forEach((feedback) => {
-        if (feedback.mentorId && feedback.mentorName) {
-          if (!mentorMap.has(String(feedback.mentorId))) {
-            mentorMap.set(String(feedback.mentorId), {
-              _id: feedback.mentorId,
-              name: feedback.mentorName,
-              email: feedback.mentorEmail || "",
-            });
-          }
-        }
-      });
+      // Prepare feedback list with proper formatting
+      const formattedFeedbacks = (Array.isArray(feedbacks) ? feedbacks : []).map((fb) => ({
+        _id: fb._id,
+        studentName: fb.userId?.name || "N/A",
+        studentEmail: fb.userId?.email || "N/A",
+        mentorName: fb.mentorName || "N/A",
+        semester: fb.semester || "N/A",
+        feedbackRound: fb.feedbackRound || "N/A",
+        averageScore: fb.averageScore || "N/A",
+        remarks: fb.remarks || "",
+        mentorAccessibility: fb.mentorAccessibility || 0,
+        mentorInteraction: fb.mentorInteraction || 0,
+        academicHelp: fb.academicHelp || 0,
+        mentorConcern: fb.mentorConcern || 0,
+        listeningSkills: fb.listeningSkills || 0,
+        professionalMotivation: fb.professionalMotivation || 0,
+        barrierResolution: fb.barrierResolution || 0,
+        systemEffectiveness: fb.systemEffectiveness || 0,
+        continuationWillingness: fb.continuationWillingness || 0,
+        submittedAt: fb.submittedAt,
+      }));
       
-      const mentorsArray = Array.from(mentorMap.values());
-      setMentors(mentorsArray);
+      setAllFeedback(formattedFeedbacks);
       
-      if (mentorsArray.length === 0) {
-        enqueueSnackbar("No mentors with feedback available", { variant: "info" });
+      // Auto-select first feedback
+      if (formattedFeedbacks.length > 0) {
+        setSelectedFeedback(formattedFeedbacks[0]);
+      }
+      
+      if (formattedFeedbacks.length === 0) {
+        enqueueSnackbar("No feedback available", { variant: "info" });
       }
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || "Failed to load mentors", { variant: "error" });
+      enqueueSnackbar(error?.response?.data?.message || "Failed to load feedback", { variant: "error" });
     } finally {
       setIsLoading(false);
     }
   }, [enqueueSnackbar]);
 
   useEffect(() => {
-    loadMentors();
-  }, [loadMentors]);
-
-  // Load feedback for selected mentor
-  const loadMentorFeedback = useCallback(async (mentorId) => {
-    if (!mentorId) {
-      setFeedbackData([]);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const response = await api.get(`/feedback/by-mentor/${mentorId}`);
-      const feedbacks = response.data?.data?.feedbacks || response.data?.data || [];
-      const mentor = mentors.find((m) => String(m._id) === String(mentorId));
-      
-      // Enrich feedback data with mentor info
-      const enriched = (Array.isArray(feedbacks) ? feedbacks : [feedbacks]).map((feedback) => ({
-        ...feedback,
-        mentorName: mentor?.name || "N/A",
-      }));
-      
-      setFeedbackData(enriched);
-    } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || "Failed to load mentor feedback", { variant: "error" });
-      setFeedbackData([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [enqueueSnackbar, mentors]);
-
-  const handleMentorSelect = (mentorId) => {
-    setSelectedMentor(mentorId);
-    setPage(0);
-    loadMentorFeedback(mentorId);
-  };
+    loadAllFeedback();
+  }, [loadAllFeedback]);
 
   const filteredRows = useMemo(() => {
-    if (!searchQuery) return feedbackData;
+    if (!searchQuery) return allFeedback;
     const lowerQuery = searchQuery.toLowerCase();
-    return feedbackData.filter((row) => {
-      const studentName = row?.studentName || row?.name || "";
-      const studentEmail = row?.studentEmail || row?.email || "";
-      const studentUSN = row?.studentUSN || row?.usn || "";
+    return allFeedback.filter((row) => {
+      const studentName = row?.studentName || "";
+      const mentorName = row?.mentorName || "";
+      const studentEmail = row?.studentEmail || "";
       return (
         studentName.toLowerCase().includes(lowerQuery) ||
-        studentEmail.toLowerCase().includes(lowerQuery) ||
-        studentUSN.toLowerCase().includes(lowerQuery)
+        mentorName.toLowerCase().includes(lowerQuery) ||
+        studentEmail.toLowerCase().includes(lowerQuery)
       );
     });
-  }, [feedbackData, searchQuery]);
-
-  const pageRows = useMemo(
-    () => filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [filteredRows, page, rowsPerPage]
-  );
+  }, [allFeedback, searchQuery]);
 
   const handleDownloadExcel = useCallback(async () => {
     try {
@@ -160,32 +111,28 @@ const FeedbackReportPage = () => {
 
       worksheet.columns = [
         { header: "Student Name", key: "studentName", width: 24 },
-        { header: "USN", key: "studentUSN", width: 18 },
         { header: "Email", key: "studentEmail", width: 28 },
         { header: "Mentor Name", key: "mentorName", width: 24 },
         { header: "Semester", key: "semester", width: 12 },
-        { header: "Feedback Round", key: "round", width: 14 },
-        { header: "Score", key: "score", width: 12 },
-        { header: "Comments", key: "comments", width: 40 },
-        { header: "Status", key: "status", width: 14 },
+        { header: "Feedback Round", key: "feedbackRound", width: 14 },
+        { header: "Average Score", key: "averageScore", width: 14 },
+        { header: "Remarks", key: "remarks", width: 40 },
       ];
 
       worksheet.addRows(
-        filteredRows.map((row) => ({
-          studentName: row?.studentName || row?.name || "N/A",
-          studentUSN: row?.studentUSN || row?.usn || "N/A",
-          studentEmail: row?.studentEmail || row?.email || "N/A",
+        allFeedback.map((row) => ({
+          studentName: row?.studentName || "N/A",
+          studentEmail: row?.studentEmail || "N/A",
           mentorName: row?.mentorName || "N/A",
           semester: row?.semester || "N/A",
-          round: row?.round || "N/A",
-          score: row?.score || "N/A",
-          comments: row?.comments || "",
-          status: row?.status || "N/A",
+          feedbackRound: row?.feedbackRound || "N/A",
+          averageScore: row?.averageScore || "N/A",
+          remarks: row?.remarks || "",
         }))
       );
 
       worksheet.getRow(1).font = { bold: true };
-      worksheet.autoFilter = { from: "A1", to: "I1" };
+      worksheet.autoFilter = { from: "A1", to: "G1" };
 
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], {
@@ -194,13 +141,13 @@ const FeedbackReportPage = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `feedback-report-${selectedMentor || "all"}.xlsx`;
+      link.download = `feedback-report-all.xlsx`;
       link.click();
       window.URL.revokeObjectURL(url);
     } catch (error) {
       enqueueSnackbar("Unable to generate Excel file", { variant: "error" });
     }
-  }, [enqueueSnackbar, filteredRows, selectedMentor]);
+  }, [enqueueSnackbar, allFeedback]);
 
   return (
     <Page title="Feedback Report">
@@ -233,13 +180,13 @@ const FeedbackReportPage = () => {
                 Feedback Report
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 900, lineHeight: 1.8 }}>
-                View feedback responses from students for each mentor. Select a mentor to see their feedback data and export to Excel.
+                View all feedback responses from students. Click on any feedback to view details and export to Excel.
               </Typography>
             </Stack>
           </Paper>
 
           <Grid container spacing={3}>
-            {/* Mentor Selection Card */}
+            {/* Feedback List Card */}
             <Grid item xs={12} md={3}>
               <Paper
                 elevation={0}
@@ -248,27 +195,46 @@ const FeedbackReportPage = () => {
                   borderRadius: 3,
                   border: `1px solid ${theme.palette.divider}`,
                   backgroundColor: theme.palette.background.paper,
+                  height: "fit-content",
                 }}
               >
-                <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-                  Select Mentor
-                </Typography>
-                <Stack spacing={1.5} sx={{ maxHeight: 600, overflow: "auto" }}>
+                <Stack spacing={2}>
+                  <TextField
+                    placeholder="Search feedback..."
+                    size="small"
+                    value={searchQuery}
+                    onChange={(event) => {
+                      setSearchQuery(event.target.value);
+                    }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon color="action" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{ width: "100%" }}
+                  />
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.secondary" }}>
+                    Total: {filteredRows.length} feedback
+                  </Typography>
+                </Stack>
+                <Stack spacing={1.5} sx={{ maxHeight: 600, overflow: "auto", mt: 2 }}>
                   {isLoading ? (
-                    <Typography color="text.secondary">Loading mentors...</Typography>
-                  ) : mentors.length ? (
-                    mentors.map((mentor) => (
+                    <Typography color="text.secondary">Loading feedback...</Typography>
+                  ) : filteredRows.length ? (
+                    filteredRows.map((feedback) => (
                       <Card
-                        key={mentor._id}
-                        onClick={() => handleMentorSelect(mentor._id)}
+                        key={feedback._id}
+                        onClick={() => setSelectedFeedback(feedback)}
                         sx={{
                           cursor: "pointer",
                           backgroundColor:
-                            String(selectedMentor) === String(mentor._id)
+                            String(selectedFeedback?._id) === String(feedback._id)
                               ? alpha(theme.palette.primary.main, 0.12)
                               : "transparent",
                           border:
-                            String(selectedMentor) === String(mentor._id)
+                            String(selectedFeedback?._id) === String(feedback._id)
                               ? `2px solid ${theme.palette.primary.main}`
                               : `1px solid ${theme.palette.divider}`,
                           transition: "all 0.2s",
@@ -279,112 +245,122 @@ const FeedbackReportPage = () => {
                         }}
                       >
                         <CardContent sx={{ p: 1.5 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                            {mentor.name || "N/A"}
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.3 }}>
+                            {feedback.studentName || "N/A"}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {mentor.email || "N/A"}
+                            {feedback.mentorName}
+                          </Typography>
+                          <Typography variant="caption" sx={{ display: "block", mt: 0.5, color: "text.secondary" }}>
+                            Round {feedback.feedbackRound} • Score: {feedback.averageScore}
                           </Typography>
                         </CardContent>
                       </Card>
                     ))
                   ) : (
-                    <Typography color="text.secondary">No mentors available</Typography>
+                    <Typography color="text.secondary">No feedback found</Typography>
                   )}
                 </Stack>
               </Paper>
             </Grid>
 
-            {/* Feedback Data Table */}
+            {/* Feedback Details Panel */}
             <Grid item xs={12} md={9}>
-              {selectedMentor ? (
+              {selectedFeedback ? (
                 <Paper elevation={0} sx={{ borderRadius: 3, overflow: "hidden", border: `1px solid ${theme.palette.divider}` }}>
-                  <Box sx={{ p: { xs: 2, sm: 3 }, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                    <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }}>
-                      <TextField
-                        placeholder="Search by name, email, or USN"
-                        size="small"
-                        value={searchQuery}
-                        onChange={(event) => {
-                          setSearchQuery(event.target.value);
-                          setPage(0);
-                        }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <SearchIcon color="action" />
-                            </InputAdornment>
-                          ),
-                        }}
-                        sx={{ minWidth: { xs: "100%", md: 320 } }}
-                      />
+                  <Box sx={{ p: { xs: 2, sm: 3 }, borderBottom: `1px solid ${theme.palette.divider}`, backgroundColor: alpha(theme.palette.primary.main, 0.03) }}>
+                    <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "flex-start", md: "center" }}>
+                      <Stack spacing={0.5}>
+                        <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                          {selectedFeedback.studentName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Mentor: {selectedFeedback.mentorName} • Round: {selectedFeedback.feedbackRound}
+                        </Typography>
+                      </Stack>
 
                       <Button
                         variant="contained"
                         startIcon={<DownloadOutlinedIcon />}
                         onClick={handleDownloadExcel}
-                        disabled={!filteredRows.length}
+                        disabled={!allFeedback.length}
                       >
                         Download Excel
                       </Button>
                     </Stack>
                   </Box>
 
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 800 }}>Student Name</TableCell>
-                          <TableCell sx={{ fontWeight: 800 }}>Email</TableCell>
-                          <TableCell sx={{ fontWeight: 800 }}>USN</TableCell>
-                          <TableCell sx={{ fontWeight: 800 }}>Round</TableCell>
-                          <TableCell sx={{ fontWeight: 800 }}>Score</TableCell>
-                          <TableCell sx={{ fontWeight: 800 }}>Status</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {isLoading ? (
-                          <TableRow>
-                            <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                              Loading feedback...
-                            </TableCell>
-                          </TableRow>
-                        ) : pageRows.length ? (
-                          pageRows.map((row) => (
-                            <TableRow key={row._id} hover>
-                              <TableCell>{row?.studentName || row?.name || "N/A"}</TableCell>
-                              <TableCell>{row?.studentEmail || row?.email || "N/A"}</TableCell>
-                              <TableCell>{row?.studentUSN || row?.usn || "N/A"}</TableCell>
-                              <TableCell>{row?.round || "N/A"}</TableCell>
-                              <TableCell>{row?.score || "N/A"}</TableCell>
-                              <TableCell>{row?.status || "N/A"}</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                              No feedback records found for this mentor.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                  <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                    <Grid container spacing={3}>
+                      {/* Basic Info */}
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                          Email
+                        </Typography>
+                        <Typography variant="body2">{selectedFeedback.studentEmail}</Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                          Semester
+                        </Typography>
+                        <Typography variant="body2">{selectedFeedback.semester}</Typography>
+                      </Grid>
 
-                  {feedbackData.length > 0 && (
-                    <TablePagination
-                      component="div"
-                      count={filteredRows.length}
-                      rowsPerPage={rowsPerPage}
-                      page={page}
-                      onPageChange={(_event, newPage) => setPage(newPage)}
-                      onRowsPerPageChange={(event) => {
-                        setRowsPerPage(parseInt(event.target.value, 10));
-                        setPage(0);
-                      }}
-                      rowsPerPageOptions={[25, 50, 100]}
-                    />
-                  )}
+                      {/* Ratings */}
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>
+                          Ratings (1-5 scale)
+                        </Typography>
+                        <Grid container spacing={2}>
+                          {[
+                            { label: "Mentor Accessibility", key: "mentorAccessibility" },
+                            { label: "Mentor Interaction", key: "mentorInteraction" },
+                            { label: "Academic Help", key: "academicHelp" },
+                            { label: "Mentor Concern", key: "mentorConcern" },
+                            { label: "Listening Skills", key: "listeningSkills" },
+                            { label: "Professional Motivation", key: "professionalMotivation" },
+                            { label: "Barrier Resolution", key: "barrierResolution" },
+                            { label: "System Effectiveness", key: "systemEffectiveness" },
+                            { label: "Continuation Willingness", key: "continuationWillingness" },
+                          ].map((item) => (
+                            <Grid item xs={12} sm={6} md={4} key={item.key}>
+                              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+                                {item.label}
+                              </Typography>
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 30 }}>
+                                  {selectedFeedback[item.key]}/5
+                                </Typography>
+                                <Box sx={{ width: "100%", height: 6, backgroundColor: alpha(theme.palette.primary.main, 0.1), borderRadius: 3, overflow: "hidden" }}>
+                                  <Box sx={{ width: `${(selectedFeedback[item.key] / 5) * 100}%`, height: "100%", backgroundColor: theme.palette.primary.main }} />
+                                </Box>
+                              </Box>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Grid>
+
+                      {/* Average Score */}
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                          Average Score
+                        </Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 900, color: theme.palette.primary.main }}>
+                          {selectedFeedback.averageScore}/5
+                        </Typography>
+                      </Grid>
+
+                      {/* Remarks */}
+                      {selectedFeedback.remarks && (
+                        <Grid item xs={12}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                            Remarks
+                          </Typography>
+                          <Typography variant="body2">{selectedFeedback.remarks}</Typography>
+                        </Grid>
+                      )}
+                    </Grid>
+                  </Box>
                 </Paper>
               ) : (
                 <Paper
@@ -397,7 +373,7 @@ const FeedbackReportPage = () => {
                   }}
                 >
                   <Typography color="text.secondary">
-                    Select a mentor from the list to view their feedback responses.
+                    {isLoading ? "Loading feedback..." : "Select feedback from the list to view details."}
                   </Typography>
                 </Paper>
               )}
