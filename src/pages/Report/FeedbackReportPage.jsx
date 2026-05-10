@@ -153,7 +153,44 @@ const FeedbackReportPage = () => {
         });
 
         setMentorFeedback(rows);
-        if (rows.length) setSelectedFeedback(rows[0]);
+
+        // Auto-set filters to most recent feedback's semester and round
+        if (rows.length) {
+          const sorted = rows.slice().sort((a, b) => {
+            const ta = a.submittedAt ? new Date(a.submittedAt).getTime() : 0;
+            const tb = b.submittedAt ? new Date(b.submittedAt).getTime() : 0;
+            return tb - ta;
+          });
+          const latest = sorted[0];
+          if (latest) {
+            setSemesterFilter(latest.semester || "");
+            setRoundFilter(latest.feedbackRound || "");
+          }
+        }
+        // If any rows miss USN, fetch user profiles to populate USN
+        const missingIds = Array.from(new Set(rows.filter(r => !r.usn || r.usn === 'N/A').map(r => r.studentId))).filter(Boolean);
+        if (missingIds.length) {
+          try {
+            await Promise.all(missingIds.map(async (id) => {
+              try {
+                const uresp = await api.get(`/users/${id}`, { params: { includeProfiles: true } });
+                const user = uresp.data?.data?.user;
+                const usn = user?.studentProfile?.usn || user?.profile?.usn || user?.registrationNumber || null;
+                if (usn) {
+                  rows.forEach((r) => {
+                    if (String(r.studentId) === String(id)) r.usn = usn;
+                  });
+                }
+              } catch (e) {
+                // ignore per-user failures
+              }
+            }));
+            // update state with enriched rows
+            setMentorFeedback(rows);
+          } catch (e) {
+            // ignore
+          }
+        }
       } catch (error) {
         enqueueSnackbar(error?.response?.data?.message || "Failed to load mentor feedback", { variant: "error" });
         setMentorFeedback([]);
