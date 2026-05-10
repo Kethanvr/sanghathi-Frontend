@@ -61,22 +61,23 @@ const FeedbackReportPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [detailRow, setDetailRow] = useState(null);
 
-  // Load available mentors from mentorship data
+  // Load available mentors from feedback overview
   const loadMentors = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await api.get("/mentorship/students");
-      const students = response.data?.data || [];
+      const response = await api.get("/feedback/overview");
+      const allData = response.data?.data || {};
+      const feedbacks = allData.feedbacks || [];
       
-      // Extract unique mentors from student data
+      // Extract unique mentors from feedback data
       const mentorMap = new Map();
-      (Array.isArray(students) ? students : []).forEach((student) => {
-        if (student.mentor?._id && student.mentor?.name) {
-          if (!mentorMap.has(String(student.mentor._id))) {
-            mentorMap.set(String(student.mentor._id), {
-              _id: student.mentor._id,
-              name: student.mentor.name,
-              email: student.mentor.email || "",
+      (Array.isArray(feedbacks) ? feedbacks : []).forEach((feedback) => {
+        if (feedback.mentorId) {
+          if (!mentorMap.has(String(feedback.mentorId))) {
+            mentorMap.set(String(feedback.mentorId), {
+              _id: feedback.mentorId,
+              name: feedback.mentorName || "N/A",
+              email: feedback.mentorEmail || "",
             });
           }
         }
