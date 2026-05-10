@@ -107,6 +107,7 @@ const directorNavConfig = [
 
 const studentNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/" },
+  { text: "Alerts", icon: <CampaignOutlinedIcon />, link: "/alerts" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
   // { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
   { text: "Mentor Details", icon: <PersonOutlinedIcon />, link: "/mentor-details" },

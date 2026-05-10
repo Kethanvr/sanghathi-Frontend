@@ -885,11 +885,19 @@ const FeedbackManagement = () => {
                 )}
 
                 {/* Filter Toolbar */}
-                <Card sx={{ p: 3, borderRadius: 3, boxShadow: theme.customShadows?.z8 }}>
+                <Card sx={{
+                  p: 3,
+                  borderRadius: 3,
+                  boxShadow: theme.customShadows?.z8,
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
+                  background: isLight
+                    ? `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, rgba(255,255,255,0.98) 100%)`
+                    : `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(theme.palette.grey[900], 0.75)} 100%)`,
+                }}>
                   <Stack spacing={3}>
                     {/* Row 1: Data View Filters */}
-                    <Box>
-                      <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 700, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.06), border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}` }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 900, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
                         <FilterListIcon fontSize="small" /> Data View Filters
                       </Typography>
                       <Grid container spacing={2} alignItems="center">
@@ -928,7 +936,7 @@ const FeedbackManagement = () => {
                     <Divider />
 
                     {/* Row 2: Search, Status & Mentor Filter */}
-                    <Box>
+                    <Box sx={{ p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.info.main, 0.05), border: `1px solid ${alpha(theme.palette.info.main, 0.12)}` }}>
                       <Grid container spacing={2}>
                         <Grid item xs={12} sm={4}>
                           <TextField

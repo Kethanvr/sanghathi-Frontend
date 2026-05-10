@@ -26,6 +26,7 @@ const AdmissionDetailsPage = lazy(() => import("./pages/Student/AdmissionDetails
 const Placement = lazy(() => import("./pages/Placement/Placement"));
 const Ptm = lazy(() => import("./pages/ParentsTeacherMeeting/Ptm"));
 const Attendance = lazy(() => import("./pages/Student/Attendance"));
+const StudentAlerts = lazy(() => import("./pages/Student/Alerts"));
 const Thread = lazy(() => import("./pages/Thread/Thread"));
 const ThreadWindow = lazy(() => import("./pages/Thread/ThreadWindow"));
 const Report = lazy(() => import("./pages/Report/Report"));
@@ -449,6 +450,14 @@ function App() {
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={Attendance} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/alerts"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={StudentAlerts} />
                       </ProtectedRouteWrapper>
                     }
                   />
