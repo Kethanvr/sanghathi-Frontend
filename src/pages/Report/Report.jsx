@@ -15,6 +15,7 @@ import {
 import {
   AssessmentOutlined as AssessmentOutlinedIcon,
   SchoolOutlined as SchoolOutlinedIcon,
+  RateReviewOutlined as RateReviewOutlinedIcon,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
@@ -92,18 +93,21 @@ const Report = () => {
 
   const [competitionCount, setCompetitionCount] = useState(0);
   const [attendanceCount, setAttendanceCount] = useState(0);
+  const [feedbackCount, setFeedbackCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadReports = useCallback(async () => {
     try {
       setIsLoading(true);
-      const [competitionResponse, attendanceResponse] = await Promise.all([
+      const [competitionResponse, attendanceResponse, feedbackResponse] = await Promise.all([
         api.get("/reports/competitions"),
         api.get("/reports/attendance"),
+        api.get("/feedback/overview").catch(() => ({ data: { data: { feedbacks: [] } } })),
       ]);
 
       setCompetitionCount(competitionResponse.data?.data?.competitions?.length || 0);
       setAttendanceCount(attendanceResponse.data?.data?.attendance?.length || 0);
+      setFeedbackCount(feedbackResponse.data?.data?.feedbacks?.length || 0);
     } catch (error) {
       enqueueSnackbar(error?.response?.data?.message || "Failed to load reports summary", { variant: "error" });
     } finally {
@@ -165,6 +169,15 @@ const Report = () => {
                 count={isLoading ? "..." : attendanceCount}
                 icon={<SchoolOutlinedIcon />}
                 onClick={() => navigate("/report/attendance")}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <ReportCard
+                title="Feedback Report"
+                description="Click to view feedback by mentor and export to Excel."
+                count={isLoading ? "..." : feedbackCount}
+                icon={<RateReviewOutlinedIcon />}
+                onClick={() => navigate("/report/feedback")}
               />
             </Grid>
           </Grid>

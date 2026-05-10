@@ -31,6 +31,7 @@ import {
   Search as SearchIcon,
   ForumOutlined as ForumOutlinedIcon,
   VisibilityOutlined as VisibilityOutlinedIcon,
+  EmailOutlined as EmailOutlinedIcon,
 } from "@mui/icons-material";
 import { alpha } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
@@ -61,6 +62,9 @@ const FacultyAlerts = () => {
   const [detailRow, setDetailRow] = useState(null);
   const [detailAttendance, setDetailAttendance] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailPreview, setEmailPreview] = useState(null);
+  const [emailSending, setEmailSending] = useState(false);
 
   const loadAlerts = useCallback(async () => {
     try {
@@ -166,6 +170,33 @@ const FacultyAlerts = () => {
     }
   }, [enqueueSnackbar]);
 
+  const handleSendEmailPreview = useCallback(async () => {
+    try {
+      setEmailSending(true);
+      const response = await api.post("/reports/send-low-attendance-email", { dryRun: true, recipientIds: filteredRows.map((r) => r.userId) });
+      setEmailPreview(response.data?.data || null);
+      setEmailDialogOpen(true);
+    } catch (error) {
+      enqueueSnackbar(error?.response?.data?.message || "Unable to generate email preview", { variant: "error" });
+    } finally {
+      setEmailSending(false);
+    }
+  }, [enqueueSnackbar, filteredRows]);
+
+  const handleSendEmailConfirm = useCallback(async () => {
+    try {
+      setEmailSending(true);
+      await api.post("/reports/send-low-attendance-email", { dryRun: false, recipientIds: filteredRows.map((r) => r.userId) });
+      enqueueSnackbar("Email sent successfully to all low-attendance students", { variant: "success" });
+      setEmailDialogOpen(false);
+      setEmailPreview(null);
+    } catch (error) {
+      enqueueSnackbar(error?.response?.data?.message || "Unable to send email", { variant: "error" });
+    } finally {
+      setEmailSending(false);
+    }
+  }, [enqueueSnackbar, filteredRows]);
+
   const detailSemesters = useMemo(() => detailAttendance?.semesters || [], [detailAttendance]);
 
   return (
@@ -247,6 +278,17 @@ const FacultyAlerts = () => {
 
                   <Button variant="contained" startIcon={<DownloadOutlinedIcon />} onClick={handleDownloadExcel} disabled={!filteredRows.length}>
                     Download Excel
+                  </Button>
+
+                  <Button 
+                    variant="contained" 
+                    color="warning"
+                    startIcon={<EmailOutlinedIcon />} 
+                    onClick={handleSendEmailPreview} 
+                    disabled={!filteredRows.length || emailSending}
+                    loading={emailSending}
+                  >
+                    Send Email
                   </Button>
                 </Stack>
               </Stack>
@@ -397,6 +439,57 @@ const FacultyAlerts = () => {
               Open Thread
             </Button>
           ) : null}
+        </DialogActions>
+      </Dialog>
+
+      {/* Email Preview Dialog */}
+      <Dialog open={emailDialogOpen} onClose={() => !emailSending && setEmailDialogOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ pr: 6 }}>
+          Send Email to Low Attendance Students
+          <IconButton onClick={() => !emailSending && setEmailDialogOpen(false)} sx={{ position: "absolute", right: 12, top: 12 }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {emailPreview ? (
+            <Stack spacing={2}>
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                  Recipients: {emailPreview.recipients?.length || 0} students
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                  {emailPreview.recipients?.slice(0, 3).join(", ")}
+                  {emailPreview.recipients?.length > 3 ? `... and ${emailPreview.recipients.length - 3} more` : ""}
+                </Typography>
+              </Box>
+
+              <Box sx={{ p: 2, borderRadius: 2, bgcolor: "background.neutral", border: `1px solid ${theme.palette.divider}` }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, display: "block" }}>
+                  Subject:
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                  {emailPreview.subject}
+                </Typography>
+              </Box>
+
+              <Box sx={{ p: 2, borderRadius: 2, bgcolor: "background.neutral", border: `1px solid ${theme.palette.divider}`, maxHeight: 240, overflow: "auto" }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, display: "block" }}>
+                  Message Preview:
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, whiteSpace: "pre-wrap" }}>
+                  {emailPreview.text}
+                </Typography>
+              </Box>
+            </Stack>
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEmailDialogOpen(false)} disabled={emailSending}>
+            Cancel
+          </Button>
+          <Button variant="contained" color="warning" onClick={handleSendEmailConfirm} loading={emailSending}>
+            Confirm & Send
+          </Button>
         </DialogActions>
       </Dialog>
     </Page>

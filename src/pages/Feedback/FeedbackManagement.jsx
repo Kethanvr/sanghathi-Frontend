@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useContext } from "react";
+import React, { useState, useEffect, useMemo, useContext, useCallback } from "react";
 import {
   Alert,
   Box,
@@ -57,6 +57,8 @@ import GroupIcon from "@mui/icons-material/Group";
 import UpdateIcon from "@mui/icons-material/Update";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+import ExcelJS from "exceljs";
 
 const roundOptions = [
   { value: 1, label: "Feedback 1" },
@@ -682,6 +684,62 @@ const FeedbackManagement = () => {
     setPage(0);
   };
 
+  const handleExportToExcel = useCallback(async () => {
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Feedback Response");
+
+      worksheet.columns = [
+        { header: "Student Name", key: "studentName", width: 24 },
+        { header: "College Code", key: "collegeCode", width: 16 },
+        { header: "Department", key: "department", width: 18 },
+        { header: "Mentor Name", key: "mentorName", width: 24 },
+        { header: "Avg Score", key: "averageScore", width: 12 },
+        { header: "Status", key: "status", width: 14 },
+      ];
+
+      const dataToExport = isHodOrDirector
+        ? filteredMentorGroups
+            .filter((group) => !mentorFilter || group.mentorId === mentorFilter)
+            .flatMap((group) =>
+              group.mentees.map((mentee) => ({
+                studentName: mentee.studentName || "N/A",
+                collegeCode: mentee.collegeCode || "N/A",
+                department: mentee.department || "N/A",
+                mentorName: group.mentorName || "Unassigned",
+                averageScore: mentee.averageScore || "N/A",
+                status: mentee.feedbacks?.some((f) => f.feedbackRound === selectedFeedbackRound) ? "Responded" : "Pending",
+              }))
+            )
+        : filteredStudents.map((student) => ({
+            studentName: student.studentName || "N/A",
+            collegeCode: student.collegeCode || "N/A",
+            department: "N/A",
+            mentorName: student.mentorName || "Unassigned",
+            averageScore: student.averageScore || "N/A",
+            status: student.feedbacks?.some((f) => f.feedbackRound === selectedFeedbackRound) ? "Responded" : "Pending",
+          }));
+
+      worksheet.addRows(dataToExport);
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.autoFilter = { from: "A1", to: "F1" };
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `feedback-responses-sem${semesterFilter}-r${selectedFeedbackRound}.xlsx`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      enqueueSnackbar("File exported successfully", { variant: "success" });
+    } catch (error) {
+      enqueueSnackbar("Unable to export to Excel", { variant: "error" });
+    }
+  }, [isHodOrDirector, filteredMentorGroups, filteredStudents, mentorFilter, selectedFeedbackRound, semesterFilter, enqueueSnackbar]);
+
   return (
     <Page title="Feedback Management">
       <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -993,10 +1051,20 @@ const FeedbackManagement = () => {
 
           {/* Results Section */}
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 800, mb: 3, display: "flex", alignItems: "center", gap: 1.5 }}>
-              <AssessmentIcon color="primary" />
-              Response Analysis
-            </Typography>
+            <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={2} sx={{ mb: 3 }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 1.5 }}>
+                <AssessmentIcon color="primary" />
+                Response Analysis
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<DownloadOutlinedIcon />}
+                onClick={handleExportToExcel}
+                disabled={!loading && ((isHodOrDirector && filteredMentorGroups.length === 0) || (!isHodOrDirector && filteredStudents.length === 0))}
+              >
+                Export to Excel
+              </Button>
+            </Stack>
 
             {!semesterFilter && !feedbackWindow && feedbacks.length === 0 ? (
               <Paper sx={{ p: 8, textAlign: "center", borderRadius: 4, backgroundColor: alpha(theme.palette.grey[500], 0.05), border: `2px dashed ${theme.palette.divider}` }}>

@@ -32,6 +32,7 @@ const ThreadWindow = lazy(() => import("./pages/Thread/ThreadWindow"));
 const Report = lazy(() => import("./pages/Report/Report"));
 const CompetitionReportPage = lazy(() => import("./pages/Report/CompetitionReportPage"));
 const AttendanceReportPage = lazy(() => import("./pages/Report/AttendanceReportPage"));
+const FeedbackReportPage = lazy(() => import("./pages/Report/FeedbackReportPage"));
 const ThreadReports = lazy(() => import("./pages/ThreadReports/ThreadReports"));
 const ThreadReportsByMentor = lazy(() => import("./pages/ThreadReports/ThreadReportsByMentor"));
 const ThreadReportsByStudent = lazy(() => import("./pages/ThreadReports/ThreadReportsByStudent"));
@@ -529,6 +530,14 @@ function App() {
                     element={
                       <ProtectedRouteWrapper allowedRoles={["admin", "hod", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={AttendanceReportPage} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/report/feedback"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["admin", "hod", "director", "strcoordinator"]}>
+                        <LazyLoadWrapper component={FeedbackReportPage} />
                       </ProtectedRouteWrapper>
                     }
                   />
