@@ -19,7 +19,7 @@ import {
   IconButton,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { useContext, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { loginCall } from "../apiCalls";
 import { AuthContext } from "../context/AuthContext";
 import Image from "mui-image";
@@ -42,11 +42,56 @@ const Login = () => {
   const isLight = theme.palette.mode === 'light';
   const from = location.state?.from;
   const redirectParam = new URLSearchParams(location.search).get("redirect");
+  const refreshToken = new URLSearchParams(location.search).get("_hr");
 
   const [isAdminDemoChecked, setIsAdminDemoChecked] = useState(false);
   const [isFacultyDemoChecked, setIsFacultyDemoChecked] = useState(false);
   const [isStudentDemoChecked, setIsStudentDemoChecked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [refreshingCache, setRefreshingCache] = useState(!refreshToken);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const refreshLoginCache = async () => {
+      if (refreshToken) {
+        setRefreshingCache(false);
+        return;
+      }
+
+      setRefreshingCache(true);
+
+      try {
+        if (typeof window !== "undefined" && "caches" in window) {
+          const cacheKeys = await window.caches.keys();
+          await Promise.all(cacheKeys.map((cacheKey) => window.caches.delete(cacheKey)));
+        }
+
+        if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => registration.unregister()));
+        }
+
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set("_hr", String(Date.now()));
+
+        if (!isCancelled) {
+          window.location.replace(nextUrl.toString());
+        }
+      } catch (error) {
+        logger.warn("Unable to refresh cached login assets automatically:", error);
+        if (!isCancelled) {
+          window.location.reload();
+        }
+      }
+    };
+
+    refreshLoginCache();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [refreshToken]);
 
   const handleAdminDemoChange = (event) => {
     setIsAdminDemoChecked(event.target.checked);
@@ -138,6 +183,23 @@ const Login = () => {
   return (
     <Page title="Login">
       <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3, md: 0 } }}>
+        {refreshingCache ? (
+          <Box
+            sx={{
+              minHeight: "100dvh",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            <CircularProgress />
+            <Typography variant="body1" color="text.secondary" align="center">
+              Loading the latest login page...
+            </Typography>
+          </Box>
+        ) : (
         <Grid
           container
           spacing={{ xs: 1.5, md: 2 }}
@@ -330,6 +392,7 @@ const Login = () => {
             </Box>
           </Grid>
         </Grid>
+        )}
       </Container>
     </Page>
   );
