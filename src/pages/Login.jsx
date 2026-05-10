@@ -32,6 +32,7 @@ import Illustration from "../public/login_illustration.png";
 import logger from "../utils/logger.js";
 const Login = () => {
   const RELEASE_ANNOUNCEMENT_SESSION_KEY = "showSanghathi20Announcement";
+  const navigate = useNavigate();
   const location = useLocation();
   const email = useRef();
   const password = useRef();
@@ -125,7 +126,7 @@ const Login = () => {
       }
 
       sessionStorage.removeItem("postLoginRedirectPath");
-      window.location.href = redirectPath;
+      navigate(redirectPath, { replace: true });
     } catch (err) {
       logger.info(err);
       enqueueSnackbar(err?.response?.data?.message || "Login failed", {
