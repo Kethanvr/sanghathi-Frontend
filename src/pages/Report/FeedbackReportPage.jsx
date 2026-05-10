@@ -5,6 +5,10 @@ import {
   Card,
   CardContent,
   Container,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Grid,
   InputAdornment,
   Paper,
@@ -43,6 +47,7 @@ const FeedbackReportPage = () => {
 
   const [allFeedback, setAllFeedback] = useState([]);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [mentors, setMentors] = useState([]);
   const [selectedMentorId, setSelectedMentorId] = useState(null);
   const [mentorFeedback, setMentorFeedback] = useState([]);
@@ -135,21 +140,30 @@ const FeedbackReportPage = () => {
         // Flatten mentees.feedbacks into rows
         const rows = [];
         mentees.forEach((m) => {
-          (Array.isArray(m.feedbacks) ? m.feedbacks : []).forEach((fb) => {
-            rows.push({
-              _id: fb._id,
-              studentId: m.studentId || m.studentId || (fb.userId && fb.userId._id) || null,
-              studentName: m.studentName || fb.userId?.name || "N/A",
-              studentEmail: fb.userId?.email || m.studentEmail || "N/A",
-              usn: fb.studentUSN || fb.usn || m.usn || "N/A",
-              semester: fb.semester || "N/A",
-              feedbackRound: fb.feedbackRound || fb.round || "N/A",
-              averageScore: fb.averageScore || "N/A",
-              submittedAt: fb.submittedAt || fb.createdAt || null,
-              remarks: fb.remarks || "",
-              mentorName: mentorGroup?.mentorName || resp.data?.data?.mentor?.name || "N/A",
+            (Array.isArray(m.feedbacks) ? m.feedbacks : []).forEach((fb) => {
+              rows.push({
+                _id: fb._id,
+                studentId: m.studentId || m.studentId || (fb.userId && fb.userId._id) || null,
+                studentName: m.studentName || fb.userId?.name || "N/A",
+                studentEmail: fb.userId?.email || m.studentEmail || "N/A",
+                usn: fb.studentUSN || fb.usn || m.usn || "N/A",
+                semester: fb.semester || "N/A",
+                feedbackRound: fb.feedbackRound || fb.round || "N/A",
+                averageScore: fb.averageScore || "N/A",
+                submittedAt: fb.submittedAt || fb.createdAt || null,
+                remarks: fb.remarks || "",
+                mentorName: mentorGroup?.mentorName || resp.data?.data?.mentor?.name || "N/A",
+                mentorAccessibility: fb.mentorAccessibility || 0,
+                mentorInteraction: fb.mentorInteraction || 0,
+                academicHelp: fb.academicHelp || 0,
+                mentorConcern: fb.mentorConcern || 0,
+                listeningSkills: fb.listeningSkills || 0,
+                professionalMotivation: fb.professionalMotivation || 0,
+                barrierResolution: fb.barrierResolution || 0,
+                systemEffectiveness: fb.systemEffectiveness || 0,
+                continuationWillingness: fb.continuationWillingness || 0,
+              });
             });
-          });
         });
 
         setMentorFeedback(rows);
@@ -252,11 +266,22 @@ const FeedbackReportPage = () => {
       worksheet.columns = [
         { header: "Student Name", key: "studentName", width: 24 },
         { header: "Email", key: "studentEmail", width: 28 },
+        { header: "USN", key: "usn", width: 16 },
         { header: "Mentor Name", key: "mentorName", width: 24 },
         { header: "Semester", key: "semester", width: 12 },
         { header: "Feedback Round", key: "feedbackRound", width: 14 },
         { header: "Average Score", key: "averageScore", width: 14 },
+        { header: "Mentor Accessibility", key: "mentorAccessibility", width: 14 },
+        { header: "Mentor Interaction", key: "mentorInteraction", width: 14 },
+        { header: "Academic Help", key: "academicHelp", width: 14 },
+        { header: "Mentor Concern", key: "mentorConcern", width: 14 },
+        { header: "Listening Skills", key: "listeningSkills", width: 14 },
+        { header: "Professional Motivation", key: "professionalMotivation", width: 18 },
+        { header: "Barrier Resolution", key: "barrierResolution", width: 14 },
+        { header: "System Effectiveness", key: "systemEffectiveness", width: 14 },
+        { header: "Continuation Willingness", key: "continuationWillingness", width: 18 },
         { header: "Remarks", key: "remarks", width: 40 },
+        { header: "Submitted At", key: "submittedAt", width: 20 },
       ];
 
       const dataToExport = selectedMentorId ? mentorFilteredRows : allFeedback;
@@ -264,11 +289,22 @@ const FeedbackReportPage = () => {
         dataToExport.map((row) => ({
           studentName: row?.studentName || "N/A",
           studentEmail: row?.studentEmail || "N/A",
+          usn: row?.usn || "N/A",
           mentorName: row?.mentorName || row?.mentorName || "N/A",
           semester: row?.semester || "N/A",
           feedbackRound: row?.feedbackRound || row?.feedbackRound || "N/A",
           averageScore: row?.averageScore || row?.averageScore || "N/A",
+          mentorAccessibility: row?.mentorAccessibility || 0,
+          mentorInteraction: row?.mentorInteraction || 0,
+          academicHelp: row?.academicHelp || 0,
+          mentorConcern: row?.mentorConcern || 0,
+          listeningSkills: row?.listeningSkills || 0,
+          professionalMotivation: row?.professionalMotivation || 0,
+          barrierResolution: row?.barrierResolution || 0,
+          systemEffectiveness: row?.systemEffectiveness || 0,
+          continuationWillingness: row?.continuationWillingness || 0,
           remarks: row?.remarks || "",
+          submittedAt: row?.submittedAt ? new Date(row.submittedAt).toLocaleString() : "",
         }))
       );
 
@@ -462,7 +498,7 @@ const FeedbackReportPage = () => {
                               <TableCell>{row.feedbackRound}</TableCell>
                               <TableCell>{row.averageScore}</TableCell>
                               <TableCell align="center">
-                                <Button size="small" variant="outlined" onClick={() => setSelectedFeedback(row)}>View Details</Button>
+                                <Button size="small" variant="outlined" onClick={() => { setSelectedFeedback(row); setDialogOpen(true); }}>View Details</Button>
                               </TableCell>
                             </TableRow>
                           ))
@@ -478,23 +514,49 @@ const FeedbackReportPage = () => {
                   </TableContainer>
                 </Box>
 
-                {/* details panel for selected feedback */}
-                {selectedFeedback && (
-                  <Box sx={{ p: { xs: 2, sm: 3 } }}>
-                    <Typography variant="h6" sx={{ fontWeight: 800 }}>{selectedFeedback.studentName}</Typography>
-                    <Typography variant="caption" color="text.secondary">{selectedFeedback.studentEmail} • {selectedFeedback.usn}</Typography>
-                    <Box sx={{ mt: 2 }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Average Score</Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 900, color: theme.palette.primary.main }}>{selectedFeedback.averageScore}/5</Typography>
-                      {selectedFeedback.remarks && (
-                        <Box sx={{ mt: 2 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Remarks</Typography>
-                          <Typography variant="body2">{selectedFeedback.remarks}</Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Box>
-                )}
+                {/* Full details dialog shown when View Details is clicked */}
+                <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
+                  <DialogTitle>Feedback Details</DialogTitle>
+                  <DialogContent dividers>
+                    {selectedFeedback ? (
+                      <Box sx={{ pb: 1 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 800 }}>{selectedFeedback.studentName}</Typography>
+                        <Typography variant="caption" color="text.secondary">{selectedFeedback.studentEmail} • {selectedFeedback.usn}</Typography>
+
+                        <Grid container spacing={2} sx={{ mt: 2 }}>
+                          <Grid item xs={12} sm={6} md={4}><Typography variant="subtitle2">Semester</Typography><Typography>{selectedFeedback.semester}</Typography></Grid>
+                          <Grid item xs={12} sm={6} md={4}><Typography variant="subtitle2">Feedback Round</Typography><Typography>{selectedFeedback.feedbackRound}</Typography></Grid>
+                          <Grid item xs={12} sm={6} md={4}><Typography variant="subtitle2">Average Score</Typography><Typography>{selectedFeedback.averageScore}/5</Typography></Grid>
+
+                          <Grid item xs={12} md={6}><Typography variant="subtitle2">Mentor Interaction</Typography><Typography>{selectedFeedback.mentorInteraction}</Typography></Grid>
+                          <Grid item xs={12} md={6}><Typography variant="subtitle2">Mentor Accessibility</Typography><Typography>{selectedFeedback.mentorAccessibility}</Typography></Grid>
+
+                          <Grid item xs={12} md={6}><Typography variant="subtitle2">Academic Help</Typography><Typography>{selectedFeedback.academicHelp}</Typography></Grid>
+                          <Grid item xs={12} md={6}><Typography variant="subtitle2">Mentor Concern</Typography><Typography>{selectedFeedback.mentorConcern}</Typography></Grid>
+
+                          <Grid item xs={12} md={6}><Typography variant="subtitle2">Listening Skills</Typography><Typography>{selectedFeedback.listeningSkills}</Typography></Grid>
+                          <Grid item xs={12} md={6}><Typography variant="subtitle2">Professional Motivation</Typography><Typography>{selectedFeedback.professionalMotivation}</Typography></Grid>
+
+                          <Grid item xs={12} md={6}><Typography variant="subtitle2">Barrier Resolution</Typography><Typography>{selectedFeedback.barrierResolution}</Typography></Grid>
+                          <Grid item xs={12} md={6}><Typography variant="subtitle2">System Effectiveness</Typography><Typography>{selectedFeedback.systemEffectiveness}</Typography></Grid>
+
+                          <Grid item xs={12}><Typography variant="subtitle2">Continuation Willingness</Typography><Typography>{selectedFeedback.continuationWillingness}</Typography></Grid>
+
+                          {selectedFeedback.remarks && (
+                            <Grid item xs={12}><Typography variant="subtitle2">Remarks</Typography><Typography>{selectedFeedback.remarks}</Typography></Grid>
+                          )}
+
+                          <Grid item xs={12}><Typography variant="subtitle2">Submitted At</Typography><Typography>{selectedFeedback.submittedAt ? new Date(selectedFeedback.submittedAt).toLocaleString() : 'N/A'}</Typography></Grid>
+                        </Grid>
+                      </Box>
+                    ) : (
+                      <Typography>No details available</Typography>
+                    )}
+                  </DialogContent>
+                  <DialogActions>
+                    <Button onClick={() => setDialogOpen(false)}>Close</Button>
+                  </DialogActions>
+                </Dialog>
               </Paper>
             </>
           )}
