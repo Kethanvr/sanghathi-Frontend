@@ -74,6 +74,7 @@ const adminNavConfig = [
 
 const facultyNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/faculty/dashboard" },
+  { text: "Alerts", icon: <CampaignOutlinedIcon />, link: "/faculty/alerts" },
   { text: "My Mentees", icon: <PeopleIcon />, link: "/mentees" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
   // { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },

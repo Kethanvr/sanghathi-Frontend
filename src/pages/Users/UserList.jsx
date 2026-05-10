@@ -15,15 +15,15 @@ import {
   Menu,
   Typography,
   TablePagination,
-  Select,
   TextField,
   Button,
-  Checkbox,
   Stack,
-  Chip,
   Card,
   CardContent,
-  Grid,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   InputAdornment,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
@@ -47,6 +47,7 @@ export default function UserList({ onEdit }) {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuUser, setMenuUser] = useState(null);
+  const [detailUser, setDetailUser] = useState(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -77,15 +78,12 @@ export default function UserList({ onEdit }) {
   const handleOpenMenu = (event, user) => { setAnchorEl(event.currentTarget); setMenuUser(user); };
   const handleCloseMenu = () => { setAnchorEl(null); setMenuUser(null); };
 
-  const handleDeleteOne = async (user) => {
-    try {
-      // keep function for potential admin workflows but don't expose delete in UI
-      await api.delete(`/users/${user._id}`);
-      enqueueSnackbar(`Deleted ${user.name || 'user'}`, { variant: "success" });
-      fetchUsers();
-    } catch (err) {
-      enqueueSnackbar(err?.response?.data?.message || "Unable to delete user", { variant: "error" });
-    }
+  const handleOpenDetails = (user) => {
+    setDetailUser(user);
+  };
+
+  const handleCloseDetails = () => {
+    setDetailUser(null);
   };
 
   return (
@@ -117,10 +115,10 @@ export default function UserList({ onEdit }) {
               <TableRow>
                 <TableCell>Name</TableCell>
                 <TableCell>Email</TableCell>
-                <TableCell>Role</TableCell>
                 <TableCell>Department</TableCell>
                 <TableCell>Semester</TableCell>
                 <TableCell>Mentor Assigned</TableCell>
+                <TableCell>View Details</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -136,10 +134,14 @@ export default function UserList({ onEdit }) {
                     </Box>
                   </TableCell>
                   <TableCell>{u.email || 'N/A'}</TableCell>
-                  <TableCell>{u.roleName || 'N/A'}</TableCell>
                   <TableCell>{u.department || 'N/A'}</TableCell>
                   <TableCell>{u.sem || 'N/A'}</TableCell>
                   <TableCell>{(u.mentor && (u.mentor.name || u.mentor.fullName)) || u.mentorName || 'Unassigned'}</TableCell>
+                  <TableCell>
+                    <Button size="small" variant="outlined" onClick={() => handleOpenDetails(u)}>
+                      View Details
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -150,6 +152,26 @@ export default function UserList({ onEdit }) {
           <TablePagination component="div" count={filtered.length} page={page} onPageChange={(e, p) => setPage(p)} rowsPerPage={rowsPerPage} onRowsPerPageChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }} />
         </Box>
       </CardContent>
+
+      <Dialog open={Boolean(detailUser)} onClose={handleCloseDetails} fullWidth maxWidth="sm">
+        <DialogTitle>User Details</DialogTitle>
+        <DialogContent dividers>
+          {detailUser ? (
+            <Stack spacing={1.25}>
+              <Typography><strong>Name:</strong> {detailUser.name || 'N/A'}</Typography>
+              <Typography><strong>Email:</strong> {detailUser.email || 'N/A'}</Typography>
+              <Typography><strong>Department:</strong> {detailUser.department || 'N/A'}</Typography>
+              <Typography><strong>Semester:</strong> {detailUser.sem || 'N/A'}</Typography>
+              <Typography><strong>Mentor Assigned:</strong> {(detailUser.mentor && (detailUser.mentor.name || detailUser.mentor.fullName)) || detailUser.mentorName || 'Unassigned'}</Typography>
+              <Typography><strong>USN:</strong> {detailUser.usn || 'N/A'}</Typography>
+              <Typography><strong>Role:</strong> {detailUser.roleName || 'N/A'}</Typography>
+            </Stack>
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDetails}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   );
 }

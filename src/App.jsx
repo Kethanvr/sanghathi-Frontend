@@ -45,6 +45,7 @@ const ViewMentors = lazy(() => import("./pages/Admin/ViewMentors"));
 const Data = lazy(() => import("./pages/Admin/Data"));
 const UploadHistory = lazy(() => import("./pages/Admin/UploadHistory"));
 const FacultyDashboard = lazy(() => import("./pages/Faculty/FacultyDashboard"));
+const FacultyAlerts = lazy(() => import("./pages/Faculty/FacultyAlerts"));
 const CareerReview = lazy(() => import("./pages/CareerReview/CareerReview"));
 const ScoreCard = lazy(() => import("./pages/Scorecard/ScoreCard"));
 const POAttainmentGrading = lazy(() => import("./pages/MenteePOAttainment/POAttainmentGrading"));
@@ -156,6 +157,14 @@ function App() {
                     element={
                       <ProtectedRouteWrapper allowedRoles={["faculty"]}>
                         <LazyLoadWrapper component={FacultyDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/faculty/alerts"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["faculty"]}>
+                        <LazyLoadWrapper component={FacultyAlerts} />
                       </ProtectedRouteWrapper>
                     }
                   />

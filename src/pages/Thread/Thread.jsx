@@ -74,6 +74,8 @@ const Thread = () => {
   const isLight = theme.palette.mode === 'light';
   const colorMode = isLight ? 'primary' : 'info';
   const mentorIdParam = searchParams.get("mentorId");
+  const menteeIdParam = searchParams.get("menteeId");
+  const [prefilledMentee, setPrefilledMentee] = useState(null);
 
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
@@ -215,6 +217,18 @@ const Thread = () => {
       setOpenDialog(true);
     }
   }, [mentorIdParam, assignedMentor]);
+
+  useEffect(() => {
+    if (!menteeIdParam || !Array.isArray(users) || users.length === 0) {
+      return;
+    }
+
+    const matchedMentee = users.find((candidate) => candidate?._id === menteeIdParam);
+    if (matchedMentee) {
+      setPrefilledMentee(matchedMentee);
+      setOpenDialog(true);
+    }
+  }, [menteeIdParam, users]);
 
   const handleThreadClick = (thread) => {
     navigate(`/threads/${thread._id}`);
@@ -415,8 +429,20 @@ const Thread = () => {
             users={users}
             currentUser={user}
             onSave={handleAddNewThread}
-            initialParticipants={assignedMentor ? [assignedMentor] : []}
-            allowedUserIds={assignedMentor ? [assignedMentor._id] : null}
+            initialParticipants={
+              prefilledMentee
+                ? [prefilledMentee]
+                : assignedMentor
+                  ? [assignedMentor]
+                  : []
+            }
+            allowedUserIds={
+              prefilledMentee
+                ? [prefilledMentee._id]
+                : assignedMentor
+                  ? [assignedMentor._id]
+                  : null
+            }
             colorMode={colorMode}
           />
         </Box>
