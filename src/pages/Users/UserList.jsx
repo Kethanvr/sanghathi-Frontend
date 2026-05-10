@@ -27,7 +27,6 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import DeleteIcon from "@mui/icons-material/Delete";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -46,7 +45,6 @@ export default function UserList({ onEdit }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [selectedUsers, setSelectedUsers] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuUser, setMenuUser] = useState(null);
 
@@ -74,32 +72,14 @@ export default function UserList({ onEdit }) {
     return (u.name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q) || (u.usn || "").toLowerCase().includes(q);
   });
 
-  const handleSelectUser = (id) => {
-    setSelectedUsers((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  };
-
-  const handleSelectAll = (ev) => {
-    if (ev.target.checked) setSelectedUsers(filtered.map((u) => u._id));
-    else setSelectedUsers([]);
-  };
+  // selection removed: users are view-only in this listing
 
   const handleOpenMenu = (event, user) => { setAnchorEl(event.currentTarget); setMenuUser(user); };
   const handleCloseMenu = () => { setAnchorEl(null); setMenuUser(null); };
 
-  const handleDeleteSelected = async () => {
-    if (!selectedUsers.length) return;
-    try {
-      await Promise.all(selectedUsers.map(id => api.delete(`/users/${id}`)));
-      enqueueSnackbar(`Deleted ${selectedUsers.length} user(s)`, { variant: "success" });
-      setSelectedUsers([]);
-      fetchUsers();
-    } catch (err) {
-      enqueueSnackbar(err?.response?.data?.message || "Unable to delete users", { variant: "error" });
-    }
-  };
-
   const handleDeleteOne = async (user) => {
     try {
+      // keep function for potential admin workflows but don't expose delete in UI
       await api.delete(`/users/${user._id}`);
       enqueueSnackbar(`Deleted ${user.name || 'user'}`, { variant: "success" });
       fetchUsers();
@@ -110,15 +90,13 @@ export default function UserList({ onEdit }) {
 
   return (
     <Card>
-      <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
           <Typography variant="h6">View Users</Typography>
           <Typography variant="caption" color="text.secondary">Search and manage users</Typography>
         </Box>
         <Stack direction="row" spacing={1}>
-          <Button variant="contained" color="error" disabled={!selectedUsers.length} onClick={handleDeleteSelected} startIcon={<DeleteIcon />}>
-            Delete Selected ({selectedUsers.length})
-          </Button>
+          {/* Delete control intentionally hidden per request */}
         </Stack>
       </Box>
 
@@ -137,19 +115,17 @@ export default function UserList({ onEdit }) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell padding="checkbox"><Checkbox checked={selectedUsers.length > 0 && selectedUsers.length === filtered.length} indeterminate={selectedUsers.length > 0 && selectedUsers.length < filtered.length} onChange={handleSelectAll} /></TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Role</TableCell>
                 <TableCell>Department</TableCell>
                 <TableCell>Semester</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell>Mentor Assigned</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((u) => (
                 <TableRow key={u._id} hover>
-                  <TableCell padding="checkbox"><Checkbox checked={selectedUsers.includes(u._id)} onChange={() => handleSelectUser(u._id)} /></TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Avatar src={getAvatarSrc(u) || undefined}>{!getAvatarSrc(u) ? getAvatarFallbackText(u.name) : null}</Avatar>
@@ -163,13 +139,7 @@ export default function UserList({ onEdit }) {
                   <TableCell>{u.roleName || 'N/A'}</TableCell>
                   <TableCell>{u.department || 'N/A'}</TableCell>
                   <TableCell>{u.sem || 'N/A'}</TableCell>
-                  <TableCell>
-                    <IconButton onClick={(e) => handleOpenMenu(e, u)}><MoreVertIcon /></IconButton>
-                    <Menu anchorEl={anchorEl} open={Boolean(anchorEl) && menuUser?._id === u._id} onClose={handleCloseMenu}>
-                      <MenuItem onClick={() => { handleCloseMenu(); if (onEdit) onEdit(u); }}>Edit</MenuItem>
-                      <MenuItem onClick={() => { handleCloseMenu(); handleDeleteOne(u); }}>Delete</MenuItem>
-                    </Menu>
-                  </TableCell>
+                  <TableCell>{(u.mentor && (u.mentor.name || u.mentor.fullName)) || u.mentorName || 'Unassigned'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
