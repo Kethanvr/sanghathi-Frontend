@@ -61,12 +61,28 @@ const FeedbackReportPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [detailRow, setDetailRow] = useState(null);
 
-  // Load available mentors
+  // Load available mentors from mentorship data
   const loadMentors = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await api.get("/mentorship/mentors");
-      setMentors(response.data?.data?.mentors || []);
+      const response = await api.get("/mentorship/students");
+      const students = response.data?.data || [];
+      
+      // Extract unique mentors from student data
+      const mentorMap = new Map();
+      (Array.isArray(students) ? students : []).forEach((student) => {
+        if (student.mentor?._id && student.mentor?.name) {
+          if (!mentorMap.has(String(student.mentor._id))) {
+            mentorMap.set(String(student.mentor._id), {
+              _id: student.mentor._id,
+              name: student.mentor.name,
+              email: student.mentor.email || "",
+            });
+          }
+        }
+      });
+      
+      setMentors(Array.from(mentorMap.values()));
     } catch (error) {
       enqueueSnackbar(error?.response?.data?.message || "Failed to load mentors", { variant: "error" });
     } finally {
