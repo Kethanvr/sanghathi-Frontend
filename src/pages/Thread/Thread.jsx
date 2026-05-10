@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import {
   Box,
   Typography,
   Divider,
   Button,
+  IconButton,
   CircularProgress,
   Container,
   useTheme,
@@ -13,6 +14,12 @@ import {
   MenuItem,
   Stack,
   InputAdornment,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Chip,
+  Paper,
 } from "@mui/material";
 
 import { useSnackbar } from "notistack";
@@ -21,7 +28,7 @@ import NewThreadDialog from "./NewThreadDialog";
 import ThreadList from "./ThreadList";
 import Page from "../../components/Page";
 
-import { Add } from "@mui/icons-material";
+import { Add, CampaignOutlined, Close } from "@mui/icons-material";
 import SearchIcon from "@mui/icons-material/Search";
 import api from "../../utils/axios";
 
@@ -62,15 +69,25 @@ const Thread = () => {
   const [threads, setThreads] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [users, setUsers] = useState([]);
+  const [assignedMentor, setAssignedMentor] = useState(null);
   const { user } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailPreviewOpen, setEmailPreviewOpen] = useState(false);
+  const [emailPreviewLoading, setEmailPreviewLoading] = useState(false);
+  const [emailPreview, setEmailPreview] = useState(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const colorMode = isLight ? 'primary' : 'info';
+  const mentorIdParam = searchParams.get("mentorId");
+  const menteeIdParam = searchParams.get("menteeId");
+  const [prefilledMentee, setPrefilledMentee] = useState(null);
+  const isFaculty = user?.roleName === "faculty";
 
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
@@ -121,6 +138,23 @@ const Thread = () => {
   const fetchUsers = useCallback(async () => {
     try {
       const shouldScopeToStudents = ["faculty", "hod", "director"].includes(user?.roleName);
+
+      if (user?.roleName === "student") {
+        try {
+          const response = await api.get(`/mentorship/mentor/${user._id}`);
+          const mentor = response?.data?.mentor;
+
+          if (mentor?._id) {
+            setAssignedMentor(mentor);
+            setUsers([mentor]);
+            return;
+          }
+        } catch (mentorError) {
+          logger.error("Error fetching assigned mentor:", mentorError);
+          setUsers([]);
+          return;
+        }
+      }
 
       if (user?.roleName === "faculty") {
         const mentees = [];
@@ -190,6 +224,24 @@ const Thread = () => {
     fetchUsers();
   }, [fetchUsers]);
 
+  useEffect(() => {
+    if (mentorIdParam && assignedMentor?._id === mentorIdParam) {
+      setOpenDialog(true);
+    }
+  }, [mentorIdParam, assignedMentor]);
+
+  useEffect(() => {
+    if (!menteeIdParam || !Array.isArray(users) || users.length === 0) {
+      return;
+    }
+
+    const matchedMentee = users.find((candidate) => candidate?._id === menteeIdParam);
+    if (matchedMentee) {
+      setPrefilledMentee(matchedMentee);
+      setOpenDialog(true);
+    }
+  }, [menteeIdParam, users]);
+
   const handleThreadClick = (thread) => {
     navigate(`/threads/${thread._id}`);
   };
@@ -258,6 +310,47 @@ const Thread = () => {
     setOpenDialog(true);
   };
 
+  const fetchEmailPreview = async () => {
+    const response = await api.post("/threads/notify-open-thread-students", { dryRun: true });
+    return response.data?.data || null;
+  };
+
+  const handleOpenEmailPreview = async () => {
+    try {
+      setEmailPreviewLoading(true);
+      const preview = await fetchEmailPreview();
+      setEmailPreview(preview);
+      setEmailPreviewOpen(true);
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message || "Unable to load email preview.",
+        { variant: "error" }
+      );
+      logger.error("Error loading open-thread email preview:", error);
+    } finally {
+      setEmailPreviewLoading(false);
+    }
+  };
+
+  const handleSendOpenThreadEmail = async () => {
+    try {
+      setIsSendingEmail(true);
+      const response = await api.post("/threads/notify-open-thread-students");
+      enqueueSnackbar(response?.data?.message || "Email notification sent to open-thread students.", {
+        variant: "success",
+      });
+      setEmailPreviewOpen(false);
+      setEmailPreview(null);
+    } catch (error) {
+      enqueueSnackbar(error?.response?.data?.message || "Unable to send email notification.", {
+        variant: "error",
+      });
+      logger.error("Error sending open-thread email notification:", error);
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   return (
     <Page title="Thread">
       <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 } }}>
@@ -282,15 +375,42 @@ const Thread = () => {
             <Typography variant="h4" component="h1">
               Threads
             </Typography>
-            <Button
-              variant="contained"
-              color={colorMode}
-              onClick={handleOpenDialog}
-              startIcon={<Add />}
-              sx={{ mt: 1, mb: 2, width: { xs: "100%", sm: "auto" } }}
-            >
-              Add new
-            </Button>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
+              {isFaculty ? (
+                <Button
+                  variant="contained"
+                  color={colorMode}
+                  onClick={handleOpenEmailPreview}
+                  disabled={isSendingEmail || emailPreviewLoading}
+                  startIcon={<CampaignOutlined />}
+                  sx={{
+                    mt: 1,
+                    mb: 2,
+                    width: { xs: "100%", sm: "auto" },
+                    minHeight: 44,
+                    px: 2.5,
+                    fontWeight: 800,
+                    background: "linear-gradient(90deg, #f97316 0%, #ef4444 100%)",
+                    color: "white",
+                    boxShadow: "0 12px 30px rgba(239,68,68,0.35)",
+                    '&:hover': {
+                      background: "linear-gradient(90deg, #ea580c 0%, #dc2626 100%)",
+                    },
+                  }}
+                >
+                  {emailPreviewLoading ? "Preparing Preview..." : "Send Email"}
+                </Button>
+              ) : null}
+              <Button
+                variant="contained"
+                color={colorMode}
+                onClick={handleOpenDialog}
+                startIcon={<Add />}
+                sx={{ mt: 1, mb: 2, width: { xs: "100%", sm: "auto" } }}
+              >
+                Add new
+              </Button>
+            </Stack>
           </Box>
           <Divider />
           <Box
@@ -389,10 +509,100 @@ const Thread = () => {
             users={users}
             currentUser={user}
             onSave={handleAddNewThread}
+            initialParticipants={
+              prefilledMentee
+                ? [prefilledMentee]
+                : assignedMentor
+                  ? [assignedMentor]
+                  : []
+            }
+            allowedUserIds={
+              prefilledMentee
+                ? [prefilledMentee._id]
+                : assignedMentor
+                  ? [assignedMentor._id]
+                  : null
+            }
             colorMode={colorMode}
           />
         </Box>
       </Container>
+
+      <Dialog open={emailPreviewOpen} onClose={() => setEmailPreviewOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle sx={{ pr: 6 }}>
+          Confirm Email Notification
+          <IconButton onClick={() => setEmailPreviewOpen(false)} sx={{ position: "absolute", right: 12, top: 12 }}>
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {emailPreview ? (
+            <Stack spacing={2}>
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>
+                  Recipients ({Array.isArray(emailPreview.recipients) ? emailPreview.recipients.length : 0})
+                </Typography>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  {(emailPreview.recipients || []).map((recipient) => (
+                    <Chip key={recipient} label={recipient} size="small" />
+                  ))}
+                </Stack>
+              </Paper>
+
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>
+                  Subject
+                </Typography>
+                <Typography>{emailPreview.subject}</Typography>
+              </Paper>
+
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 55%, #2563eb 100%)",
+                  color: "white",
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>
+                  Email Preview
+                </Typography>
+                <Box
+                  sx={{
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    bgcolor: "rgba(255,255,255,0.06)",
+                    p: 2,
+                    "& a": { color: "#fde68a", fontWeight: 800 },
+                  }}
+                  dangerouslySetInnerHTML={{ __html: emailPreview.html || "" }}
+                />
+              </Paper>
+
+              <Typography variant="body2" color="text.secondary">
+                This will send one common message to all unique student recipients found in open threads.
+              </Typography>
+            </Stack>
+          ) : (
+            <Typography>No preview available.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setEmailPreviewOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleSendOpenThreadEmail}
+            disabled={isSendingEmail}
+            sx={{
+              background: "linear-gradient(90deg, #f97316 0%, #ef4444 100%)",
+              color: "white",
+              boxShadow: "0 12px 30px rgba(239,68,68,0.35)",
+            }}
+          >
+            {isSendingEmail ? "Sending..." : "Confirm & Send"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Page>
   );
 };

@@ -48,9 +48,9 @@ const MentorAllocation = () => {
   const [filterBranch, setFilterBranch] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [showFilters, setShowFilters] = useState(false);
-  const rowsPerPageOptions = [5, 10, 25, 50];
+  const rowsPerPageOptions = [25, 50, 100];
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -58,7 +58,7 @@ const MentorAllocation = () => {
         const response = await api.get("/mentors/allocation-students", {
           params: {
             page: 1,
-            limit: 1000,
+            limit: 100,
           },
         });
         const { data } = response.data;
@@ -89,7 +89,7 @@ const MentorAllocation = () => {
       const response = await api.get("/mentors/allocation-students", {
         params: {
           page: 1,
-          limit: 1000,
+          limit: 100,
         },
       });
       const { data } = response.data;

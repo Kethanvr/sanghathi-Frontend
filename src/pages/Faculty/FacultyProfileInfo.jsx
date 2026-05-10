@@ -19,10 +19,12 @@ import {
   Business as BusinessIcon,
   Email as EmailIcon,
   EventAvailable as EventAvailableIcon,
-  LocalPhone as LocalPhoneIcon,
+  Forum as ForumIcon,
   MeetingRoom as MeetingRoomIcon,
   Person as PersonIcon,
+  LocalPhone as LocalPhoneIcon,
 } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../utils/axios";
 import logger from "../../utils/logger.js";
@@ -39,16 +41,6 @@ const formatValue = (value) => {
   }
 
   return String(value);
-};
-
-const getPhoneHref = (phoneValue) => {
-  const value = formatValue(phoneValue);
-  if (value === "Not available") {
-    return null;
-  }
-
-  const normalized = value.replace(/[^0-9+]/g, "");
-  return normalized ? `tel:${normalized}` : null;
 };
 
 const InfoRow = ({ icon, label, value }) => (
@@ -68,6 +60,7 @@ const InfoRow = ({ icon, label, value }) => (
 const FacultyProfileInfo = () => {
   const theme = useTheme();
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [mentorDetails, setMentorDetails] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -117,6 +110,7 @@ const FacultyProfileInfo = () => {
           : null;
 
         setMentorDetails({
+          mentorId: mentor._id,
           fullName: profileName || mentor.name || "Not available",
           roleName: mentor.roleName || "Faculty Mentor",
           department: facultyProfile?.department || mentor.department || "Not available",
@@ -165,7 +159,6 @@ const FacultyProfileInfo = () => {
   const mobileNumber = formatValue(mentorDetails?.mobileNumber);
   const emailHref =
     officialEmail === "Not available" ? null : `mailto:${officialEmail}`;
-  const phoneHref = getPhoneHref(mentorDetails?.mobileNumber);
 
   return (
     <Box
@@ -329,11 +322,14 @@ const FacultyProfileInfo = () => {
                     </Button>
                     <Button
                       variant="outlined"
-                      startIcon={<LocalPhoneIcon />}
-                      href={phoneHref || undefined}
-                      disabled={!phoneHref}
+                      startIcon={<ForumIcon />}
+                      onClick={() => {
+                        if (!mentorDetails?.mentorId) return;
+                        navigate(`/threads?mentorId=${mentorDetails.mentorId}`);
+                      }}
+                      disabled={!mentorDetails?.mentorId}
                     >
-                      Call Mentor
+                      Thread
                     </Button>
                   </Stack>
                 </CardContent>

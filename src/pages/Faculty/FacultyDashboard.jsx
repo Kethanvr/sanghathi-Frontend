@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Container, Grid, Typography, Box, useTheme } from "@mui/material";
 import Page from "../../components/Page";
 import { Card, CardHeader, CardContent, CardActionArea } from "@mui/material";
@@ -32,7 +32,8 @@ import {
   Group as GroupIcon,
   Dashboard as DashboardIcon,
   LiveHelp as LiveHelpIcon,
-  Info as InfoOutlinedIcon
+  Info as InfoOutlinedIcon,
+  CampaignOutlined as CampaignOutlinedIcon,
 } from "@mui/icons-material";
 import { blueGrey } from "@mui/material/colors";
 
@@ -40,9 +41,11 @@ import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import HdrStrongIcon from '@mui/icons-material/HdrStrong';
 import { alpha } from "@mui/material/styles";
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import DashboardHeroCard from "../../components/dashboard/DashboardHeroCard";
+import api from "../../utils/axios";
+import { useSnackbar } from "notistack";
 
 const StudentTile = ({ title, icon, link }) => {
   const theme = useTheme();
@@ -135,7 +138,10 @@ const FacultyDashboard = () => {
   const theme = useTheme();
   const isLight = theme.palette.mode === 'light';
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
   const [bugReportDialogOpen, setBugReportDialogOpen] = useState(false);
+  const [alertCount, setAlertCount] = useState(0);
   
   const handleBugReportDialogOpen = () => {
     setBugReportDialogOpen(true);
@@ -144,6 +150,44 @@ const FacultyDashboard = () => {
   const handleBugReportDialogClose = () => {
     setBugReportDialogOpen(false);
   };
+
+  useEffect(() => {
+    const loadAlerts = async () => {
+      if (!user?._id) return;
+
+      try {
+        const [attendanceResponse, menteesResponse] = await Promise.all([
+          api.get("/reports/attendance"),
+          api.get(`/mentorship/${user._id}/mentees-with-profiles`, { params: { page: 1, limit: 500 } }),
+        ]);
+
+        const lowAttendanceRows = attendanceResponse.data?.data?.attendance || [];
+        const mentees = Array.isArray(menteesResponse.data?.mentees) ? menteesResponse.data.mentees : [];
+        const menteeIds = new Set(mentees.map((mentee) => String(mentee?._id)).filter(Boolean));
+        const facultyAlerts = lowAttendanceRows.filter((row) => menteeIds.has(String(row.userId)));
+
+        setAlertCount(facultyAlerts.length);
+
+        const toastKey = `faculty-alert-toast-${user._id}`;
+        if (facultyAlerts.length > 0 && !sessionStorage.getItem(toastKey)) {
+          sessionStorage.setItem(toastKey, "1");
+          enqueueSnackbar(`Attention needed: ${facultyAlerts.length} mentee(s) are below 75% attendance.`, {
+            variant: "warning",
+            autoHideDuration: 6000,
+            action: () => (
+              <Button color="inherit" size="small" onClick={() => navigate("/faculty/alerts")}>
+                View Alerts
+              </Button>
+            ),
+          });
+        }
+      } catch (error) {
+        console.error("Unable to load faculty alerts", error);
+      }
+    };
+
+    loadAlerts();
+  }, [enqueueSnackbar, navigate, user?._id]);
   
   return (
     <Page title="Faculty Dashboard">
@@ -211,6 +255,14 @@ const FacultyDashboard = () => {
                 title="Campus Buddy"
                 icon={<HdrStrongIcon />}
                 link="/campus-buddy"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={isLight ? 6 : 6} lg={isLight ? 4 : 4}>
+              <StudentTile
+                title={`Alerts${alertCount ? ` (${alertCount})` : ""}`}
+                icon={<CampaignOutlinedIcon />}
+                link="/faculty/alerts"
               />
             </Grid>
           </Grid>

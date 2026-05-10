@@ -26,9 +26,13 @@ const AdmissionDetailsPage = lazy(() => import("./pages/Student/AdmissionDetails
 const Placement = lazy(() => import("./pages/Placement/Placement"));
 const Ptm = lazy(() => import("./pages/ParentsTeacherMeeting/Ptm"));
 const Attendance = lazy(() => import("./pages/Student/Attendance"));
+const StudentAlerts = lazy(() => import("./pages/Student/Alerts"));
 const Thread = lazy(() => import("./pages/Thread/Thread"));
 const ThreadWindow = lazy(() => import("./pages/Thread/ThreadWindow"));
 const Report = lazy(() => import("./pages/Report/Report"));
+const CompetitionReportPage = lazy(() => import("./pages/Report/CompetitionReportPage"));
+const AttendanceReportPage = lazy(() => import("./pages/Report/AttendanceReportPage"));
+const FeedbackReportPage = lazy(() => import("./pages/Report/FeedbackReportPage"));
 const ThreadReports = lazy(() => import("./pages/ThreadReports/ThreadReports"));
 const ThreadReportsByMentor = lazy(() => import("./pages/ThreadReports/ThreadReportsByMentor"));
 const ThreadReportsByStudent = lazy(() => import("./pages/ThreadReports/ThreadReportsByStudent"));
@@ -43,6 +47,7 @@ const ViewMentors = lazy(() => import("./pages/Admin/ViewMentors"));
 const Data = lazy(() => import("./pages/Admin/Data"));
 const UploadHistory = lazy(() => import("./pages/Admin/UploadHistory"));
 const FacultyDashboard = lazy(() => import("./pages/Faculty/FacultyDashboard"));
+const FacultyAlerts = lazy(() => import("./pages/Faculty/FacultyAlerts"));
 const CareerReview = lazy(() => import("./pages/CareerReview/CareerReview"));
 const ScoreCard = lazy(() => import("./pages/Scorecard/ScoreCard"));
 const POAttainmentGrading = lazy(() => import("./pages/MenteePOAttainment/POAttainmentGrading"));
@@ -58,6 +63,7 @@ const FeedbackForm = lazy(() => import("./pages/Feedback/feedback"));
 const FeedbackManagement = lazy(() => import("./pages/Feedback/FeedbackManagement"));
 const MyChatBot = lazy(() => import("./mychatbot"));
 const Updates = lazy(() => import("./pages/Updates"));
+const DepartmentSelectionPage = lazy(() => import("./pages/StrCoordinator/DepartmentSelectionPage"));
 
 function App() {
   // Track page views on route change using Google Analytics GA4
@@ -128,10 +134,16 @@ function App() {
                         ) : user.roleName === "admin" ? (
                           <Navigate replace to="/admin/dashboard" />
                         ) : user.roleName === "director" ? (
-                          <Navigate replace to="/director/dashboard" />
+                          user.department ? (
+                            <Navigate replace to="/director/dashboard" />
+                          ) : (
+                            <Navigate replace to="/strcoordinator/select-department" />
+                          )
                         ) : user.roleName === "hod" ? (
                           <Navigate replace to="/hod/dashboard" />
-                        ): (
+                        ) : user.roleName === "strcoordinator" ? (
+                          <Navigate replace to="/strcoordinator/select-department" />
+                        ) : (
                           <ProtectedRouteWrapper allowedRoles={["student"]}>
                             <LazyLoadWrapper component={Dashboard} />
                           </ProtectedRouteWrapper>
@@ -147,6 +159,14 @@ function App() {
                     element={
                       <ProtectedRouteWrapper allowedRoles={["faculty"]}>
                         <LazyLoadWrapper component={FacultyDashboard} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/faculty/alerts"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["faculty"]}>
+                        <LazyLoadWrapper component={FacultyAlerts} />
                       </ProtectedRouteWrapper>
                     }
                   />
@@ -193,7 +213,7 @@ function App() {
                   <Route
                     path="/hod/thread-reports"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={ThreadReports} />
                       </ProtectedRouteWrapper>
                     }
@@ -201,7 +221,7 @@ function App() {
                   <Route
                     path="/hod/thread-reports/:mentorId"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={ThreadReportsByMentor} />
                       </ProtectedRouteWrapper>
                     }
@@ -209,7 +229,7 @@ function App() {
                   <Route
                     path="/hod/thread-reports/:mentorId/:studentId"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["faculty", "hod", "admin", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={ThreadReportsByStudent} />
                       </ProtectedRouteWrapper>
                     }
@@ -217,7 +237,7 @@ function App() {
                   <Route
                     path="/recent-threads"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["hod", "admin", "director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["hod", "admin", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={RecentThreads} />
                       </ProtectedRouteWrapper>
                     }
@@ -225,7 +245,7 @@ function App() {
                   <Route
                     path="/director/mentors"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["director", "strcoordinator"]}>
                         <LazyLoadWrapper component={DirectorViewMentors} />
                       </ProtectedRouteWrapper>
                     }
@@ -233,7 +253,7 @@ function App() {
                   <Route
                     path="/director/mentor/:mentorId/mentees"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["director","hod"]}>
+                      <ProtectedRouteWrapper allowedRoles={["director", "hod", "strcoordinator"]}>
                         <LazyLoadWrapper component={DirectorMenteesList} />
                       </ProtectedRouteWrapper>
                     }
@@ -249,7 +269,7 @@ function App() {
                   <Route
                     path="/director/mentee-profile/:menteeId"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["director","hod"]}>
+                      <ProtectedRouteWrapper allowedRoles={["director", "hod", "strcoordinator"]}>
                         <LazyLoadWrapper component={StudentDashboard} />
                       </ProtectedRouteWrapper>
                     }
@@ -291,6 +311,22 @@ function App() {
                     element={
                       <ProtectedRouteWrapper>
                         <LazyLoadWrapper component={ViewUsers} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/strcoordinator/select-department"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["strcoordinator", "director"]}>
+                        <LazyLoadWrapper component={DepartmentSelectionPage} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/strcoordinator/dashboard"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["strcoordinator", "director"]}>
+                        <LazyLoadWrapper component={DirectorDashboard} />
                       </ProtectedRouteWrapper>
                     }
                   />
@@ -345,7 +381,7 @@ function App() {
                   <Route
                     path="/feedback/manage"
                     element={
-                      <ProtectedRouteWrapper allowedRoles={["admin", "hod", "director"]}>
+                      <ProtectedRouteWrapper allowedRoles={["admin", "hod", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={FeedbackManagement} />
                       </ProtectedRouteWrapper>
                     }
@@ -419,6 +455,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/alerts"
+                    element={
+                      <ProtectedRouteWrapper>
+                        <LazyLoadWrapper component={StudentAlerts} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
                     path="/career-review"
                     element={
                       <ProtectedRouteWrapper>
@@ -468,8 +512,32 @@ function App() {
                   <Route
                     path="/report"
                     element={
-                      <ProtectedRouteWrapper>
+                      <ProtectedRouteWrapper allowedRoles={["admin", "hod", "director", "strcoordinator"]}>
                         <LazyLoadWrapper component={Report} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/report/competition"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["admin", "hod", "director", "strcoordinator"]}>
+                        <LazyLoadWrapper component={CompetitionReportPage} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/report/attendance"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["admin", "hod", "director", "strcoordinator"]}>
+                        <LazyLoadWrapper component={AttendanceReportPage} />
+                      </ProtectedRouteWrapper>
+                    }
+                  />
+                  <Route
+                    path="/report/feedback"
+                    element={
+                      <ProtectedRouteWrapper allowedRoles={["admin", "hod", "director", "strcoordinator"]}>
+                        <LazyLoadWrapper component={FeedbackReportPage} />
                       </ProtectedRouteWrapper>
                     }
                   />

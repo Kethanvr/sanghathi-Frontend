@@ -270,7 +270,7 @@ export default function ViewMentors() {
 
             {mentors.length > 0 && (
               <TablePagination
-                rowsPerPageOptions={[5, 10, 25, 50]}
+                rowsPerPageOptions={[25, 50, 100]}
                 component="div"
                 count={total}
                 rowsPerPage={rowsPerPage}

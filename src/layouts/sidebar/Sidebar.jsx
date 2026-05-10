@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import getNavConfig from "./NavConfig";
 import SidebarDrawer from "./SidebarDrawer";
 import NavItemsList from "./NavItemsList";
+import DepartmentSwitcher from "../header/DepartmentSwitcher";
 import FlexBetween from "../../components/FlexBetween";
 import logo from "../../public/logo.svg";
 import { Box, IconButton, useTheme } from "@mui/material";
@@ -67,6 +68,10 @@ const Sidebar = ({
               </IconButton>
             )}
           </FlexBetween>
+
+          {/* Department Switcher */}
+          <DepartmentSwitcher variant="sidebar" />
+
           <NavItemsList
             navConfig={navConfig}
             active={active}

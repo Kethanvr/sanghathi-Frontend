@@ -179,7 +179,7 @@ const AdminDashboard = () => {
           
           <Grid item xs={12} sm={6} md={isLight ? 6 : 6} lg={isLight ? 4 : 4}>
             <AdminTile
-              title="Thread Reports"
+              title="Reports"
               icon={<SummarizeIcon />}
               link="/report"
             />

@@ -42,7 +42,7 @@ export default function ClubEvents() {
 
       const { data } = response.data;
   
-      if (data && Array.isArray(data.clubs)) {
+      if (data && Array.isArray(data.clubs) && data.clubs.length > 0) {
         const formattedClubs = data.clubs.map(club => ({
           ...club,
           registeredDate: club.registeredDate ? new Date(club.registeredDate).toISOString().split('T')[0] : '',
@@ -50,7 +50,8 @@ export default function ClubEvents() {
         reset({ clubs: formattedClubs });
       } else {
         logger.warn("No club data found for this user");
-        reset({ clubs: [] });
+        // show one empty row by default
+        reset({ clubs: [{ clubName: "", clubdepartment: "", registeredDate: "" }] });
       }
     } catch (error) {
       logger.info("Error fetching club data:", error);

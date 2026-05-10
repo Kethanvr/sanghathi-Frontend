@@ -20,6 +20,7 @@ import {
   alpha,
   Chip,
   Avatar,
+  InputAdornment,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import SearchIcon from "@mui/icons-material/Search";
@@ -129,29 +130,44 @@ function HodViewMentors() {
             flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between',
             alignItems: { xs: 'stretch', sm: 'center' },
-            gap: { xs: 1, sm: 0 },
+            gap: 1.5,
             px: { xs: 2, sm: 3 },
-            py: 2
+            py: 2,
+            background: isLight
+              ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.06)}, ${alpha(theme.palette.info.main, 0.05)})`
+              : `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.22)}, ${alpha(theme.palette.info.dark, 0.16)})`,
           }}
         >
-          <Typography variant="h6" component="h1" sx={{ fontWeight: 500 }}>
-            Assigned Mentors in {user.department} Department
-          </Typography>
-          <Chip 
+          <Box>
+            <Typography variant="h6" component="h1" sx={{ fontWeight: 600 }}>
+              Assigned Mentors in {user.department} Department
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Review mentor profiles and the students currently assigned to them.
+            </Typography>
+          </Box>
+          <Chip
             icon={<SchoolIcon />}
-            label={`${filteredMentors.length} Assigned Mentors`}
+            label={`${filteredMentors.length} assigned mentors`}
             color={isLight ? "primary" : "info"}
             variant="outlined"
+            sx={{ fontWeight: 600 }}
           />
         </Box>
-        <CardContent sx={{ px: { xs: 1.5, sm: 3 } }}>
+        <CardContent sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
           <Stack spacing={2}>
             <Box
               sx={{
                 display: "flex",
                 gap: 2,
-                alignItems: "center",
-                flexDirection: { xs: "column", sm: "row" },
+                alignItems: "stretch",
+                flexDirection: { xs: "column", md: "row" },
+                p: { xs: 2, sm: 2.5 },
+                borderRadius: 2,
+                border: `1px solid ${alpha(theme.palette.divider, 0.18)}`,
+                backgroundColor: isLight
+                  ? alpha(theme.palette.background.paper, 0.92)
+                  : alpha(theme.palette.background.paper, 0.72),
               }}
             >
               <TextField
@@ -160,15 +176,25 @@ function HodViewMentors() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 InputProps={{
-                  startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />,
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: "text.secondary" }} />
+                    </InputAdornment>
+                  ),
                   endAdornment: searchQuery && (
                     <InputAdornment position="end">
-                      <Button size="small" onClick={() => setSearchQuery("")}>
+                      <Button size="small" onClick={() => setSearchQuery("") }>
                         <ClearIcon />
                       </Button>
                     </InputAdornment>
                   ),
                 }}
+              />
+              <Chip
+                label={searchQuery ? "Filtered" : "All mentors"}
+                variant="outlined"
+                color={isLight ? "primary" : "info"}
+                sx={{ alignSelf: { xs: "flex-start", md: "center" }, fontWeight: 600 }}
               />
             </Box>
 

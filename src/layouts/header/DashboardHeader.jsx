@@ -16,6 +16,7 @@ import { useState } from "react";
 
 import AccountPopover from "./AccountPopover";
 import NotificationsPopover from "./NotificationsPopover";
+import DepartmentSwitcher from "./DepartmentSwitcher";
 import FlexBetween from "../../components/FlexBetween";
 import {
   AppBar,
@@ -134,6 +135,7 @@ const DashboardHeader = ({ isSidebarOpen, setIsSidebarOpen }) => {
             </IconButton>
           </Tooltip>
 
+          <DepartmentSwitcher />
           <NotificationsPopover />
           <AccountPopover />
         </FlexBetween>

@@ -54,7 +54,7 @@ const MentorAssignmentDialog = ({ open, studentIds, onClose, onSuccess }) => {
         const params = {
           role: "faculty",
           page: 1,
-          limit: 1000,
+          limit: 100,
           fields: "_id,name,email,department,avatar,photo",
           includeProfiles: true,
         };

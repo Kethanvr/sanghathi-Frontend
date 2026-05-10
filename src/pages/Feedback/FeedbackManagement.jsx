@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useContext } from "react";
+import React, { useState, useEffect, useMemo, useContext, useCallback } from "react";
 import {
   Alert,
   Box,
@@ -57,7 +57,8 @@ import GroupIcon from "@mui/icons-material/Group";
 import UpdateIcon from "@mui/icons-material/Update";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+import ExcelJS from "exceljs";
 
 const roundOptions = [
   { value: 1, label: "Feedback 1" },
@@ -99,7 +100,10 @@ const FeedbackManagement = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useContext(AuthContext);
   const canEditWindow = user?.roleName === "admin";
-  const isHodOrDirector = user?.roleName === "hod" || user?.roleName === "director";
+  const isHodOrDirector =
+    user?.roleName === "hod" ||
+    user?.roleName === "director" ||
+    user?.roleName === "strcoordinator";
   const [departmentScope, setDepartmentScope] = useState(
     user?.department || user?.facultyProfile?.department || ""
   );
@@ -282,7 +286,7 @@ const FeedbackManagement = () => {
               role: "student",
               semester: activeSem,
               department: user.roleName !== 'admin' ? departmentParam : undefined,
-              limit: 1000 // Get all for this semester
+              limit: 100
             }
           });
           const fetchedStudents = studentResponse.data?.data?.users || [];
@@ -623,7 +627,7 @@ const FeedbackManagement = () => {
   };
 
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
 
   const filteredStudents = useMemo(() => {
     // Merge allStudents with feedbacks to show status
@@ -679,6 +683,62 @@ const FeedbackManagement = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+
+  const handleExportToExcel = useCallback(async () => {
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Feedback Response");
+
+      worksheet.columns = [
+        { header: "Student Name", key: "studentName", width: 24 },
+        { header: "College Code", key: "collegeCode", width: 16 },
+        { header: "Department", key: "department", width: 18 },
+        { header: "Mentor Name", key: "mentorName", width: 24 },
+        { header: "Avg Score", key: "averageScore", width: 12 },
+        { header: "Status", key: "status", width: 14 },
+      ];
+
+      const dataToExport = isHodOrDirector
+        ? filteredMentorGroups
+            .filter((group) => !mentorFilter || group.mentorId === mentorFilter)
+            .flatMap((group) =>
+              group.mentees.map((mentee) => ({
+                studentName: mentee.studentName || "N/A",
+                collegeCode: mentee.collegeCode || "N/A",
+                department: mentee.department || "N/A",
+                mentorName: group.mentorName || "Unassigned",
+                averageScore: mentee.averageScore || "N/A",
+                status: mentee.feedbacks?.some((f) => f.feedbackRound === selectedFeedbackRound) ? "Responded" : "Pending",
+              }))
+            )
+        : filteredStudents.map((student) => ({
+            studentName: student.studentName || "N/A",
+            collegeCode: student.collegeCode || "N/A",
+            department: "N/A",
+            mentorName: student.mentorName || "Unassigned",
+            averageScore: student.averageScore || "N/A",
+            status: student.feedbacks?.some((f) => f.feedbackRound === selectedFeedbackRound) ? "Responded" : "Pending",
+          }));
+
+      worksheet.addRows(dataToExport);
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.autoFilter = { from: "A1", to: "F1" };
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `feedback-responses-sem${semesterFilter}-r${selectedFeedbackRound}.xlsx`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      enqueueSnackbar("File exported successfully", { variant: "success" });
+    } catch (error) {
+      enqueueSnackbar("Unable to export to Excel", { variant: "error" });
+    }
+  }, [isHodOrDirector, filteredMentorGroups, filteredStudents, mentorFilter, selectedFeedbackRound, semesterFilter, enqueueSnackbar]);
 
   return (
     <Page title="Feedback Management">
@@ -883,102 +943,106 @@ const FeedbackManagement = () => {
                 )}
 
                 {/* Filter Toolbar */}
-                <Card sx={{ p: 3, borderRadius: 3, boxShadow: theme.customShadows?.z8 }}>
-                  <Stack spacing={3}>
-                    {/* Row 1: Data View Filters */}
-                    <Box>
-                      <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 700, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <FilterListIcon fontSize="small" /> Data View Filters
-                      </Typography>
-                      <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={4}>
+                <Card sx={{
+                  p: 3,
+                  borderRadius: 3,
+                  boxShadow: theme.customShadows?.z8,
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
+                  background: isLight
+                    ? `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, rgba(255,255,255,0.98) 100%)`
+                    : `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(theme.palette.grey[900], 0.75)} 100%)`,
+                }}>
+                  <Stack spacing={2.5}>
+                    {/* Search Bar - Full Width */}
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder="Search student by name, USN, or email..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon color="disabled" />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          backgroundColor: alpha(theme.palette.background.paper, 0.6),
+                        },
+                      }}
+                    />
+
+                    {/* Filter Row */}
+                    <Typography variant="subtitle2" sx={{ fontWeight: 900, color: 'primary.main', display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                      <FilterListIcon fontSize="small" /> Filters
+                    </Typography>
+                    <Grid container spacing={2} alignItems="center">
+                      <Grid item xs={12} sm={6} md={3}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>View Semester</InputLabel>
+                          <Select
+                            label="View Semester"
+                            value={semesterFilter}
+                            onChange={(e) => setSemesterFilter(e.target.value)}
+                          >
+                            {(user?.department === "MCA" ? [1, 2, 3, 4] : [1, 2, 3, 4, 5, 6, 7, 8]).map((sem) => (
+                              <MenuItem key={sem} value={sem.toString()}>
+                                Semester {sem}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={3}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>View Round</InputLabel>
+                          <Select
+                            label="View Round"
+                            value={selectedFeedbackRound}
+                            onChange={(e) => setSelectedFeedbackRound(Number(e.target.value))}
+                          >
+                            <MenuItem value={1}>Feedback 1</MenuItem>
+                            <MenuItem value={2}>Feedback 2</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={3}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Response Status</InputLabel>
+                          <Select
+                            label="Response Status"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                          >
+                            <MenuItem value="all">All Students</MenuItem>
+                            <MenuItem value="responded">Responded</MenuItem>
+                            <MenuItem value="pending">Pending</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      {isHodOrDirector && (
+                        <Grid item xs={12} sm={6} md={3}>
                           <FormControl fullWidth size="small">
-                            <InputLabel>View Semester</InputLabel>
+                            <InputLabel>Filter by Mentor</InputLabel>
                             <Select
-                              label="View Semester"
-                              value={semesterFilter}
-                              onChange={(e) => setSemesterFilter(e.target.value)}
+                              label="Filter by Mentor"
+                              value={mentorFilter}
+                              onChange={(e) => setMentorFilter(e.target.value)}
                             >
-                              {(user?.department === "MCA" ? [1, 2, 3, 4] : [1, 2, 3, 4, 5, 6, 7, 8]).map((sem) => (
-                                <MenuItem key={sem} value={sem.toString()}>
-                                  Semester {sem}
+                              <MenuItem value="">All Mentors</MenuItem>
+                              {mentorGroups.map((group) => (
+                                <MenuItem key={group.mentorId} value={group.mentorId}>
+                                  {group.mentorName}
                                 </MenuItem>
                               ))}
                             </Select>
                           </FormControl>
                         </Grid>
-                        <Grid item xs={12} sm={4}>
-                          <FormControl fullWidth size="small">
-                            <InputLabel>View Round</InputLabel>
-                            <Select
-                              label="View Round"
-                              value={selectedFeedbackRound}
-                              onChange={(e) => setSelectedFeedbackRound(Number(e.target.value))}
-                            >
-                              <MenuItem value={1}>Feedback 1</MenuItem>
-                              <MenuItem value={2}>Feedback 2</MenuItem>
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                      </Grid>
-                    </Box>
-
-                    <Divider />
-
-                    {/* Row 2: Search, Status & Mentor Filter */}
-                    <Box>
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={4}>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            placeholder="Search student..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <SearchIcon color="disabled" />
-                                </InputAdornment>
-                              ),
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                          <FormControl fullWidth size="small">
-                            <InputLabel>Response Status</InputLabel>
-                            <Select
-                              label="Response Status"
-                              value={statusFilter}
-                              onChange={(e) => setStatusFilter(e.target.value)}
-                            >
-                              <MenuItem value="all">All Students</MenuItem>
-                              <MenuItem value="responded">Responded</MenuItem>
-                              <MenuItem value="pending">Pending</MenuItem>
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                        {isHodOrDirector && (
-                          <Grid item xs={12} sm={4}>
-                            <FormControl fullWidth size="small">
-                              <InputLabel>Filter by Mentor</InputLabel>
-                              <Select
-                                label="Filter by Mentor"
-                                value={mentorFilter}
-                                onChange={(e) => setMentorFilter(e.target.value)}
-                              >
-                                <MenuItem value="">All Mentors</MenuItem>
-                                {mentorGroups.map((group) => (
-                                  <MenuItem key={group.mentorId} value={group.mentorId}>
-                                    {group.mentorName}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                            </FormControl>
-                          </Grid>
-                        )}
-                      </Grid>
-                    </Box>
+                      )}
+                    </Grid>
                   </Stack>
                 </Card>
               </Stack>
@@ -987,10 +1051,20 @@ const FeedbackManagement = () => {
 
           {/* Results Section */}
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 800, mb: 3, display: "flex", alignItems: "center", gap: 1.5 }}>
-              <AssessmentIcon color="primary" />
-              Response Analysis
-            </Typography>
+            <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={2} sx={{ mb: 3 }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 1.5 }}>
+                <AssessmentIcon color="primary" />
+                Response Analysis
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<DownloadOutlinedIcon />}
+                onClick={handleExportToExcel}
+                disabled={!loading && ((isHodOrDirector && filteredMentorGroups.length === 0) || (!isHodOrDirector && filteredStudents.length === 0))}
+              >
+                Export to Excel
+              </Button>
+            </Stack>
 
             {!semesterFilter && !feedbackWindow && feedbacks.length === 0 ? (
               <Paper sx={{ p: 8, textAlign: "center", borderRadius: 4, backgroundColor: alpha(theme.palette.grey[500], 0.05), border: `2px dashed ${theme.palette.divider}` }}>
@@ -1090,23 +1164,14 @@ const FeedbackManagement = () => {
                                   <Stack direction="row" spacing={1} justifyContent="flex-end">
                                     <Button size="small" variant="text" onClick={() => handleOpenDrillDown({ studentId: mentee.studentId, studentName: mentee.studentName })}>Details</Button>
                                     {canEditWindow && feedback && (
-                                      <>
-                                        <IconButton 
-                                          size="small" 
-                                          onClick={() => handleOpenEditInDialog(feedback)}
-                                          title="Edit feedback"
-                                        >
-                                          <EditIcon fontSize="small" />
-                                        </IconButton>
-                                        <IconButton 
-                                          size="small" 
-                                          color="error"
-                                          onClick={() => { setFeedbackToDelete(feedback); setDeleteConfirmOpen(true); }}
-                                          title="Delete feedback"
-                                        >
-                                          <DeleteIcon fontSize="small" />
-                                        </IconButton>
-                                      </>
+                                      <IconButton 
+                                        size="small" 
+                                        color="error"
+                                        onClick={() => { setFeedbackToDelete(feedback); setDeleteConfirmOpen(true); }}
+                                        title="Delete feedback"
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
                                     )}
                                   </Stack>
                                 </TableCell>
@@ -1152,23 +1217,14 @@ const FeedbackManagement = () => {
                                 <Stack direction="row" spacing={1} justifyContent="flex-end">
                                   <Button size="small" variant="text" onClick={() => handleOpenDrillDown({ studentId: student._id, studentName: student.name })}>Details</Button>
                                   {canEditWindow && student.hasResponded && (
-                                    <>
-                                      <IconButton 
-                                        size="small" 
-                                        onClick={() => handleOpenEditInDialog(student.feedback)}
-                                        title="Edit feedback"
-                                      >
-                                        <EditIcon fontSize="small" />
-                                      </IconButton>
-                                      <IconButton 
-                                        size="small" 
-                                        color="error"
-                                        onClick={() => { setFeedbackToDelete(student.feedback); setDeleteConfirmOpen(true); }}
-                                        title="Delete feedback"
-                                      >
-                                        <DeleteIcon fontSize="small" />
-                                      </IconButton>
-                                    </>
+                                    <IconButton 
+                                      size="small" 
+                                      color="error"
+                                      onClick={() => { setFeedbackToDelete(student.feedback); setDeleteConfirmOpen(true); }}
+                                      title="Delete feedback"
+                                    >
+                                      <DeleteIcon fontSize="small" />
+                                    </IconButton>
                                   )}
                                 </Stack>
                               </TableCell>
@@ -1185,7 +1241,7 @@ const FeedbackManagement = () => {
                   onPageChange={handleChangePage}
                   rowsPerPage={rowsPerPage}
                   onRowsPerPageChange={handleChangeRowsPerPage}
-                  rowsPerPageOptions={[25, 50, 75, 100]}
+                  rowsPerPageOptions={[25, 50, 100]}
                 />
               </Box>
             )}
@@ -1410,15 +1466,6 @@ const FeedbackManagement = () => {
 
                         {canEditWindow && (
                           <Stack direction="row" spacing={2}>
-                            <Button
-                              variant="outlined"
-                              startIcon={<EditIcon />}
-                              onClick={() => handleOpenEditInDialog(studentFeedbacks[round])}
-                              fullWidth
-                              sx={{ py: 1.5, borderRadius: 2, fontWeight: 700 }}
-                            >
-                              Modify This Feedback Entry
-                            </Button>
                             <Button
                               variant="outlined"
                               color="error"

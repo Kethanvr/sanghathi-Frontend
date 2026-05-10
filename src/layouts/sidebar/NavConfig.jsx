@@ -9,6 +9,7 @@ import QuestionAnswerOutlinedIcon from "@mui/icons-material/QuestionAnswerOutlin
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import SummarizeOutlinedIcon from '@mui/icons-material/SummarizeOutlined';
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
@@ -67,12 +68,13 @@ const adminNavConfig = [
     link: "/admin/upload-history",
   },
   { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
-  { text: "Thread Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
+  { text: "Reports", icon: <AssessmentOutlinedIcon />, link: "/report" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
 
 const facultyNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/faculty/dashboard" },
+  { text: "Alerts", icon: <CampaignOutlinedIcon />, link: "/faculty/alerts" },
   { text: "My Mentees", icon: <PeopleIcon />, link: "/mentees" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
   // { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
@@ -84,6 +86,7 @@ const hodNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/hod/dashboard" },
   { text: "Department Mentors", icon: <PeopleIcon />, link: "/hod/mentors" },
   { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
+  { text: "Reports", icon: <AssessmentOutlinedIcon />, link: "/report" },
   { text: "Thread Reports", icon: <SummarizeOutlinedIcon />, link: "/hod/thread-reports" },
   { text: "Recent Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/recent-threads" },
   { text: "View Users", icon: <PeopleOutlinedIcon />, link: "/admin/users" },
@@ -96,7 +99,7 @@ const directorNavConfig = [
   { text: "All Mentors", icon: <PeopleIcon />, link: "/director/mentors" },
   { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
   { text: "View Users", icon: <PeopleOutlinedIcon />, link: "/director/users" },
-  { text: "Thread Reports", icon: <SummarizeOutlinedIcon />, link: "/report" },
+  { text: "Reports", icon: <AssessmentOutlinedIcon />, link: "/report" },
   { text: "Recent Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/recent-threads" },
   { text: "Campus Buddy", icon: <HdrStrongIcon />, link: "/campus-buddy" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
@@ -104,9 +107,20 @@ const directorNavConfig = [
 
 const studentNavConfig = [
   { text: "Home", icon: <HomeOutlinedIcon />, link: "/" },
+  { text: "Alerts", icon: <CampaignOutlinedIcon />, link: "/alerts" },
   { text: "Threads", icon: <QuestionAnswerOutlinedIcon />, link: "/threads" },
   // { text: "Meetings", icon: <EventOutlinedIcon />, link: "/meetings" },
   { text: "Mentor Details", icon: <PersonOutlinedIcon />, link: "/mentor-details" },
+  { text: "Campus Buddy", icon: <HdrStrongIcon />, link: "/campus-buddy" },
+  { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
+];
+
+const strcoordinatorNavConfig = [
+  { text: "Home", icon: <HomeOutlinedIcon />, link: "/strcoordinator/dashboard" },
+  { text: "View Users", icon: <PeopleOutlinedIcon />, link: "/admin/users" },
+  { text: "View Mentors", icon: <PeopleIcon />, link: "/director/mentors" },
+  { text: "Reports", icon: <AssessmentOutlinedIcon />, link: "/report" },
+  { text: "Feedback", icon: <RateReviewOutlinedIcon />, link: "/feedback/manage" },
   { text: "Campus Buddy", icon: <HdrStrongIcon />, link: "/campus-buddy" },
   { text: "Settings", icon: <SettingsOutlinedIcon />, link: "/settings" },
 ];
@@ -121,6 +135,8 @@ const getNavConfig = (role) => {
       return hodNavConfig;
     case "director":
       return directorNavConfig;
+    case "strcoordinator":
+      return strcoordinatorNavConfig;
     case "student":
       return studentNavConfig;
     default:
