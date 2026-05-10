@@ -90,7 +90,7 @@ const AttendanceReportPage = () => {
         (row.department || "").toLowerCase().includes(lowerQuery)
       );
     });
-  }, [attendanceRows, searchQuery]);
+  }, [attendanceRows, searchQuery, filterMentor, filterSemester]);
 
   const mentors = useMemo(() => [...new Set(attendanceRows.map(r => r.mentorName).filter(Boolean))], [attendanceRows]);
   const semesters = useMemo(() => [...new Set(attendanceRows.map(r => r.semester).filter(Boolean))], [attendanceRows]);
