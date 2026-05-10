@@ -68,6 +68,7 @@ const Thread = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const theme = useTheme();
@@ -76,6 +77,7 @@ const Thread = () => {
   const mentorIdParam = searchParams.get("mentorId");
   const menteeIdParam = searchParams.get("menteeId");
   const [prefilledMentee, setPrefilledMentee] = useState(null);
+  const isFaculty = user?.roleName === "faculty";
 
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
@@ -298,6 +300,25 @@ const Thread = () => {
     setOpenDialog(true);
   };
 
+  const handleSendOpenThreadEmail = async () => {
+    try {
+      setIsSendingEmail(true);
+      const response = await api.post("/threads/notify-open-thread-students");
+      enqueueSnackbar(
+        response?.data?.message || "Email notification sent to open-thread students.",
+        { variant: "success" }
+      );
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message || "Unable to send email notification.",
+        { variant: "error" }
+      );
+      logger.error("Error sending open-thread email notification:", error);
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   return (
     <Page title="Thread">
       <Container maxWidth="lg" sx={{ px: { xs: 1.5, sm: 3 } }}>
@@ -322,15 +343,28 @@ const Thread = () => {
             <Typography variant="h4" component="h1">
               Threads
             </Typography>
-            <Button
-              variant="contained"
-              color={colorMode}
-              onClick={handleOpenDialog}
-              startIcon={<Add />}
-              sx={{ mt: 1, mb: 2, width: { xs: "100%", sm: "auto" } }}
-            >
-              Add new
-            </Button>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: { xs: "100%", sm: "auto" } }}>
+              {isFaculty ? (
+                <Button
+                  variant="outlined"
+                  color={colorMode}
+                  onClick={handleSendOpenThreadEmail}
+                  disabled={isSendingEmail}
+                  sx={{ mt: 1, mb: 2, width: { xs: "100%", sm: "auto" } }}
+                >
+                  {isSendingEmail ? "Sending Email..." : "Send Email"}
+                </Button>
+              ) : null}
+              <Button
+                variant="contained"
+                color={colorMode}
+                onClick={handleOpenDialog}
+                startIcon={<Add />}
+                sx={{ mt: 1, mb: 2, width: { xs: "100%", sm: "auto" } }}
+              >
+                Add new
+              </Button>
+            </Stack>
           </Box>
           <Divider />
           <Box
