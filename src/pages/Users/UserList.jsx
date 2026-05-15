@@ -30,10 +30,13 @@ import { useSnackbar } from "notistack";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 import api from "../../utils/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { getAvatarSrc, getAvatarFallbackText } from "../../utils/avatarResolver";
+import ConfirmationDialog from "./ConfirmationDialog";
 
 export default function UserList({ onEdit }) {
   const theme = useTheme();
@@ -48,6 +51,8 @@ export default function UserList({ onEdit }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuUser, setMenuUser] = useState(null);
   const [detailUser, setDetailUser] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -86,6 +91,45 @@ export default function UserList({ onEdit }) {
     setDetailUser(null);
   };
 
+  const canManageUsers = ["admin", "hod", "director"].includes(
+    (currentUser?.roleName || "").toLowerCase()
+  );
+
+  const handleEditUser = () => {
+    if (menuUser && onEdit && menuUser.roleName === "student") {
+      onEdit(menuUser);
+    }
+    handleCloseMenu();
+  };
+
+  const handleDeleteUser = () => {
+    if (!menuUser) return;
+    setDeletingUser(menuUser);
+    setDeleteDialogOpen(true);
+    handleCloseMenu();
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!deletingUser?._id) return;
+
+    try {
+      await api.delete(`/users/${deletingUser._id}`);
+      enqueueSnackbar("User deleted successfully", { variant: "success" });
+      if (detailUser?._id === deletingUser._id) {
+        handleCloseDetails();
+      }
+      await fetchUsers();
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message || "Unable to delete user",
+        { variant: "error" }
+      );
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeletingUser(null);
+    }
+  };
+
   return (
     <Card>
         <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
@@ -119,6 +163,7 @@ export default function UserList({ onEdit }) {
                 <TableCell>Semester</TableCell>
                 <TableCell>Mentor Assigned</TableCell>
                 <TableCell>View Details</TableCell>
+                <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -141,6 +186,11 @@ export default function UserList({ onEdit }) {
                     <Button size="small" variant="outlined" onClick={() => handleOpenDetails(u)}>
                       View Details
                     </Button>
+                  </TableCell>
+                  <TableCell align="center">
+                    <IconButton onClick={(event) => handleOpenMenu(event, u)} size="small">
+                      <MoreVertIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -172,6 +222,39 @@ export default function UserList({ onEdit }) {
           <Button onClick={handleCloseDetails}>Close</Button>
         </DialogActions>
       </Dialog>
+
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>
+        <MenuItem onClick={() => { handleOpenDetails(menuUser); handleCloseMenu(); }}>
+          View Details
+        </MenuItem>
+        {onEdit && menuUser?.roleName === "student" && (
+          <MenuItem onClick={handleEditUser}>
+            <EditIcon fontSize="small" sx={{ mr: 1 }} />
+            Edit User
+          </MenuItem>
+        )}
+        {canManageUsers && menuUser && menuUser._id !== currentUser?._id && (
+          <MenuItem onClick={handleDeleteUser}>
+            <DeleteIcon fontSize="small" sx={{ mr: 1 }} color="error" />
+            Delete User
+          </MenuItem>
+        )}
+      </Menu>
+
+      <ConfirmationDialog
+        title="Delete User"
+        message={
+          deletingUser
+            ? `Are you sure you want to delete ${deletingUser.name || deletingUser.email || "this user"}? This action cannot be undone.`
+            : "Are you sure you want to delete this user?"
+        }
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setDeletingUser(null);
+        }}
+        onConfirm={confirmDeleteUser}
+      />
     </Card>
   );
 }
