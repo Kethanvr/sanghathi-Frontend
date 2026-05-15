@@ -58,7 +58,7 @@ const MentorAllocation = () => {
         const response = await api.get("/mentors/allocation-students", {
           params: {
             page: 1,
-            limit: 100,
+            limit: 1000,
           },
         });
         const { data } = response.data;
@@ -89,7 +89,7 @@ const MentorAllocation = () => {
       const response = await api.get("/mentors/allocation-students", {
         params: {
           page: 1,
-          limit: 100,
+          limit: 1000,
         },
       });
       const { data } = response.data;
